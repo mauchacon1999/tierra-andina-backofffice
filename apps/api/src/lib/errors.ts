@@ -1,21 +1,5 @@
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
-/**
- * Controlled application error. The global error handler turns it into
- * `{ error: { code, message, details? } }` with the given HTTP status (default 400).
- */
-export class AppError extends Error {
-  constructor(
-    readonly code: string,
-    message: string,
-    readonly status: ContentfulStatusCode = 400,
-    readonly details?: unknown,
-  ) {
-    super(message);
-    this.name = "AppError";
-  }
-}
-
 export const ErrorCode = {
   NOT_FOUND: "NOT_FOUND",
   VALIDATION_ERROR: "VALIDATION_ERROR",
@@ -24,4 +8,55 @@ export const ErrorCode = {
   FORBIDDEN: "FORBIDDEN",
   STORE_REQUIRED: "STORE_REQUIRED",
   INTERNAL_ERROR: "INTERNAL_ERROR",
+  // Products (docs/modules/products.md §5)
+  PRODUCT_NOT_FOUND: "PRODUCT_NOT_FOUND",
+  PRODUCT_NAME_TAKEN: "PRODUCT_NAME_TAKEN",
+  PRODUCT_UNITS_LOCKED: "PRODUCT_UNITS_LOCKED",
+  INVALID_UNIT_COMBINATION: "INVALID_UNIT_COMBINATION",
+  INVALID_PRODUCT_DEFAULTS: "INVALID_PRODUCT_DEFAULTS",
+  CATEGORY_NOT_FOUND: "CATEGORY_NOT_FOUND",
 } as const;
+
+export type ErrorCodeValue = (typeof ErrorCode)[keyof typeof ErrorCode];
+
+/**
+ * HTTP status per error code. Services throw `new AppError(code, message)` without knowing
+ * HTTP (CLAUDE.md §9 layer rules); the error handler looks the status up here.
+ */
+export const ERROR_STATUS: Record<ErrorCodeValue, ContentfulStatusCode> = {
+  NOT_FOUND: 404,
+  VALIDATION_ERROR: 400,
+  DB_UNAVAILABLE: 503,
+  UNAUTHENTICATED: 401,
+  FORBIDDEN: 403,
+  STORE_REQUIRED: 400,
+  INTERNAL_ERROR: 500,
+  PRODUCT_NOT_FOUND: 404,
+  PRODUCT_NAME_TAKEN: 409,
+  PRODUCT_UNITS_LOCKED: 409,
+  INVALID_UNIT_COMBINATION: 422,
+  INVALID_PRODUCT_DEFAULTS: 422,
+  CATEGORY_NOT_FOUND: 422,
+};
+
+/**
+ * Controlled application error. The global error handler turns it into
+ * `{ error: { code, message, details? } }`. The status comes from `status`, else from
+ * `ERROR_STATUS[code]`, else 400.
+ */
+export class AppError extends Error {
+  constructor(
+    readonly code: string,
+    message: string,
+    readonly status?: ContentfulStatusCode,
+    readonly details?: unknown,
+  ) {
+    super(message);
+    this.name = "AppError";
+  }
+
+  /** The HTTP status this error is answered with. */
+  get httpStatus(): ContentfulStatusCode {
+    return this.status ?? ERROR_STATUS[this.code as ErrorCodeValue] ?? 400;
+  }
+}

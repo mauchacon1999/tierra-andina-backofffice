@@ -42,3 +42,55 @@ Origin: http://localhost:3000
 Content-Type: application/json
 
 { "name": "Nadie", "email": "nadie@test.local", "password": "password-123" }
+
+# --- Products (docs/modules/products.md §5). Sign in first (request above).
+# Reads: any role (receivers get only id, name, saleUnit). Writes: owner only.
+# Errors: 404 PRODUCT_NOT_FOUND · 409 PRODUCT_NAME_TAKEN · 409 PRODUCT_UNITS_LOCKED ·
+#         422 INVALID_UNIT_COMBINATION · 422 INVALID_PRODUCT_DEFAULTS · 422 CATEGORY_NOT_FOUND
+
+### Categories — 200 { data: [{ id, code, name, sortOrder }] }
+GET {{baseUrl}}/api/v1/product-categories
+
+### List — 200 { data, total, page, pageSize }; search ignores case and accents
+GET {{baseUrl}}/api/v1/products?search=tomate&isActive=true&page=1&pageSize=20
+
+### Create — 201 product (decimals as 4-decimal strings; lastMargin omitted → store default)
+# @name createProduct
+POST {{baseUrl}}/api/v1/products
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{
+  "name": "Tomate perita",
+  "categoryId": "<id of the 'vegetable' category>",
+  "purchaseUnit": "crate",
+  "saleUnit": "kg",
+  "defaultPackQuantity": "24",
+  "lastShrinkage": "2",
+  "lastMargin": "0.5"
+}
+
+### Quick create (purchase screen) — 201; category "other", shrinkage 0, default margin
+POST {{baseUrl}}/api/v1/products/quick
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "name": "Cilantro", "purchaseUnit": "bundle", "saleUnit": "unit", "defaultPackQuantity": "28" }
+
+### Detail — 200 product + isUnitLocked
+GET {{baseUrl}}/api/v1/products/{{createProduct.response.body.id}}
+
+### Update — 200; units rejected with 409 once the product is used
+PATCH {{baseUrl}}/api/v1/products/{{createProduct.response.body.id}}
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "lastMargin": "0.6" }
+
+### Deactivate (soft delete) — 200
+POST {{baseUrl}}/api/v1/products/{{createProduct.response.body.id}}/deactivate
+Origin: http://localhost:3000
+
+### Activate — 200
+POST {{baseUrl}}/api/v1/products/{{createProduct.response.body.id}}/activate
+Origin: http://localhost:3000

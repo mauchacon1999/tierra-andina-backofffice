@@ -59,8 +59,8 @@ describe("404", () => {
     });
   });
 
-  test("/api/v1 is mounted but empty", async () => {
-    const res = await makeApp().request("/api/v1/products");
+  test("unknown /api/v1 routes use the same format", async () => {
+    const res = await makeApp().request("/api/v1/does-not-exist");
 
     expect(res.status).toBe(404);
     expect(((await res.json()) as { error: { code: string } }).error.code).toBe("NOT_FOUND");

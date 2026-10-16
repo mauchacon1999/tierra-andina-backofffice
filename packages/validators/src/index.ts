@@ -10,6 +10,7 @@ export type { DecimalSchemaOptions } from "./amount";
 export { MAX_PAGE_SIZE, paginatedSchema, paginationQuerySchema } from "./pagination";
 export type { Paginated, PaginatedSchema, PaginationQuery } from "./pagination";
 export {
+  createProductFieldsSchema,
   createProductSchema,
   NAME_MAX,
   NAME_MIN,
@@ -25,6 +26,7 @@ export {
   productSummaryListSchema,
   productSummarySchema,
   purchaseUnitSchema,
+  quickCreateProductFieldsSchema,
   quickCreateProductSchema,
   quickProductFormSchema,
   saleUnitSchema,

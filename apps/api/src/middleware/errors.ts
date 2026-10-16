@@ -12,7 +12,7 @@ function body(code: string, message: string, details?: unknown): ApiErrorBody {
 /** Turns any error into the unified shape { error: { code, message, details? } }. */
 export const errorHandler: ErrorHandler<AppEnv> = (err, c) => {
   if (err instanceof AppError) {
-    return c.json(body(err.code, err.message, err.details), err.status);
+    return c.json(body(err.code, err.message, err.details), err.httpStatus);
   }
 
   if (err instanceof HTTPException) {

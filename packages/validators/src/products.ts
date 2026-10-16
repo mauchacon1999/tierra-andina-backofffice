@@ -106,23 +106,32 @@ const productFields = {
   lastMargin: marginSchema.optional(),
 };
 
-/** POST /api/v1/products */
-export const createProductSchema = z
-  .object(productFields)
-  .superRefine((value, ctx) => checkProductRules(value, ctx));
+/**
+ * Field shapes only (no cross-field rules). The API validates requests with it and lets the
+ * service apply the rules, so rule violations answer 422 with their own codes
+ * (INVALID_UNIT_COMBINATION, INVALID_PRODUCT_DEFAULTS) instead of a generic 400.
+ */
+export const createProductFieldsSchema = z.object(productFields);
+
+/** POST /api/v1/products — shapes + rules. Use it in forms for immediate feedback. */
+export const createProductSchema = createProductFieldsSchema.superRefine((value, ctx) =>
+  checkProductRules(value, ctx),
+);
 
 export type CreateProductInput = z.input<typeof createProductSchema>;
 export type CreateProduct = z.output<typeof createProductSchema>;
 
 /** POST /api/v1/products/quick — from the purchase screen; category defaults to "other". */
-export const quickCreateProductSchema = z
-  .object({
-    name: nameSchema,
-    purchaseUnit: purchaseUnitSchema,
-    saleUnit: saleUnitSchema,
-    defaultPackQuantity: packQuantitySchema.default(null),
-  })
-  .superRefine((value, ctx) => checkProductRules({ ...value, lastShrinkage: "0" }, ctx));
+export const quickCreateProductFieldsSchema = z.object({
+  name: nameSchema,
+  purchaseUnit: purchaseUnitSchema,
+  saleUnit: saleUnitSchema,
+  defaultPackQuantity: packQuantitySchema.default(null),
+});
+
+export const quickCreateProductSchema = quickCreateProductFieldsSchema.superRefine((value, ctx) =>
+  checkProductRules({ ...value, lastShrinkage: "0" }, ctx),
+);
 
 export type QuickCreateProductInput = z.input<typeof quickCreateProductSchema>;
 export type QuickCreateProduct = z.output<typeof quickCreateProductSchema>;
