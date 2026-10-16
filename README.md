@@ -28,6 +28,8 @@ All apps read this single root `.env`:
 | `API_PORT`                                          | API               | `4000`                                                      |
 | `WEB_ORIGIN`                                        | API (CORS)        | `http://localhost:3000`                                     |
 | `NEXT_PUBLIC_API_URL`                               | web               | `http://localhost:4000`                                     |
+| `SEED_OWNER_EMAIL`, `SEED_OWNER_PASSWORD`           | `db:seed`         | owner login created by the seed (password ≥ 8 chars)        |
+| `SEED_OWNER_NAME` (optional)                        | `db:seed`         | `Dueño`                                                     |
 
 ## 2. Start the database
 
@@ -41,13 +43,24 @@ The test database (`<POSTGRES_DB>_test`) is created automatically the first time
 is initialized. To start from scratch: `docker compose down -v && bun run db:up`
 (**deletes all local data**).
 
-Migrations:
+Create the schema and load the initial data (store, owner user, settings, payment methods,
+categories):
+
+```bash
+bun run db:migrate    # apply pending migrations
+bun run db:seed       # initial data; safe to run again
+```
+
+Other database commands:
 
 ```bash
 bun run db:generate   # create a migration from schema changes (packages/db/src/schema)
-bun run db:migrate    # apply pending migrations
+bun run db:reset      # DROP everything in the local DB and re-apply migrations
 bun run db:studio     # browse the database
 ```
+
+`db:reset` and `db:seed` accept `-- --test` for the test database. See
+[docs/database.md](docs/database.md) for migrations, conventions and the list of tables.
 
 ## 3. Run everything
 
@@ -71,6 +84,8 @@ bun run build         # production build of API and web
 ```
 
 API unit tests build the Hono app in memory and do not need the database or `.env`.
+The `@ta/db` integration tests need PostgreSQL running (`bun run db:up`): they reset and seed
+the **test** database on every run.
 Running `bun test` from the root is intentionally blocked; use `bun run test`
 (or `bun --cwd=<package> test` for a single package).
 
@@ -83,5 +98,5 @@ packages/core       @ta/core — pure business logic (decimal.js)
 packages/db         @ta/db — Drizzle client, schema and migrations
 packages/validators @ta/validators — shared Zod schemas
 packages/tsconfig   @ta/tsconfig — shared strict TypeScript config
-docs/               project documentation (api.http with request examples)
+docs/               plan, domain model, database guide, module specs, api.http
 ```

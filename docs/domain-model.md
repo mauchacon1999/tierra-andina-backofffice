@@ -45,7 +45,9 @@ month (paydays). Cash starts at zero every day; the previous day's cash is kept 
 | `supplier_rate` | Each stall              | One per purchase line |
 | `sale_rate`     | Owner                   | One per price list    |
 
-- Every stored amount keeps: the USD amount, the Bs amount, and the rate used.
+- Every amount of money that changes hands (payments, expenses, advances, credit entries, what
+  is paid to a stall) keeps: the USD amount, the Bs amount, and the rate used. Obligations and
+  templates denominated in USD (payables, recurring expenses, salaries, claims) store USD only.
 - All money, rates, quantities and margins are `numeric(14,4)`. Calculations use decimal.js.
 
 ---
@@ -75,6 +77,8 @@ sale_price_usd    = round_up(unit_cost_usd × (1 + margin), usd_rounding_step)
 sale_price_bs     = round_up(sale_price_usd × sale_rate, bs_rounding_step)
 ```
 
+- `quoted_price_usd` is the total of the purchase line (3 crates at 20 USD → 60 USD), and the
+  stall is paid `quoted_price_usd × supplier_rate` in Bs (stored as `amount_bs`).
 - `real_cost_usd` captures the supplier's rate rounding so it never silently eats the margin.
 - If goods arrive incomplete (§4), costing uses the **received** quantity.
 
@@ -176,47 +180,76 @@ different stores.
 
 ## 9. Database design
 
-Conventions: tables plural snake_case; columns snake_case; every table has `id uuid` (v7),
-`created_at timestamptz`, `updated_at timestamptz`; editable tables add `created_by` and
-`updated_by` (→ users). Money columns end in `_usd` or `_bs`; rates end in `_rate`.
+Implemented in `packages/db/src/schema/` (one file per area). How to work with it:
+`docs/database.md`.
+
+Conventions: tables plural snake_case; columns snake_case; every table has `id uuid` (v7,
+generated in the app), `created_at timestamptz`, `updated_at timestamptz`; editable tables add
+`created_by` and `updated_by` (→ users, nullable because the seed and system jobs write without a
+user). Money columns end in `_usd` or `_bs`; rates end in `_rate`. Catalog-like tables that code
+refers to have a stable English `code` (unique) plus a Spanish `name` shown in the UI.
+
+Tables without audit columns: Better Auth tables, `push_subscriptions` and `audit_logs`
+(append-only: `created_at` only, no `updated_at`).
 
 ### 9.1 Organization and access
 
-| Table                          | Key columns                                                                                                |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| `stores`                       | name, address, timezone (default `America/Caracas`), is_active                                             |
-| `users` (+ Better Auth tables) | name, email, … (managed by Better Auth)                                                                    |
-| `memberships`                  | user_id, store_id, role (`owner`/`manager`/`receiver`), is_active · unique (user_id, store_id)             |
-| `settings`                     | store_id, key, value (jsonb) · unique (store_id, key)                                                      |
-| `push_subscriptions`           | user_id, endpoint, keys (jsonb), user_agent                                                                |
-| `audit_logs`                   | store_id, user_id, table_name, record_id, action (`insert`/`update`/`delete`), changes (jsonb), created_at |
+| Table                | Key columns                                                                                                |
+| -------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `stores`             | name, address, timezone (default `America/Caracas`), is_active                                             |
+| `users`              | name, email (unique), email_verified, image — Better Auth                                                  |
+| `sessions`           | user_id, token (unique), expires_at, ip_address, user_agent — Better Auth                                  |
+| `accounts`           | user_id, account_id, provider_id, password (hash), OAuth tokens — Better Auth                              |
+| `verifications`      | identifier, value, expires_at — Better Auth                                                                |
+| `memberships`        | user_id, store_id, role (`owner`/`manager`/`receiver`), is_active · unique (user_id, store_id)             |
+| `settings`           | store_id, key, value (jsonb) · unique (store_id, key)                                                      |
+| `push_subscriptions` | user_id, endpoint (unique), keys (jsonb), user_agent                                                       |
+| `audit_logs`         | store_id, user_id, table_name, record_id, action (`insert`/`update`/`delete`), changes (jsonb), created_at |
 
-Initial settings: `usd_rounding_step = 0.05`, `bs_rounding_step = 1`,
-`sale_rate_mode = manual` (or `bcv_plus_pct`), `sale_rate_markup_pct = 0`,
-`default_margin = 0.50`, `receiver_can_see_prices = false`.
+Better Auth tables use plural names and uuid ids so they follow the same conventions; the auth
+instance must use the Drizzle adapter with `usePlural: true` and
+`advanced.database.generateId: () => Bun.randomUUIDv7()`.
+
+Initial settings: `usd_rounding_step = "0.05"`, `bs_rounding_step = "1"`,
+`sale_rate_mode = "manual"` (or `"bcv_plus_pct"`), `sale_rate_markup_pct = "0"`,
+`default_margin = "0.50"`, `receiver_can_see_prices = false`. Decimal values are stored as
+**JSON strings**, never JSON numbers, so they are never read back as floats.
 
 ### 9.2 Catalog
 
-| Table                | Key columns                                                                                                                                      |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `product_categories` | name (fruit, vegetable, greens, tubers, other), sort_order                                                                                       |
-| `products`           | name, category_id, purchase_unit (`crate`/`bundle`/`kg`), sale_unit (`kg`/`unit`), default_pack_quantity, last_shrinkage, last_margin, is_active |
-| `suppliers`          | name, kind (`wholesale_stall`/`local`), phone, stall_reference, is_active                                                                        |
+| Table                | Key columns                                                                                                                                                                |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `product_categories` | code (unique: fruit, vegetable, greens, tubers, other), name, sort_order                                                                                                   |
+| `products`           | name, normalized_name (unique), category_id, purchase_unit (`crate`/`bundle`/`kg`), sale_unit (`kg`/`unit`), default_pack_quantity, last_shrinkage, last_margin, is_active |
+| `suppliers`          | name, kind (`wholesale_stall`/`local`), phone, stall_reference, is_active                                                                                                  |
+
+`normalized_name` (lowercase, no accents, single spaces) makes "Cebollín" and "cebollin" the same
+product (`docs/modules/products.md` §1.4).
 
 ### 9.3 Exchange rates
 
-| Table            | Key columns                                                                                                 |
-| ---------------- | ----------------------------------------------------------------------------------------------------------- |
-| `exchange_rates` | store_id (null for BCV), business_date, kind (`bcv`/`sale`), value · unique (store_id, business_date, kind) |
+| Table            | Key columns                                                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `exchange_rates` | store_id (null for BCV), business_date, kind (`bcv`/`sale`), value · unique NULLS NOT DISTINCT (store_id, business_date, kind) |
+
+`NULLS NOT DISTINCT` is required: in PostgreSQL two NULL `store_id`s never collide, so a plain
+unique would allow two BCV rates for the same day. A CHECK ties the scope to the kind: BCV rows
+have no store, sale rows always have one.
 
 ### 9.4 Purchasing
 
-| Table                 | Key columns                                                                                                                                                                                                                                                                                                                                                                        |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `purchase_trips`      | store_id, business_date, bcv_rate, status (`open`/`closed`), total_usd, total_bs, note                                                                                                                                                                                                                                                                                             |
-| `purchase_lines`      | trip_id, supplier_id, stall_reference, product_id, purchase_unit, packs, gross_quantity, shrinkage, usable_quantity, quoted_price_usd, supplier_rate, real_cost_usd, unit_cost_usd, margin, sale_price_usd, payment_status (`paid`/`credit`), receipt_status (`pending`/`received`/`partial`/`missing`), received_packs, received_quantity, received_by, received_at, receipt_note |
-| `supplier_claims`     | purchase_line_id, supplier_id, missing_packs, amount_usd, status (`open`/`resolved`/`written_off`), resolution_note                                                                                                                                                                                                                                                                |
-| `shopping_list_items` | store_id, product_id, requested_by, note, status (`open`/`bought`/`dropped`), purchase_line_id (nullable)                                                                                                                                                                                                                                                                          |
+| Table                 | Key columns                                                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `purchase_trips`      | store_id, business_date, bcv_rate, status (`open`/`closed`), total_usd, total_bs, note                                                                                                                                                                                                                                                                                                                   |
+| `purchase_lines`      | trip_id, supplier_id (nullable), stall_reference, product_id, purchase_unit, packs, gross_quantity, shrinkage, usable_quantity, quoted_price_usd, amount_bs, supplier_rate, real_cost_usd, unit_cost_usd, margin, sale_price_usd, payment_status (`paid`/`credit`), receipt_status (`pending`/`received`/`partial`/`missing`), received_packs, received_quantity, received_by, received_at, receipt_note |
+| `supplier_claims`     | purchase_line_id (unique), supplier_id (nullable), missing_packs, amount_usd, status (`open`/`resolved`/`written_off`), resolution_note                                                                                                                                                                                                                                                                  |
+| `shopping_list_items` | store_id, product_id, requested_by, note, status (`open`/`bought`/`dropped`), purchase_line_id (nullable)                                                                                                                                                                                                                                                                                                |
+
+- `quoted_price_usd` is the **total of the line** (3 crates at 20 USD → 60 USD).
+- `amount_bs` = `quoted_price_usd × supplier_rate`: what is paid to the stall in Bs, at the
+  market rate of that day. It completes the "USD, Bs and rate" rule for the line.
+- `supplier_id` is nullable: a stall not registered yet is identified by `stall_reference`.
+- Quantities, shrinkage and received quantity are in the product's sale unit.
 
 ### 9.5 Pricing
 
@@ -229,24 +262,29 @@ Initial settings: `usd_rounding_step = 0.05`, `bs_rounding_step = 1`,
 
 | Table                  | Key columns                                                                                                                                                                             |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `payment_methods`      | name, currency (`USD`/`VES`), sort_order, is_active                                                                                                                                     |
+| `payment_methods`      | code (unique), name, currency (`USD`/`VES`), sort_order, is_active                                                                                                                      |
 | `daily_closes`         | store_id, business_date, submitted_by, rate, total_usd, credit_sold_bs, cash_destination (`kept`/`deposited`), status (`submitted`/`approved`), note · unique (store_id, business_date) |
-| `daily_close_payments` | daily_close_id, payment_method_id, amount, amount_usd · unique (daily_close_id, payment_method_id)                                                                                      |
+| `daily_close_payments` | daily_close_id, payment_method_id, amount (in the method's currency), amount_usd · unique (daily_close_id, payment_method_id)                                                           |
 
 ### 9.7 Receivables, payables, expenses, payroll
 
-| Table                     | Key columns                                                                                                        |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `customers`               | store_id, name, phone, is_active                                                                                   |
-| `customer_credit_entries` | customer_id, kind (`credit`/`payment`), business_date, amount_bs, amount_usd, rate, daily_close_id (nullable)      |
-| `payables`                | store_id, supplier_id, concept, amount_usd, issued_on, due_on, purchase_line_id (nullable), status (`open`/`paid`) |
-| `payable_payments`        | payable_id, paid_on, amount_usd, amount_bs, rate, payment_method_id                                                |
-| `expense_categories`      | name, kind (`fixed`/`variable`), is_active                                                                         |
-| `recurring_expenses`      | store_id, category_id, amount_usd, frequency (`weekly`/`monthly`), is_active                                       |
-| `expenses`                | store_id, category_id, business_date, amount_usd, amount_bs, rate, recurring_expense_id (nullable), note           |
-| `employees`               | store_id, name, job_title, weekly_salary_usd, user_id (nullable), is_active                                        |
-| `payroll_payments`        | employee_id, week_start, salary_usd, advances_usd, paid_usd, paid_on, note                                         |
-| `salary_advances`         | employee_id, paid_on, amount_usd, amount_bs, rate, payroll_payment_id (nullable)                                   |
+| Table                     | Key columns                                                                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `customers`               | store_id, name, phone, is_active                                                                                                      |
+| `customer_credit_entries` | customer_id, kind (`credit`/`payment`), business_date, amount_bs, amount_usd, rate, daily_close_id (nullable)                         |
+| `payables`                | store_id, supplier_id (nullable), concept, amount_usd, issued_on, due_on, purchase_line_id (nullable, unique), status (`open`/`paid`) |
+| `payable_payments`        | payable_id, paid_on, amount_usd, amount_bs, rate, payment_method_id                                                                   |
+| `expense_categories`      | code (unique), name, kind (`fixed`/`variable`), is_active                                                                             |
+| `recurring_expenses`      | store_id, category_id, amount_usd, frequency (`weekly`/`monthly`), is_active                                                          |
+| `expenses`                | store_id, category_id, business_date, amount_usd, amount_bs, rate, recurring_expense_id (nullable), note                              |
+| `employees`               | store_id, name, job_title, weekly_salary_usd, user_id (nullable), is_active                                                           |
+| `payroll_payments`        | employee_id, week_start, salary_usd, advances_usd, paid_usd, paid_on, note · unique (employee_id, week_start)                         |
+| `salary_advances`         | employee_id, paid_on, amount_usd, amount_bs, rate, payroll_payment_id (nullable)                                                      |
+
+Obligations and templates denominated in USD (`payables`, `recurring_expenses`,
+`supplier_claims`, `payroll_payments`, `employees.weekly_salary_usd`) store USD only; the Bs
+amount and rate are stored when money changes hands (payments, expenses, advances, credit
+entries) — see §2.
 
 ### 9.8 Entity overview
 
@@ -277,19 +315,38 @@ erDiagram
 
 ### 9.9 Indexes and constraints
 
-- Index every foreign key and every `business_date`.
-- `CHECK` constraints: amounts ≥ 0, rates > 0, `shrinkage < gross_quantity`,
-  `received_packs <= packs`, `margin >= 0`.
-- Uniques listed in the tables above.
+- Every foreign key is the leading column of an index, except `created_by` / `updated_by`
+  (never used to filter; `audit_logs` answers "who did what"). Every `business_date` is indexed.
+- Named `CHECK` constraints (`<table>_<rule>_check`), 38 in total:
+  - amounts ≥ 0 and rates > 0 on every money/rate column;
+  - `purchase_lines`: packs > 0, gross_quantity > 0, 0 ≤ shrinkage < gross_quantity,
+    usable_quantity = gross_quantity − shrinkage, 0 ≤ received_packs ≤ packs,
+    0 ≤ received_quantity ≤ gross_quantity;
+  - margins between 0 and 5 (0–500 %) in products, purchase lines and price list lines;
+  - `products`: no kg → unit combination; pack quantity required (> 0) for crate/bundle and
+    null for kg; 0 ≤ last_shrinkage < pack quantity;
+  - `exchange_rates`: BCV rows have no store, sale rows have one;
+  - `price_lists`: a published list has `published_at`;
+  - `payables`: due_on ≥ issued_on.
+- Uniques listed in the tables above (16). A purchase line has at most one supplier claim and
+  at most one payable (§9.8).
+- Every CHECK and UNIQUE constraint has an integration test; a meta-test fails if one is added
+  without a test.
 
 ### 9.10 Seed data
 
+Idempotent (`bun run db:seed`, safe to run twice):
+
 - One store: "Tierra Andina — Mercado AVEPAC, Caricuao".
-- Owner user from `SEED_OWNER_EMAIL` / `SEED_OWNER_PASSWORD`, with `owner` membership.
+- Owner user from `SEED_OWNER_EMAIL` / `SEED_OWNER_PASSWORD` (optional `SEED_OWNER_NAME`), with a
+  Better Auth `credential` account and an `owner` membership.
 - Settings defaults (§9.1).
-- Payment methods: card terminal (VES), mobile payment (VES), cash Bs (VES), cash USD (USD).
-- Product categories (§9.2).
-- Expense categories: bags, unloading labor, drinking water, coffee, sugar, bleach (variable).
+- Payment methods: `card_terminal` "Punto de venta" (VES), `mobile_payment` "Pago móvil" (VES),
+  `cash_bs` "Efectivo Bs" (VES), `cash_usd` "Efectivo USD" (USD).
+- Product categories: `fruit` "Frutas", `vegetable` "Hortalizas", `greens` "Hojas y aliños",
+  `tubers` "Tubérculos", `other` "Otros".
+- Expense categories (variable): `bags` "Bolsas", `unloading_labor` "Descarga",
+  `drinking_water` "Agua potable", `coffee` "Café", `sugar` "Azúcar", `bleach` "Cloro".
 
 ---
 

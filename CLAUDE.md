@@ -5,9 +5,11 @@ It replaces the notebook, WhatsApp and Excel workflow: purchases at the wholesal
 cost and price calculation, daily cash closings, expenses, debts and weekly reports.
 Business context and phases live in `docs/plan.md`. Read it before starting a new feature.
 
-> **Current state (2026-10-16):** technical skeleton only — monorepo, Postgres, Drizzle with an
-> empty schema, Hono API with `/health`, Next.js status page, shared packages with example code.
-> Business rules and DB design: `docs/domain-model.md`; per-module specs: `docs/modules/`.
+> **Current state (2026-10-16):** monorepo, full database schema in `@ta/db` (32 tables,
+> migrations, idempotent seed, integration tests), Hono API with `/health` only, Next.js status
+> page. No business endpoints or auth instance yet.
+> Business rules and DB design: `docs/domain-model.md`; working with the DB: `docs/database.md`;
+> per-module specs: `docs/modules/`.
 
 ---
 
@@ -49,6 +51,7 @@ tierra-andina/
 ├── docs/
 │   ├── plan.md              # business plan and phases
 │   ├── domain-model.md      # business rules and database design (source of truth)
+│   ├── database.md          # migrations, reset, seed, DB tests, tables per area
 │   ├── modules/             # per-module specs (products.md, …)
 │   └── api.http             # request examples per endpoint
 ├── docker-compose.yml
@@ -83,11 +86,16 @@ bun run format           # prettier --write
 bun run build            # production build
 bun run db:generate      # generate migration from schema changes
 bun run db:migrate       # apply migrations
+bun run db:reset         # DROP everything in the main DB and re-apply migrations (local only)
+bun run db:seed          # load initial data (idempotent)
 bun run db:studio        # open Drizzle Studio
 ```
 
+`db:reset` / `db:seed` take `-- --test` to target the test database. Details: `docs/database.md`.
+
 Run a single app: `bun --cwd=apps/api run dev` or `bun --cwd=apps/web run dev`.
 Tests of one package: `bun --cwd=packages/core test`, `bun --cwd=apps/web run test`.
+`@ta/db` tests (and so `bun run test`) need PostgreSQL running (`bun run db:up`).
 `bun test` from the repo root is blocked on purpose (see §15).
 
 ---
@@ -140,6 +148,12 @@ Tests of one package: `bun --cwd=packages/core test`, `bun --cwd=apps/web run te
 | Recepción en camioneta                        | `truck_receipt`                            |
 | Pago móvil                                    | `mobile_payment`                           |
 | Punto de venta (tarjeta)                      | `card_terminal`                            |
+| Tienda                                        | `store`                                    |
+| Dueño / encargado / receptor                  | `owner` / `manager` / `receiver`           |
+| Reclamo al puesto (mercancía faltante)        | `supplier_claim`                           |
+| Lista de faltantes (compras del jueves)       | `shopping_list_item`                       |
+| Tasa de cambio                                | `exchange_rate`                            |
+| Nómina / adelanto                             | `payroll_payment` / `salary_advance`       |
 
 If a new domain term appears, add it here before using it.
 
@@ -331,6 +345,9 @@ apps/web/src/
   Use real business examples (see `docs/plan.md`), with exact decimal expectations.
 - `apps/api`: integration tests per endpoint against `DATABASE_URL_TEST`, covering at least:
   success, validation error, permission denied, not found.
+- `@ta/db`: every CHECK and UNIQUE constraint has a test (meta-tests enforce it). Reuse
+  `src/testing/` (`inRollback`, `expectPgError`, `createBase`, `valid.*`) — also from the API's
+  integration tests.
 - `apps/web`: tests for hooks with logic and for critical components
   (forms, totals, status changes). Test behavior, not implementation details.
 - Test names describe behavior: `it('rounds the sale price up to the next 0.05 USD')`.
@@ -433,3 +450,11 @@ Things that are not obvious from the code and have already cost time:
 - **Validator middleware return type is inferred** (`apps/api/src/lib/validate.ts`): it carries
   the types behind `c.req.valid()`. This is the one accepted exception to "exported functions
   declare their return type".
+- **Database gotchas** (full list in `docs/database.md`): a CHECK that evaluates to NULL
+  passes, so required values need `IS NOT NULL`; `numeric(14,4)` is read back padded to 4
+  decimals (`"20.0000"`); decimal settings are JSON strings and `createDb` turns off
+  postgres.js' JSON parsing so jsonb is parsed only once; ids come from `Bun.randomUUIDv7()`
+  (no DB default).
+- **New tables use the helpers** in `packages/db/src/schema/_shared.ts` (`id()`, `timestamps`,
+  `auditColumns`, `money()`/`rate()`/`quantity()`/`ratio()`) and named constraints
+  (`<table>_<rule>_check`, `<table>_<cols>_key`, `<table>_<col>_idx`).
