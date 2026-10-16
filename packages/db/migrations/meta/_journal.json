@@ -15,6 +15,13 @@
       "when": 1792126563262,
       "tag": "0001_catalog_rates_purchasing_pricing",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792126653114,
+      "tag": "0002_daily_close_finance_payroll",
+      "breakpoints": true
     }
   ]
 }
