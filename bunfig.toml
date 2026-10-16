@@ -1,0 +1,3 @@
+# Root-only Bun config. Packages run their own tests from their own directory (see scripts/).
+[test]
+preload = ["./scripts/root-bun-test-guard.ts"]

@@ -1,6 +1,6 @@
 import type { RequestIdVariables } from "hono/request-id";
 
-/** Tipos de contexto compartidos por toda la app Hono. */
-export interface AppEnv {
+/** Context types shared by the whole Hono app. */
+export type AppEnv = {
   Variables: RequestIdVariables;
-}
+};

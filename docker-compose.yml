@@ -1,7 +1,7 @@
-# PostgreSQL 16 para desarrollo local.
-# Las credenciales salen del archivo .env de la raíz (ver .env.example).
-# El script de docker/postgres/init crea la base de test (<POSTGRES_DB>_test)
-# SOLO la primera vez que se inicializa el volumen.
+# PostgreSQL 16 for local development.
+# Credentials come from the root .env file (see .env.example).
+# docker/postgres/init creates the test database (<POSTGRES_DB>_test)
+# ONLY the first time the volume is initialized.
 name: tierra-andina
 
 services:
@@ -10,9 +10,9 @@ services:
     container_name: tierra-andina-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:?Falta POSTGRES_USER en .env}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD en .env}
-      POSTGRES_DB: ${POSTGRES_DB:?Falta POSTGRES_DB en .env}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is missing in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is missing in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is missing in .env}
       TZ: America/Caracas
       PGTZ: America/Caracas
     ports:
@@ -21,8 +21,8 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      # -h 127.0.0.1 fuerza TCP: durante el init el servidor temporal solo escucha por socket,
-      # así no se reporta "healthy" antes de que termine docker/postgres/init.
+      # -h 127.0.0.1 forces TCP: during init the temporary server only listens on the socket,
+      # so the container is not reported healthy before docker/postgres/init finishes.
       test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s

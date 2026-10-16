@@ -14,14 +14,17 @@ export default defineConfig([
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
       "@typescript-eslint/consistent-type-imports": "error",
-      // Regla del proyecto: Next.js nunca accede a la base; todo pasa por la API.
+      // Project rule: Next.js never touches the database; everything goes through the API.
       "no-restricted-imports": [
         "error",
         {
           paths: [
-            { name: "@ta/db", message: "La web no accede a la base: usa la API (src/lib/api.ts)." },
-            { name: "drizzle-orm", message: "La web no accede a la base: usa la API." },
-            { name: "postgres", message: "La web no accede a la base: usa la API." },
+            {
+              name: "@ta/db",
+              message: "The web never touches the database: use the API (src/lib/api.ts).",
+            },
+            { name: "drizzle-orm", message: "The web never touches the database: use the API." },
+            { name: "postgres", message: "The web never touches the database: use the API." },
           ],
         },
       ],

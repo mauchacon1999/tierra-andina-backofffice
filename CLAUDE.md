@@ -14,19 +14,19 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 
 ## 1. Stack
 
-| Layer                     | Choice                                                                                                    |
-| ------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Runtime / package manager | Bun (workspaces) + Turborepo                                                                              |
-| API                       | Hono on Bun — `apps/api`, port 4000                                                                       |
-| Frontend                  | Next.js App Router + TypeScript + Tailwind — `apps/web`, port 3000                                        |
-| Database                  | PostgreSQL 16 (Docker)                                                                                    |
-| ORM                       | Drizzle ORM + drizzle-kit (postgres.js driver)                                                            |
-| Validation                | Zod (shared schemas in `@ta/validators`)                                                                  |
-| Server state (web)        | SWR _(planned — not installed yet)_                                                                       |
-| Client state (web)        | Zustand _(planned — not installed yet)_                                                                   |
-| Forms (web)               | React Hook Form + `@hookform/resolvers/zod` _(planned — not installed yet)_                               |
-| Decimal math              | decimal.js                                                                                                |
-| Tests                     | `bun test` (core, api) · Vitest + Testing Library (web) _(web currently uses `bun test`; Vitest planned)_ |
+| Layer                     | Choice                                                                      |
+| ------------------------- | --------------------------------------------------------------------------- |
+| Runtime / package manager | Bun (workspaces) + Turborepo                                                |
+| API                       | Hono on Bun — `apps/api`, port 4000                                         |
+| Frontend                  | Next.js App Router + TypeScript + Tailwind — `apps/web`, port 3000          |
+| Database                  | PostgreSQL 16 (Docker)                                                      |
+| ORM                       | Drizzle ORM + drizzle-kit (postgres.js driver)                              |
+| Validation                | Zod (shared schemas in `@ta/validators`)                                    |
+| Server state (web)        | SWR _(planned — not installed yet)_                                         |
+| Client state (web)        | Zustand _(planned — not installed yet)_                                     |
+| Forms (web)               | React Hook Form + `@hookform/resolvers/zod` _(planned — not installed yet)_ |
+| Decimal math              | decimal.js                                                                  |
+| Tests                     | `bun test` (core, validators, api) · Vitest + Testing Library + jsdom (web) |
 
 Do not add, replace or remove a dependency without asking first and explaining why.
 
@@ -46,11 +46,13 @@ tierra-andina/
 │   └── tsconfig/            # @ta/tsconfig — shared TS config (base, bun, nextjs)
 ├── docker/
 │   └── postgres/init/       # creates the <POSTGRES_DB>_test database on a fresh volume
+├── scripts/                 # repo-level scripts (root `bun test` guard)
 ├── docs/
 │   ├── plan.md              # business plan and phases (pending)
 │   ├── domain-model.md      # domain model and DB design (pending)
 │   └── api.http             # request examples per endpoint
 ├── docker-compose.yml
+├── bunfig.toml              # root-only: blocks `bun test` at the root (use `bun run test`)
 ├── .env.example             # single env file for the whole monorepo (copy to .env)
 └── CLAUDE.md
 ```
@@ -74,8 +76,7 @@ bun run db:up            # start PostgreSQL (waits until healthy)
 bun run db:down          # stop PostgreSQL (data is kept in the volume)
 bun run db:ping          # check the main and test databases respond
 bun dev                  # api + web in watch mode
-bun test                 # all tests
-bun run test             # all tests through Turborepo, per package
+bun run test             # all tests (Turborepo: bun test per package, Vitest for web)
 bun run typecheck        # tsc across the monorepo
 bun run lint             # eslint
 bun run format           # prettier --write
@@ -86,6 +87,8 @@ bun run db:studio        # open Drizzle Studio
 ```
 
 Run a single app: `bun --cwd=apps/api run dev` or `bun --cwd=apps/web run dev`.
+Tests of one package: `bun --cwd=packages/core test`, `bun --cwd=apps/web run test`.
+`bun test` from the repo root is blocked on purpose (see §15).
 
 ---
 
@@ -166,7 +169,7 @@ If a new domain term appears, add it here before using it.
   Never use `Number()`, `parseFloat()` or `+` on these values.
 - Every stored amount keeps its USD value, its Bs value and the rate used.
 - All calculation rules live in `@ta/core` (§8). The API and the web never reimplement them.
-- Input amounts are validated with `@ta/validators` (`montoSchema`: string, `.` as decimal
+- Input amounts are validated with `@ta/validators` (`amountSchema`: string, `.` as decimal
   separator, ≥ 0, max 4 decimals, max 10 integer digits so it fits `numeric(14,4)`).
 - Results are returned in plain notation (`Decimal#toFixed()`), never exponential.
 
@@ -382,7 +385,7 @@ A task is finished only when all of these pass:
 
 - [ ] `bun run typecheck` — no errors
 - [ ] `bun run lint` — no errors
-- [ ] `bun test` — all green, including new tests for this task
+- [ ] `bun run test` — all green, including new tests for this task
 - [ ] Migration generated if the schema changed
 - [ ] Docs updated per §13
 - [ ] Short summary given: what changed, which files, which tests, which docs
@@ -419,3 +422,14 @@ Things that are not obvious from the code and have already cost time:
   when debugging one of them.
 - **Line endings are LF** (`.gitattributes`); shell scripts mounted into containers break
   with CRLF.
+- **Root `bun test` is blocked** by `bunfig.toml` + `scripts/root-bun-test-guard.ts`: Bun's
+  runner would also pick up the web tests (they need Vitest + jsdom) and fail. Bun 1.3 has no
+  option to exclude paths. Use `bun run test`; the root `bunfig.toml` is not read inside packages.
+- **Web tests** run with Vitest (`apps/web/vitest.config.mts`): jsdom, `@` alias and a fake
+  `NEXT_PUBLIC_API_URL`, because `lib/env.ts` validates it at import time. Mock `fetch` with
+  `vi.stubGlobal`; use fake timers for polling hooks.
+- **Path aliases**: `@/` maps to `src/` in both apps (`tsconfig.json` paths; Vitest via
+  `resolve.alias`). Bun resolves tsconfig paths at runtime and in `bun build`.
+- **Validator middleware return type is inferred** (`apps/api/src/lib/validate.ts`): it carries
+  the types behind `c.req.valid()`. This is the one accepted exception to "exported functions
+  declare their return type".

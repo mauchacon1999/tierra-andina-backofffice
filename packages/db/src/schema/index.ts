@@ -1,7 +1,7 @@
-// El schema se define en otra tarea.
+// The schema is defined in a separate task (see docs/domain-model.md).
 //
-// Reglas (ver CLAUDE.md):
-// - Tablas y columnas en español, snake_case.
-// - Dinero, tasas, kilos y márgenes: numeric(14, 4); nunca float/real/double.
-// - Todo cambio de schema va acompañado de `bun run db:generate`.
+// Rules (see CLAUDE.md):
+// - Tables and columns in English, snake_case, plural table names.
+// - Money, rates, kilos and margins: numeric(14, 4); never float/real/double.
+// - Every schema change ships with `bun run db:generate`.
 export {};

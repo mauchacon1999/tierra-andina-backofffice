@@ -1,5 +1,5 @@
-// @ta/validators: esquemas Zod compartidos entre API y web.
+// @ta/validators: Zod schemas shared by the API and the web.
 export { apiErrorSchema } from "./api-error";
 export type { ApiErrorBody } from "./api-error";
-export { montoSchema } from "./monto";
-export type { Monto } from "./monto";
+export { amountSchema } from "./amount";
+export type { Amount } from "./amount";

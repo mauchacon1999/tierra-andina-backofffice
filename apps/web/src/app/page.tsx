@@ -1,6 +1,6 @@
-import { StatusPanel } from "@/components/status-panel";
+import { StatusPanel } from "@/features/system-status/components/status-panel";
 
-export default function Home() {
+export default function Home(): React.JSX.Element {
   return (
     <main className="mx-auto w-full max-w-md flex-1 px-4 py-8 sm:max-w-2xl sm:py-12">
       <header className="mb-8">

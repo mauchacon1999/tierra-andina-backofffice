@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "display": "Base estricta de Tierra Andina",
+  "display": "Tierra Andina strict base",
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2022"],

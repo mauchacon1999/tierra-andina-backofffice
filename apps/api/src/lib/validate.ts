@@ -5,8 +5,12 @@ import { z } from "zod";
 import { AppError, ErrorCode } from "./errors";
 
 /**
- * Envoltorio de zValidator: si la validación falla, lanza AppError para que la respuesta
- * salga con el formato único de error. Uso: route.post("/", validate("json", schema), handler)
+ * zValidator wrapper: on failure it throws AppError so the response uses the unified error
+ * shape instead of zValidator's own. Usage: route.post("/", validate("json", schema), handler)
+ *
+ * The return type is intentionally inferred: it carries the input/output types that make
+ * `c.req.valid(target)` typed in the handler, and spelling it out would duplicate zValidator's
+ * generic signature.
  */
 export const validate = <Target extends keyof ValidationTargets, Schema extends z.ZodType>(
   target: Target,

@@ -8,7 +8,7 @@
     "start": "next start --port 3000",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "bun test"
+    "test": "vitest run"
   },
   "dependencies": {
     "@ta/core": "workspace:*",
@@ -21,11 +21,15 @@
   "devDependencies": {
     "@ta/tsconfig": "workspace:*",
     "@tailwindcss/turbopack": "^4",
-    "@types/bun": "^1.4.3",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.1.2",
     "eslint-config-next": "16.4.2",
-    "tailwindcss": "^4"
+    "jsdom": "^30.1.3",
+    "tailwindcss": "^4",
+    "vitest": "^5.0.5"
   }
 }

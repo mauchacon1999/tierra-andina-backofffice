@@ -1,21 +1,22 @@
 import { apiErrorSchema } from "@ta/validators";
 import { z } from "zod";
 
-import { publicEnv } from "./env";
+import { publicEnv } from "@/lib/env";
 
-/** Códigos que genera el propio cliente; el resto viene de la API (NOT_FOUND, DB_UNAVAILABLE…). */
+/** Codes produced by this client; every other code comes from the API (NOT_FOUND, DB_UNAVAILABLE…). */
 export type ClientErrorCode = "NETWORK_ERROR" | "TIMEOUT" | "INVALID_RESPONSE";
 
-export interface ApiErrorInit {
-  /** Status HTTP; 0 si no hubo respuesta (red caída o timeout). */
+export type ApiErrorInit = {
+  /** HTTP status; 0 when there was no response (network down or timeout). */
   status: number;
   code: ClientErrorCode | (string & {});
+  /** Spanish, safe to show to users. */
   message: string;
   details?: unknown;
   requestId?: string | undefined;
-}
+};
 
-/** Error tipado de toda llamada a la API. */
+/** Typed error thrown by every API call. */
 export class ApiError extends Error {
   readonly status: number;
   readonly code: ApiErrorInit["code"];
@@ -31,7 +32,7 @@ export class ApiError extends Error {
     this.requestId = requestId;
   }
 
-  /** true si la API no llegó a responder. */
+  /** True when the API never answered. */
   get isNetworkError(): boolean {
     return this.status === 0;
   }
@@ -39,14 +40,15 @@ export class ApiError extends Error {
 
 export const isApiError = (error: unknown): error is ApiError => error instanceof ApiError;
 
-export interface RequestOptions<T> extends Omit<RequestInit, "body"> {
-  /** Se serializa como JSON. */
+export type RequestOptions<T> = Omit<RequestInit, "body"> & {
+  /** Serialized as JSON. */
   body?: unknown;
-  /** Si se pasa, la respuesta se valida con Zod y queda tipada. */
+  /** When given, the response is validated with Zod and typed accordingly. */
   schema?: z.ZodType<T>;
   timeoutMs?: number;
-}
+};
 
+/** Calls the API. Resolves with the (validated) JSON body or throws ApiError. */
 export async function apiFetch<T>(
   path: string,
   { body, schema, timeoutMs = 8000, headers, signal, ...init }: RequestOptions<T> = {},
@@ -97,6 +99,7 @@ export async function apiFetch<T>(
     });
   }
 
+  // Without a schema the caller vouches for the shape (trusted boundary).
   if (!schema) return data as T;
 
   const parsed = schema.safeParse(data);
@@ -115,14 +118,14 @@ export async function apiFetch<T>(
 type MethodOptions<T> = Omit<RequestOptions<T>, "method">;
 
 export const api = {
-  get: <T>(path: string, options?: MethodOptions<T>) =>
+  get: <T>(path: string, options?: MethodOptions<T>): Promise<T> =>
     apiFetch<T>(path, { ...options, method: "GET" }),
-  post: <T>(path: string, body?: unknown, options?: MethodOptions<T>) =>
+  post: <T>(path: string, body?: unknown, options?: MethodOptions<T>): Promise<T> =>
     apiFetch<T>(path, { ...options, method: "POST", body }),
-  put: <T>(path: string, body?: unknown, options?: MethodOptions<T>) =>
+  put: <T>(path: string, body?: unknown, options?: MethodOptions<T>): Promise<T> =>
     apiFetch<T>(path, { ...options, method: "PUT", body }),
-  patch: <T>(path: string, body?: unknown, options?: MethodOptions<T>) =>
+  patch: <T>(path: string, body?: unknown, options?: MethodOptions<T>): Promise<T> =>
     apiFetch<T>(path, { ...options, method: "PATCH", body }),
-  delete: <T>(path: string, options?: MethodOptions<T>) =>
+  delete: <T>(path: string, options?: MethodOptions<T>): Promise<T> =>
     apiFetch<T>(path, { ...options, method: "DELETE" }),
 };

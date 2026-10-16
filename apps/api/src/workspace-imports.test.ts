@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
 
-import { sumar } from "@ta/core";
-import { montoSchema } from "@ta/validators";
+import { sum } from "@ta/core";
+import { amountSchema } from "@ta/validators";
 
-// Garantiza que la API resuelve los paquetes compartidos del workspace.
-test("la API importa @ta/core y @ta/validators", () => {
-  expect(sumar("0.1", "0.2")).toBe("0.3");
-  expect(montoSchema.parse("10.25")).toBe("10.25");
+// Guards that the API resolves the shared workspace packages.
+test("the API imports @ta/core and @ta/validators", () => {
+  expect(sum("0.1", "0.2")).toBe("0.3");
+  expect(amountSchema.parse("10.25")).toBe("10.25");
 });

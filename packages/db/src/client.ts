@@ -4,15 +4,14 @@ import postgres from "postgres";
 
 import * as schema from "./schema";
 
-export interface CreateDbOptions {
-  /** Máximo de conexiones en el pool. */
+export type CreateDbOptions = {
+  /** Maximum connections in the pool. */
   max?: number;
-  /** Segundos antes de abortar un intento de conexión. */
+  /** Seconds before a connection attempt is aborted. */
   connectTimeout?: number;
-}
+};
 
-/** Crea un cliente Drizzle independiente (útil para tests o para la base de test). */
-export function createDb(url: string, options: CreateDbOptions = {}) {
+function buildDb(url: string, options: CreateDbOptions) {
   const client = postgres(url, {
     max: options.max ?? 10,
     connect_timeout: options.connectTimeout ?? 5,
@@ -23,7 +22,7 @@ export function createDb(url: string, options: CreateDbOptions = {}) {
   return {
     db,
     client,
-    /** Ejecuta SELECT 1. Lanza si la base no responde. */
+    /** Runs SELECT 1. Throws if the database does not answer. */
     ping: async (): Promise<void> => {
       await db.execute(sql`select 1`);
     },
@@ -31,22 +30,27 @@ export function createDb(url: string, options: CreateDbOptions = {}) {
   };
 }
 
-export type DbClient = ReturnType<typeof createDb>;
+export type DbClient = ReturnType<typeof buildDb>;
 export type Database = DbClient["db"];
+
+/** Creates an independent Drizzle client (e.g. for tests or the test database). */
+export function createDb(url: string, options: CreateDbOptions = {}): DbClient {
+  return buildDb(url, options);
+}
 
 function requireDatabaseUrl(): string {
   const url = process.env.DATABASE_URL;
   if (!url) {
     throw new Error(
-      "[@ta/db] Falta la variable DATABASE_URL. Copia .env.example a .env en la raíz del repo.",
+      "[@ta/db] DATABASE_URL is not set. Copy .env.example to .env at the repo root.",
     );
   }
   return url;
 }
 
-// Instancia por defecto. postgres.js es perezoso: no abre conexiones hasta la primera consulta.
+// Default instance. postgres.js is lazy: no connection is opened until the first query.
 const defaultClient = createDb(requireDatabaseUrl());
 
-export const db = defaultClient.db;
-export const ping = defaultClient.ping;
-export const closeDb = defaultClient.close;
+export const db: Database = defaultClient.db;
+export const ping: () => Promise<void> = defaultClient.ping;
+export const closeDb: () => Promise<void> = defaultClient.close;

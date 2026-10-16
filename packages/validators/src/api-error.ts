@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 /**
- * Formato único de error de la API: { error: { code, message, details? } }.
- * Lo produce apps/api y lo consume apps/web.
+ * Unified API error shape: { error: { code, message, details? } }.
+ * Produced by apps/api and consumed by apps/web.
  */
 export const apiErrorSchema = z.object({
   error: z.object({

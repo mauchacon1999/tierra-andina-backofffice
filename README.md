@@ -63,7 +63,7 @@ One app only: `bun --cwd=apps/api run dev` or `bun --cwd=apps/web run dev`.
 ## 4. Tests and checks
 
 ```bash
-bun test              # all tests in the monorepo
+bun run test          # all tests (bun test per package, Vitest for the web)
 bun run typecheck     # TypeScript (strict) in every package
 bun run lint          # ESLint
 bun run format:check  # Prettier
@@ -71,6 +71,8 @@ bun run build         # production build of API and web
 ```
 
 API unit tests build the Hono app in memory and do not need the database or `.env`.
+Running `bun test` from the root is intentionally blocked; use `bun run test`
+(or `bun --cwd=<package> test` for a single package).
 
 ## Structure
 

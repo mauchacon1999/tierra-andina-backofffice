@@ -1,11 +1,7 @@
-import type { ApiError } from "@/lib/api";
+import type { CheckState } from "@/features/system-status/types";
+import { cn } from "@/utils/cn";
 
-export type CheckState =
-  | { status: "loading" }
-  | { status: "ok"; detail: string; latencyMs: number }
-  | { status: "error"; error: ApiError; latencyMs: number };
-
-const styles = {
+const STYLES = {
   loading: {
     card: "border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900",
     dot: "bg-zinc-400 animate-pulse",
@@ -26,19 +22,25 @@ const styles = {
   },
 } as const;
 
-export function StatusCard({ title, state }: { title: string; state: CheckState }) {
-  const s = styles[state.status];
+export type StatusCardProps = {
+  title: string;
+  state: CheckState;
+};
+
+export function StatusCard({ title, state }: StatusCardProps): React.JSX.Element {
+  const style = STYLES[state.status];
 
   return (
     <section
       aria-live="polite"
-      className={`rounded-2xl border-2 p-4 shadow-sm transition-colors ${s.card}`}
+      aria-label={title}
+      className={cn("rounded-2xl border-2 p-4 shadow-sm transition-colors", style.card)}
     >
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">{title}</h2>
-        <span className={`flex items-center gap-2 text-sm font-medium ${s.label}`}>
-          <span aria-hidden className={`size-3 rounded-full ${s.dot}`} />
-          {s.text}
+        <span className={cn("flex items-center gap-2 text-sm font-medium", style.label)}>
+          <span aria-hidden className={cn("size-3 rounded-full", style.dot)} />
+          {style.text}
         </span>
       </div>
 

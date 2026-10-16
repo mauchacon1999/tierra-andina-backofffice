@@ -1,15 +1,15 @@
-// Verifica la conexión a la base principal y a la de test.
-// Uso: bun run db:ping (desde la raíz)
+// Checks the connection to the main and the test database.
+// Usage: bun run db:ping (from the repo root)
 import { createDb } from "../src/client";
 
 const targets = [
-  ["principal", process.env.DATABASE_URL],
+  ["main", process.env.DATABASE_URL],
   ["test", process.env.DATABASE_URL_TEST],
 ] as const;
 
 let failed = false;
 
-// Drizzle envuelve el error del driver; la causa real (p. ej. ECONNREFUSED) va en `cause`.
+// Drizzle wraps the driver error; the real cause (e.g. ECONNREFUSED) is in `cause`.
 function describeError(error: unknown): string {
   if (!(error instanceof Error)) return String(error);
   const cause = error.cause;
@@ -22,7 +22,7 @@ function describeError(error: unknown): string {
 
 for (const [name, url] of targets) {
   if (!url) {
-    console.error(`✗ ${name}: variable de entorno no definida`);
+    console.error(`✗ ${name}: environment variable not set`);
     failed = true;
     continue;
   }

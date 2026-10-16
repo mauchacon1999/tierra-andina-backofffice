@@ -3,8 +3,8 @@ import prettier from "eslint-config-prettier";
 import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 
-// Configuración ESLint compartida por todo el monorepo.
-// apps/web la extiende y añade las reglas de Next.
+// ESLint config shared by every package. apps/web has its own config (Next rules) that
+// mirrors the rules below.
 export default defineConfig(
   {
     ignores: [

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "display": "Paquetes y apps que corren sobre Bun",
+  "display": "Packages and apps running on Bun",
   "extends": "./base.json",
   "compilerOptions": {
     "types": ["bun"]

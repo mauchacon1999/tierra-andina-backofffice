@@ -13,7 +13,7 @@ export const viewport: Viewport = {
   themeColor: "#047857",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: LayoutProps<"/">): React.JSX.Element {
   return (
     <html lang="es" className="h-full antialiased">
       <body className="flex min-h-full flex-col">{children}</body>

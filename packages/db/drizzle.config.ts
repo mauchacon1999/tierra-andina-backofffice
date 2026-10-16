@@ -2,7 +2,9 @@ import { defineConfig } from "drizzle-kit";
 
 const url = process.env.DATABASE_URL;
 if (!url) {
-  throw new Error("[drizzle.config] Falta DATABASE_URL. Copia .env.example a .env en la raíz.");
+  throw new Error(
+    "[drizzle.config] DATABASE_URL is not set. Copy .env.example to .env at the root.",
+  );
 }
 
 export default defineConfig({

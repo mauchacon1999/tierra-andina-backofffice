@@ -2,24 +2,25 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { requestId } from "hono/request-id";
 
+import type { AppEnv } from "@/lib/types";
+import { errorHandler, notFoundHandler } from "@/middleware/errors";
+import { requestLogger } from "@/middleware/logger";
+import { healthRoutes } from "@/routes/health";
+import { v1Routes } from "@/routes/v1";
+
 import pkg from "../package.json" with { type: "json" };
-import type { AppEnv } from "./lib/types";
-import { errorHandler, notFoundHandler } from "./middleware/errors";
-import { requestLogger } from "./middleware/logger";
-import { healthRoutes } from "./routes/health";
-import { v1Routes } from "./routes/v1";
 
-export interface AppDeps {
-  /** Único origen autorizado por CORS (con credenciales). */
+export type AppDeps = {
+  /** The only origin allowed by CORS (with credentials). */
   webOrigin: string;
-  /** Comprueba la base de datos; lanza si no responde. */
+  /** Checks the database; throws if it does not answer. */
   pingDb: () => Promise<void>;
-  /** Desactiva el log por petición (tests). */
+  /** Disables per-request logging (tests). */
   logRequests?: boolean;
-}
+};
 
-/** Construye la app sin efectos secundarios: no lee env ni abre conexiones. */
-export function createApp({ webOrigin, pingDb, logRequests = true }: AppDeps) {
+/** Builds the app without side effects: it reads no env and opens no connections. */
+export function createApp({ webOrigin, pingDb, logRequests = true }: AppDeps): Hono<AppEnv> {
   const app = new Hono<AppEnv>();
 
   app.use(requestId());
@@ -40,5 +41,3 @@ export function createApp({ webOrigin, pingDb, logRequests = true }: AppDeps) {
 
   return app;
 }
-
-export type App = ReturnType<typeof createApp>;

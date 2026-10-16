@@ -3,13 +3,13 @@ import path from "node:path";
 
 import type { NextConfig } from "next";
 
-// Monorepo: un único .env en la raíz del repo (ver .env.example). No se usa @next/env porque
-// Next ya lo invocó con apps/web y devuelve su caché. Si no hay .env (CI), se usa el entorno.
+// Monorepo: a single .env at the repo root (see .env.example). @next/env is not used because
+// Next already called it for apps/web and returns its cache. Without .env (CI) the real env is used.
 const rootEnv = path.resolve(process.cwd(), "../../.env");
 if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
 
 const nextConfig: NextConfig = {
-  // Se fija aquí para que quede inlineado en compilación en los bundles de servidor y cliente.
+  // Pinned here so it is inlined at build time in both the server and the client bundles.
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? "",
   },

@@ -1,4 +1,4 @@
-/** Resumen de una línea de un error. Sigue `cause` porque Drizzle envuelve el error del driver. */
+/** One-line summary of an error. Follows `cause` because Drizzle wraps the driver error. */
 export function describeError(error: unknown): string {
   if (!(error instanceof Error)) return String(error);
   const root = error.cause instanceof Error ? error.cause : error;

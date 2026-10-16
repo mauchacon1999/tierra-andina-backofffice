@@ -1,4 +1,9 @@
 {
   "extends": "@ta/tsconfig/bun.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
   "include": ["src"]
 }

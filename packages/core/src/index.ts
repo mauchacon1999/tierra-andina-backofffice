@@ -1,2 +1,2 @@
-// @ta/core: lógica pura de negocio (funciones puras con tests).
-export { sumar } from "./decimal";
+// @ta/core: pure business logic (pure functions with tests, no I/O).
+export { sum } from "./decimal";

@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { errorHandler } from "../middleware/errors";
+import { errorHandler } from "@/middleware/errors";
 import type { AppEnv } from "./types";
 import { validate } from "./validate";
 
