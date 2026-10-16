@@ -5,7 +5,9 @@ import { sessionMiddleware } from "@/middleware/auth";
 import { exchangeRatesRoutes } from "@/modules/exchange-rates/exchange-rates.routes";
 import { meRoutes } from "@/modules/me/me.routes";
 import { productCategoriesRoutes, productsRoutes } from "@/modules/products/products.routes";
+import { purchaseTripsRoutes } from "@/modules/purchases/purchases.routes";
 import { settingsRoutes } from "@/modules/settings/settings.routes";
+import { suppliersRoutes } from "@/modules/suppliers/suppliers.routes";
 
 /** /api/v1 router: every request gets `user`/`session`; modules decide what they require. */
 export function v1Routes(): Hono<AppEnv> {
@@ -15,5 +17,7 @@ export function v1Routes(): Hono<AppEnv> {
     .route("/products", productsRoutes())
     .route("/product-categories", productCategoriesRoutes())
     .route("/settings", settingsRoutes())
-    .route("/exchange-rates", exchangeRatesRoutes());
+    .route("/exchange-rates", exchangeRatesRoutes())
+    .route("/suppliers", suppliersRoutes())
+    .route("/purchase-trips", purchaseTripsRoutes());
 }

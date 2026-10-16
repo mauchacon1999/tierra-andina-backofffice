@@ -310,3 +310,30 @@ export async function setProductActive(
 export async function listCategories(db: Database): Promise<CategoryRecord[]> {
   return findAllCategories(db);
 }
+
+/** A product by id (no lock check), or undefined. For other modules that reference products. */
+export async function findProduct(db: Executor, id: string): Promise<ProductRow | undefined> {
+  return findProductById(db, id);
+}
+
+/**
+ * Remembers the shrinkage and margin of the last purchase line as the product's suggestions
+ * (products.md §1.3). Runs inside the caller's transaction; audits only when they change.
+ */
+export async function rememberPurchaseDefaults(
+  tx: Executor,
+  actor: Actor,
+  productId: string,
+  values: { lastShrinkage: string; lastMargin: string },
+): Promise<void> {
+  const before = await requireProduct(tx, productId);
+  const after = await updateProductById(tx, productId, { ...values, updatedBy: actor.userId });
+  const changes = diffChanges(before, after);
+  if (Object.keys(changes).length === 0) return;
+  await recordAudit(tx, actor, {
+    tableName: TABLE,
+    recordId: productId,
+    action: "update",
+    changes,
+  });
+}

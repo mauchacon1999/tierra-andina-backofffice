@@ -94,3 +94,75 @@ Origin: http://localhost:3000
 ### Activate — 200
 POST {{baseUrl}}/api/v1/products/{{createProduct.response.body.id}}/activate
 Origin: http://localhost:3000
+
+# --- Settings and daily rates
+### Store settings — 200 { usdRoundingStep, bsRoundingStep, saleRateMode, saleRateMarkupPct, defaultMargin, receiverCanSeePrices }
+GET {{baseUrl}}/api/v1/settings
+
+### Update settings (owner) — 200 all settings
+PATCH {{baseUrl}}/api/v1/settings
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "defaultMargin": "0.5" }
+
+### Set the day's rates (owner): BCV (global), Coche (market) and sale — 200 { businessDate, bcv, market, sale }
+PUT {{baseUrl}}/api/v1/exchange-rates/2026-10-19
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "bcv": "200", "market": "201" }
+
+### One day's rates (null when not set)
+GET {{baseUrl}}/api/v1/exchange-rates/2026-10-19
+
+### Days with rates in a range (≤ 62 days), newest first
+GET {{baseUrl}}/api/v1/exchange-rates?from=2026-10-01&to=2026-10-31
+
+# --- Suppliers and purchases (owner). Errors: 404 TRIP_NOT_FOUND · 409 TRIP_CLOSED ·
+#     422 DAY_RATES_MISSING · 404 LINE_NOT_FOUND · 422 LINE_PRODUCT_INVALID ·
+#     422 SUPPLIER_NOT_FOUND · 422 INVALID_PURCHASE_LINE
+
+### Suppliers — 200 { data }
+GET {{baseUrl}}/api/v1/suppliers
+
+### Create a supplier — 201
+POST {{baseUrl}}/api/v1/suppliers
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "name": "Puesto de Juan", "stallReference": "Nave 3, puesto 7" }
+
+### Open a trip — 201; copies the day's BCV and Coche rates (422 DAY_RATES_MISSING if not set)
+# @name openTrip
+POST {{baseUrl}}/api/v1/purchase-trips
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "businessDate": "2026-10-19", "note": "Lunes" }
+
+### Trips — 200 { data, total, page, pageSize }
+GET {{baseUrl}}/api/v1/purchase-trips?status=open
+
+### Add a line — 201 trip with lines. quotedPriceUsd is the line TOTAL; supplierRate defaults to
+### the trip's Coche rate and margin to the product's last margin.
+POST {{baseUrl}}/api/v1/purchase-trips/{{openTrip.response.body.id}}/lines
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{
+  "productId": "<product id>",
+  "stallReference": "Puesto 14",
+  "packs": "3",
+  "grossQuantity": "72",
+  "shrinkage": "6",
+  "quotedPriceUsd": "60",
+  "paymentStatus": "paid"
+}
+
+### Trip with lines
+GET {{baseUrl}}/api/v1/purchase-trips/{{openTrip.response.body.id}}
+
+### Close the trip — 200; lines can no longer change
+POST {{baseUrl}}/api/v1/purchase-trips/{{openTrip.response.body.id}}/close
+Origin: http://localhost:3000
