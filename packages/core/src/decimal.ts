@@ -5,7 +5,14 @@ import Decimal from "decimal.js";
  * never with `number`: 0.1 + 0.2 must be "0.3", not 0.30000000000000004.
  */
 
-function toDecimal(value: string, name: string): Decimal {
+/** Scale of numeric(14,4) columns: every stored value has 4 decimals. */
+export const DB_SCALE = 4;
+
+/**
+ * Parses a decimal string. Throws TypeError for anything that is not a finite number.
+ * Internal helper shared by the other modules of @ta/core.
+ */
+export function toDecimal(value: string, name: string): Decimal {
   try {
     const d = new Decimal(value);
     if (!d.isFinite()) throw new Error("not finite");
@@ -13,6 +20,11 @@ function toDecimal(value: string, name: string): Decimal {
   } catch {
     throw new TypeError(`${name} is not a valid decimal number: "${value}"`);
   }
+}
+
+/** Rounds half-up to the DB scale and returns plain notation ("0.9091", "20.1000"). */
+export function toDbString(value: Decimal): string {
+  return value.toDecimalPlaces(DB_SCALE, Decimal.ROUND_HALF_UP).toFixed(DB_SCALE);
 }
 
 /**
