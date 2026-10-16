@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start --port 3000",
     "lint": "eslint .",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "bun test"
   },
   "dependencies": {
     "@ta/core": "workspace:*",
@@ -20,6 +21,7 @@
   "devDependencies": {
     "@ta/tsconfig": "workspace:*",
     "@tailwindcss/turbopack": "^4",
+    "@types/bun": "^1.4.3",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",

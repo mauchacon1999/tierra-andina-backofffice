@@ -8,10 +8,14 @@
   },
   "scripts": {
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
   },
   "devDependencies": {
     "@ta/tsconfig": "workspace:*",
-    "@types/bun": "latest"
+    "@types/bun": "^1.4.3"
+  },
+  "dependencies": {
+    "decimal.js": "^10.6.0"
   }
 }
