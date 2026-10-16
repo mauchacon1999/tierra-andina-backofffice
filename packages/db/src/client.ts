@@ -17,6 +17,12 @@ function buildDb(url: string, options: CreateDbOptions) {
     connect_timeout: options.connectTimeout ?? 5,
     onnotice: () => {},
   });
+  // postgres.js parses json/jsonb and Drizzle's jsonb column parses any string again, so the
+  // JSON string "0.05" came back as the number 0.05. Drizzle already disables the json
+  // serializers; disabling the parsers too makes Drizzle the only one that parses.
+  const rawJson = (value: string): string => value;
+  client.options.parsers[114] = rawJson;
+  client.options.parsers[3802] = rawJson;
   const db = drizzle(client, { schema });
 
   return {

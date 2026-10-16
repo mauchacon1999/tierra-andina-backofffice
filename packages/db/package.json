@@ -13,6 +13,7 @@
     "db:ping": "bun --env-file=../../.env scripts/ping.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "test": "bun --env-file=../../.env test",
     "db:reset": "bun --env-file=../../.env scripts/reset.ts",
     "db:seed": "bun --env-file=../../.env scripts/seed.ts"
   },

@@ -54,10 +54,13 @@ export const products = pgTable(
       "products_unit_combination_check",
       sql`NOT (${t.purchaseUnit} = 'kg' AND ${t.saleUnit} = 'unit')`,
     ),
+    // The explicit IS NOT NULL matters: `NULL > 0` is NULL, and a CHECK that evaluates to NULL
+    // passes, so without it a crate/bundle product with no pack quantity would be accepted.
     check(
       "products_default_pack_quantity_check",
       sql`(${t.purchaseUnit} = 'kg' AND ${t.defaultPackQuantity} IS NULL)
-        OR (${t.purchaseUnit} <> 'kg' AND ${t.defaultPackQuantity} > 0)`,
+        OR (${t.purchaseUnit} <> 'kg' AND ${t.defaultPackQuantity} IS NOT NULL
+          AND ${t.defaultPackQuantity} > 0)`,
     ),
     check(
       "products_last_shrinkage_check",
