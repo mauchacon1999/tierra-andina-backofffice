@@ -4,7 +4,9 @@ How every screen looks and behaves, so the app feels like one product. Follow it
 screen and component; if something is missing here, add it here first.
 
 - Tokens: `apps/web/src/app/globals.css`
-- Primitives: `apps/web/src/components/ui/` (`Button`, `TextField`, `Alert`, `Card`, `Spinner`)
+- Primitives: `apps/web/src/components/ui/` — `Button`, `ButtonLink` (a link that looks like a
+  button), `TextField`, `SelectField`, `SegmentedControl` (few exclusive options, real radios),
+  `Checkbox`, `Alert`, `Card` (tones), `Badge`, `Spinner`
 - Guard: `apps/web/src/design-system.test.ts` fails if a component uses a raw palette color
 
 ---
@@ -235,10 +237,13 @@ A status is a dot + a label (never color alone). Mapping for the app's states:
 - USD with 2 decimals, Bs with 2 decimals, quantities up to 3 (`22 kg`, `0,909 kg` only when
   meaningful). Always show the currency/unit: "1,40 $", "294,00 Bs", "22 kg".
 - When both currencies matter, USD first and Bs below in `text-muted`.
+- Percents: `formatPercentFromFraction("0.5")` → "50 %". Never Intl `style: "percent"`: engines
+  differ on the space before the sign.
+- Helpers: `utils/format-number.ts` (`formatUsd`, `formatBs`, `formatQuantity`, `formatDecimal`,
+  `formatPercentFromFraction`).
 - Rates show their kind: "Tasa BCV 200,00", "Tasa de venta 210,00".
 - Dates: `dd/mm/aaaa` (`es-VE`); business days are dates without time; times as "7:49 a. m.".
-- Formatting helpers go in `apps/web/src/utils/` (`format-money.ts`, `format-date.ts`) when the
-  first screen needs them.
+- Date helpers go in `apps/web/src/utils/format-date.ts` when the first screen needs them.
 
 ---
 

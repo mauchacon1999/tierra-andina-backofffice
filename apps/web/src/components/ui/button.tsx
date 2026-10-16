@@ -20,6 +20,17 @@ const SIZES = {
 export type ButtonVariant = keyof typeof VARIANTS;
 export type ButtonSize = keyof typeof SIZES;
 
+/** Classes of a button; shared with `ButtonLink` so links that act as buttons look the same. */
+export function buttonClasses(variant: ButtonVariant = "primary", size: ButtonSize = "md"): string {
+  return cn(
+    "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors",
+    "focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none",
+    "disabled:cursor-not-allowed disabled:opacity-60",
+    VARIANTS[variant],
+    SIZES[size],
+  );
+}
+
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
@@ -45,14 +56,7 @@ export function Button({
       type={type}
       disabled={disabled || isLoading}
       aria-busy={isLoading || undefined}
-      className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors",
-        "focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none",
-        "disabled:cursor-not-allowed disabled:opacity-60",
-        VARIANTS[variant],
-        SIZES[size],
-        className,
-      )}
+      className={cn(buttonClasses(variant, size), className)}
       {...props}
     >
       {isLoading && <Spinner />}

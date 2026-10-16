@@ -1,0 +1,71 @@
+"use client";
+
+import { useParams } from "next/navigation";
+
+import { Alert } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
+import { Card } from "@/components/ui/card";
+import { useProduct } from "@/features/products/api/use-product";
+import { useToggleProductActive } from "@/features/products/api/use-product-mutations";
+import { ProductForm } from "@/features/products/components/product-form";
+
+/** Edit screen: loads the product, the form, and activate/deactivate. */
+export function ProductEditScreen(): React.JSX.Element {
+  const { id } = useParams<{ id: string }>();
+  const { product, error, isLoading, retry } = useProduct(id);
+  const toggle = useToggleProductActive(id);
+
+  if (error && !product) {
+    return (
+      <div className="space-y-4">
+        <Alert tone="error" title="No se pudo abrir el producto">
+          {error.message}
+        </Alert>
+        <div className="flex gap-3">
+          {error.status !== 404 && (
+            <Button variant="secondary" onClick={retry}>
+              Reintentar
+            </Button>
+          )}
+          <ButtonLink href="/products" variant="secondary">
+            Ver productos
+          </ButtonLink>
+        </div>
+      </div>
+    );
+  }
+  if (isLoading || !product) {
+    return (
+      <p role="status" className="text-muted">
+        Cargando…
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-2">
+        <h2 className="text-lg font-semibold">{product.name}</h2>
+        {!product.isActive && <Badge>Inactivo</Badge>}
+      </div>
+      <ProductForm mode="edit" product={product} />
+      <Card className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted">
+          {product.isActive
+            ? "Si ya no lo compras, desactívalo: no aparecerá en compras ni en listas nuevas."
+            : "Este producto está inactivo. Actívalo para volver a usarlo."}
+        </p>
+        <Button
+          variant={product.isActive ? "danger" : "secondary"}
+          isLoading={toggle.isRunning}
+          loadingText={product.isActive ? "Desactivando…" : "Activando…"}
+          onClick={() => void toggle.run(!product.isActive)}
+        >
+          {product.isActive ? "Desactivar" : "Activar"}
+        </Button>
+      </Card>
+    </div>
+  );
+}

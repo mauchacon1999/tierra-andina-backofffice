@@ -20,7 +20,9 @@ describe("useSignOutAction", () => {
     router.replace.mockReset();
     useSessionStore.getState().setActiveStore("store-a");
   });
-  afterEach(() => useSessionStore.getState().clear());
+  afterEach(() => {
+    useSessionStore.getState().clear();
+  });
 
   it("signs out, forgets the active store and goes to /login", async () => {
     vi.mocked(signOut).mockResolvedValue();

@@ -55,6 +55,7 @@ Each phase is usable on its own. Phases 1 and 2 remove the notebook and WhatsApp
 - [x] Monorepo, database, auth with roles (owner, manager, receiver) — sign-in on the web;
       creating manager/receiver users from the app is still pending.
 - [ ] Products, suppliers, employees, expense categories, payment methods.
+      (products done: catalog screens for the owner; the rest pending)
 - [ ] Daily BCV rate and sale rate.
 - [ ] Initial product catalog loaded from the owner's notebook.
 

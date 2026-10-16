@@ -3,7 +3,9 @@ import { afterEach, describe, expect, it } from "vitest";
 import { useSessionStore } from "@/stores/use-session-store";
 
 describe("useSessionStore", () => {
-  afterEach(() => useSessionStore.getState().clear());
+  afterEach(() => {
+    useSessionStore.getState().clear();
+  });
 
   it("starts without an active store", () => {
     expect(useSessionStore.getState().activeStoreId).toBeNull();

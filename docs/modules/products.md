@@ -213,3 +213,45 @@ UX rules:
 | Is anything bought by kilo and sold by unit?                   | Not allowed                                                                  |
 | Should products have a short name for the WhatsApp price list? | Not included; add `short_name` later if needed                               |
 | Initial catalog                                                | Owner provides the product list from the notebook; loaded with a seed script |
+
+---
+
+## 9. Implementation notes (2026-10-16)
+
+Where everything lives and the decisions taken while building it.
+
+| Layer      | Files                                                                                              |
+| ---------- | -------------------------------------------------------------------------------------------------- |
+| Core       | `packages/core/src/products.ts`, `pricing.ts`, `rounding.ts`, `errors.ts`                          |
+| Validators | `packages/validators/src/products.ts` (+ `amount.ts` `decimalSchema`, `pagination.ts`)             |
+| API        | `apps/api/src/modules/products/` (routes, service, repository, mapper, test); `lib/settings.ts`    |
+| Web        | `apps/web/src/features/products/`; pages in `app/(owner)/products/`; shared UI in `components/ui/` |
+
+Decisions and differences from §1–§7:
+
+- **ñ is kept by `normalizeProductName`.** Accents and diaeresis are removed, but "ñ" is a
+  letter in Spanish: "Ñame" and "Name" are different products (§1.4 only said "strip accents").
+- **Status codes.** Request shape errors (missing name, "1,5" instead of "1.5", bad uuid) answer
+  400 `VALIDATION_ERROR`; rule errors answer 422 with the codes of §5. Every rule error has
+  `details.fieldErrors` with the Spanish message per field; the web shows it on that field.
+- **Default margin.** Create/quick create without `lastMargin` use the store setting
+  `default_margin`. The web form starts at 50 % because there is no settings endpoint yet
+  (`TODO(ender)` in `features/products/helpers/product-form-values.ts`); the price example uses
+  the default `usd_rounding_step` 0.05 for the same reason.
+- **Margin input** is a percent with up to 2 decimals (so the fraction fits 4 decimals);
+  `productFormSchema` converts it ("50" → "0.5") with `@ta/core` `percentToFraction`.
+- **Activate / deactivate are idempotent**: repeating the current state returns 200 and writes
+  no audit row.
+- **Unit lock.** `PATCH` only rejects units that actually change (sending the same units of a
+  locked product is fine). Lock = any purchase line or price list line references the product.
+- **List.** Ordered by normalized name; search matches anywhere in the normalized name;
+  inactive products only with `isActive=false`. Receivers get `{ id, name, saleUnit }` in the
+  list and the detail.
+- **Quick create** form (`product-quick-form.tsx`) is built and tested; it will be mounted in
+  the purchase screen (phase 1).
+- **Price example** text: "Cesta a 20,00 $ → 22 kg útiles → 0,91 $/kg → venta 1,40 $/kg"
+  (`describePriceExample`, computed with `@ta/core` `priceLine`).
+
+Tests: core 60 (incl. domain-model §3.3 reference cases), validators 59, API products 33,
+web products 44 (hooks, forms, list, filters, quick form, price example), plus a browser run of
+create → duplicate → search → edit → deactivate → show inactive.

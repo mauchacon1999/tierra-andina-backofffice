@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { sum } from "./decimal";
+import { normalizeDecimal, sum } from "./decimal";
 
 describe("sum", () => {
   test('adds 0.1 + 0.2 to exactly "0.3"', () => {
@@ -28,5 +28,17 @@ describe("sum", () => {
     expect(() => sum("abc", "1")).toThrow('a is not a valid decimal number: "abc"');
     expect(() => sum("1", "")).toThrow(TypeError);
     expect(() => sum("Infinity", "1")).toThrow(TypeError);
+  });
+});
+
+describe("normalizeDecimal", () => {
+  test("drops the padding zeros of stored values", () => {
+    expect(normalizeDecimal("24.0000")).toBe("24");
+    expect(normalizeDecimal("0.5000")).toBe("0.5");
+    expect(normalizeDecimal("0.9091")).toBe("0.9091");
+  });
+
+  test("rejects non-numeric input", () => {
+    expect(() => normalizeDecimal("abc")).toThrow(TypeError);
   });
 });

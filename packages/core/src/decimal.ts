@@ -35,3 +35,12 @@ export function toDbString(value: Decimal): string {
 export function sum(a: string, b: string): string {
   return toDecimal(a, "a").plus(toDecimal(b, "b")).toFixed();
 }
+
+/**
+ * Shortest plain form of a decimal string: "24.0000" → "24", "0.5000" → "0.5".
+ * For showing stored numeric(14,4) values in inputs. Exact, no rounding.
+ * @throws {TypeError} if the value is not a decimal number.
+ */
+export function normalizeDecimal(value: string): string {
+  return toDecimal(value, "value").toFixed();
+}

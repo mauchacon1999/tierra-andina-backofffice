@@ -8,7 +8,9 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > **Current state (2026-10-16):** monorepo, full database schema in `@ta/db` (32 tables,
 > migrations, idempotent seed, integration tests), Hono API with `/health`, Better Auth
 > (`/api/auth/*`), `requireRole`, audit helper and `GET /api/v1/me`; Next.js status page.
-> Web: login (`/login`), session-protected home with the system status. No business modules yet.
+> Web: login (`/login`), session-protected home with the system status.
+> Modules done: **products** (core rules + pricing, validators, `/api/v1/products`, owner screens
+> `/products`, `/products/new`, `/products/[id]`). Next: purchases (docs/plan.md phase 1).
 > Business rules and DB design: `docs/domain-model.md`; working with the DB: `docs/database.md`;
 > per-module specs: `docs/modules/`.
 
@@ -65,10 +67,11 @@ tierra-andina/
 Dependency direction (never the other way around):
 
 ```
-apps/web ──► @ta/validators, @ta/core
-apps/api ──► @ta/db, @ta/validators, @ta/core
-@ta/db   ──► (nothing internal)
-@ta/core ──► (nothing internal)
+apps/web        ──► @ta/validators, @ta/core
+apps/api        ──► @ta/db, @ta/validators, @ta/core
+@ta/validators  ──► @ta/core   (schemas are refined with the core rules)
+@ta/db          ──► (nothing internal)
+@ta/core        ──► (nothing internal)
 ```
 
 ---
@@ -295,7 +298,9 @@ apps/web/src/
 - **UI follows `docs/design-system.md`**: colors only through the semantic tokens of
   `app/globals.css` (`bg-primary`, `text-muted`, `text-danger-text`…; no palette classes and no
   `dark:` color classes — `src/design-system.test.ts` fails otherwise), primitives from
-  `components/ui/` (`Button`, `TextField`, `Alert`, `Card`, `Spinner`).
+  `components/ui/` (`Button`, `ButtonLink`, `TextField`, `SelectField`, `SegmentedControl`,
+  `Checkbox`, `Alert`, `Card`, `Badge`, `Spinner`). Owner-only screens live under
+  `app/(owner)/` (its layout wraps them in `RoleGate`).
 - The web never imports `@ta/db`, `drizzle-orm` or `postgres`: ESLint (`no-restricted-imports`
   in `apps/web/eslint.config.mjs`) fails the lint if it does.
 - All HTTP goes through `lib/api.ts` (`api.get/post/...`). It throws a typed `ApiError`
@@ -507,3 +512,17 @@ Things that are not obvious from the code and have already cost time:
 - **Web test setup** (`apps/web/src/testing/setup.ts`): Testing Library only auto-cleans the DOM
   with Vitest globals, which we do not use, so the setup calls `cleanup()` and clears
   localStorage after each test. Wrap hooks that use SWR in `SwrTestWrapper` (fresh cache).
+- **Rule errors answer 422, shape errors 400.** API routes validate requests with the
+  "fields" schemas (`createProductFieldsSchema`…) and the service applies the `@ta/core` rules,
+  so rule violations come back with their own code (`INVALID_UNIT_COMBINATION`…). Forms use
+  the refined schemas (`createProductSchema`, `productFormSchema`) for instant feedback.
+  Rule errors carry `details.fieldErrors` so the web puts them on the right field.
+- **Services never pass HTTP statuses.** `new AppError(code, message)`; the status comes from
+  `ERROR_STATUS` in `apps/api/src/lib/errors.ts`. Add every new code there.
+- **Vitest hooks must not return values**: `beforeEach(() => mock.mockReset())` returns the
+  mock, and Vitest calls a returned function as cleanup after the test (a rejecting mock then
+  fails the test). Always use a block body: `beforeEach(() => { mock.mockReset(); })`.
+- **Percent formatting**: do not use Intl's `style: "percent"` (Node prints "50%", other engines
+  "50 %"); use `formatPercentFromFraction` (`utils/format-number.ts`).
+- **Product names**: uniqueness uses `normalizeProductName` (case, accents and spacing ignored)
+  but keeps the ñ: "Ñame" and "Name" are different products.

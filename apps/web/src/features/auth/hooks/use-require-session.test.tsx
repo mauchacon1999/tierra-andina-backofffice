@@ -29,8 +29,12 @@ function setup() {
 }
 
 describe("useRequireSession", () => {
-  beforeEach(() => router.replace.mockReset());
-  afterEach(() => useSessionStore.getState().clear());
+  beforeEach(() => {
+    router.replace.mockReset();
+  });
+  afterEach(() => {
+    useSessionStore.getState().clear();
+  });
 
   it("redirects to /login when the API answers 401", async () => {
     vi.mocked(getMe).mockRejectedValue(
