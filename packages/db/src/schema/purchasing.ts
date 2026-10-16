@@ -24,6 +24,8 @@ export const purchaseTrips = pgTable(
       .references(() => stores.id),
     businessDate: date("business_date", { mode: "string" }).notNull(),
     bcvRate: rate("bcv_rate").notNull(),
+    /** Coche market rate of the day; default supplier rate of the lines (copied at opening). */
+    marketRate: rate("market_rate").notNull(),
     status: purchaseTripStatus("status").notNull().default("open"),
     totalUsd: money("total_usd").notNull().default("0"),
     totalBs: money("total_bs").notNull().default("0"),
@@ -35,6 +37,7 @@ export const purchaseTrips = pgTable(
     index("purchase_trips_store_id_idx").on(t.storeId),
     index("purchase_trips_business_date_idx").on(t.businessDate),
     check("purchase_trips_bcv_rate_check", sql`${t.bcvRate} > 0`),
+    check("purchase_trips_market_rate_check", sql`${t.marketRate} > 0`),
     check("purchase_trips_amounts_check", sql`${t.totalUsd} >= 0 AND ${t.totalBs} >= 0`),
   ],
 );

@@ -16,7 +16,8 @@ export const saleUnit = pgEnum("sale_unit", ["kg", "unit"]);
 export const supplierKind = pgEnum("supplier_kind", ["wholesale_stall", "local"]);
 
 // Rates
-export const exchangeRateKind = pgEnum("exchange_rate_kind", ["bcv", "sale"]);
+// bcv: official (global) · market: Coche wholesale market rate of the day · sale: owner sale rate
+export const exchangeRateKind = pgEnum("exchange_rate_kind", ["bcv", "sale", "market"]);
 
 // Purchasing
 export const purchaseTripStatus = pgEnum("purchase_trip_status", ["open", "closed"]);

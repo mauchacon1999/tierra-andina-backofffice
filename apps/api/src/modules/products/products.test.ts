@@ -399,7 +399,7 @@ async function markAsUsed(productId: string): Promise<void> {
   const { db } = testConnection();
   const [trip] = await db
     .insert(schema.purchaseTrips)
-    .values({ storeId, businessDate: "2026-10-12", bcvRate: "200" })
+    .values({ storeId, businessDate: "2026-10-12", bcvRate: "200", marketRate: "201" })
     .returning();
   if (!trip) throw new Error("trip");
   await db.insert(schema.purchaseLines).values(validPurchaseLine(trip.id, productId, null));

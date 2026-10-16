@@ -37,6 +37,7 @@ describe("numeric(14,4) columns", () => {
             storeId: b.store.id,
             businessDate: "2026-10-15",
             bcvRate: value,
+            marketRate: value,
             totalUsd: value,
           })
           .returning({ bcvRate: purchaseTrips.bcvRate, totalUsd: purchaseTrips.totalUsd });
@@ -64,7 +65,12 @@ describe("numeric(14,4) columns", () => {
       const b = await createBase(tx);
       const [trip] = await tx
         .insert(purchaseTrips)
-        .values({ storeId: b.store.id, businessDate: "2026-10-15", bcvRate: "200.12345" })
+        .values({
+          storeId: b.store.id,
+          businessDate: "2026-10-15",
+          bcvRate: "200.12345",
+          marketRate: "201",
+        })
         .returning({ bcvRate: purchaseTrips.bcvRate });
 
       expect(trip?.bcvRate).toBe("200.1235");
@@ -77,9 +83,12 @@ describe("numeric(14,4) columns", () => {
       await expectPgError(
         tx,
         (sp) =>
-          sp
-            .insert(purchaseTrips)
-            .values({ storeId: b.store.id, businessDate: "2026-10-15", bcvRate: "12345678901" }),
+          sp.insert(purchaseTrips).values({
+            storeId: b.store.id,
+            businessDate: "2026-10-15",
+            bcvRate: "12345678901",
+            marketRate: "201",
+          }),
         { code: PG_NUMERIC_OUT_OF_RANGE },
       );
     });

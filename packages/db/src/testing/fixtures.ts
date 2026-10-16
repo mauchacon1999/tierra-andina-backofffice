@@ -77,7 +77,7 @@ export async function createBase(tx: Tx) {
   const trip = await one(
     tx
       .insert(purchaseTrips)
-      .values({ storeId: store.id, businessDate: "2026-10-12", bcvRate: "200" })
+      .values({ storeId: store.id, businessDate: "2026-10-12", bcvRate: "200", marketRate: "201" })
       .returning(),
   );
   const line = await one(
@@ -261,6 +261,7 @@ export const valid = {
       storeId: b.store.id,
       businessDate: "2026-10-15",
       bcvRate: "200",
+      marketRate: "201",
       ...o,
     }) satisfies Insert<typeof purchaseTrips>,
   dailyClose: (b: Base, o: Partial<Insert<typeof dailyCloses>> = {}) =>

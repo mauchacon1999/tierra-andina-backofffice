@@ -6,8 +6,8 @@ import { auditColumns, id, rate, timestamps } from "./_shared";
 import { stores } from "./organization";
 
 /**
- * Daily rates. The BCV rate is official and global (store_id NULL); the sale rate belongs to a
- * store. `value` is Bs per USD.
+ * Daily rates entered by the owner. The BCV rate is official and global (store_id NULL); the
+ * market rate (Coche) and the sale rate belong to a store. `value` is Bs per USD.
  */
 export const exchangeRates = pgTable(
   "exchange_rates",

@@ -33,17 +33,19 @@ month (paydays). Cash starts at zero every day; the previous day's cash is kept 
 
 ## 2. Money and exchange rates
 
-- Suppliers quote prices in **USD** and charge in Bs at their own rate: usually the
-  official BCV rate, sometimes rounded one point higher.
+- Suppliers quote prices in **USD** and charge in Bs at the **Coche market rate** of the day
+  (`market_rate`), sometimes a stall charges its own rate.
 - Sale prices are defined in **USD** and converted to Bs with a **sale rate** chosen by the
   owner, always above the BCV rate to protect against devaluation.
-- Three rates exist and must never be confused:
+- Four rates exist and must never be confused. The owner enters the BCV, Coche and sale rates
+  of each day by hand (screen "Tasas del día"):
 
-| Rate            | Set by                  | Scope                 |
-| --------------- | ----------------------- | --------------------- |
-| `bcv_rate`      | Central bank (official) | One per day           |
-| `supplier_rate` | Each stall              | One per purchase line |
-| `sale_rate`     | Owner                   | One per price list    |
+| Rate            | Set by                  | Scope                                                      |
+| --------------- | ----------------------- | ---------------------------------------------------------- |
+| `bcv_rate`      | Central bank (official) | One per day                                                |
+| `market_rate`   | Owner (Coche market)    | One per day; copied to each purchase trip                  |
+| `supplier_rate` | Each stall              | One per purchase line (defaults to the trip `market_rate`) |
+| `sale_rate`     | Owner                   | One per price list                                         |
 
 - Every amount of money that changes hands (payments, expenses, advances, credit entries, what
   is paid to a stall) keeps: the USD amount, the Bs amount, and the rate used. Obligations and
@@ -228,9 +230,9 @@ product (`docs/modules/products.md` §1.4).
 
 ### 9.3 Exchange rates
 
-| Table            | Key columns                                                                                                                    |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `exchange_rates` | store_id (null for BCV), business_date, kind (`bcv`/`sale`), value · unique NULLS NOT DISTINCT (store_id, business_date, kind) |
+| Table            | Key columns                                                                                                                             |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `exchange_rates` | store_id (null for BCV), business_date, kind (`bcv`/`market`/`sale`), value · unique NULLS NOT DISTINCT (store_id, business_date, kind) |
 
 `NULLS NOT DISTINCT` is required: in PostgreSQL two NULL `store_id`s never collide, so a plain
 unique would allow two BCV rates for the same day. A CHECK ties the scope to the kind: BCV rows
@@ -240,7 +242,7 @@ have no store, sale rows always have one.
 
 | Table                 | Key columns                                                                                                                                                                                                                                                                                                                                                                                              |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `purchase_trips`      | store_id, business_date, bcv_rate, status (`open`/`closed`), total_usd, total_bs, note                                                                                                                                                                                                                                                                                                                   |
+| `purchase_trips`      | store_id, business_date, bcv_rate, market_rate, status (`open`/`closed`), total_usd, total_bs, note                                                                                                                                                                                                                                                                                                      |
 | `purchase_lines`      | trip_id, supplier_id (nullable), stall_reference, product_id, purchase_unit, packs, gross_quantity, shrinkage, usable_quantity, quoted_price_usd, amount_bs, supplier_rate, real_cost_usd, unit_cost_usd, margin, sale_price_usd, payment_status (`paid`/`credit`), receipt_status (`pending`/`received`/`partial`/`missing`), received_packs, received_quantity, received_by, received_at, receipt_note |
 | `supplier_claims`     | purchase_line_id (unique), supplier_id (nullable), missing_packs, amount_usd, status (`open`/`resolved`/`written_off`), resolution_note                                                                                                                                                                                                                                                                  |
 | `shopping_list_items` | store_id, product_id, requested_by, note, status (`open`/`bought`/`dropped`), purchase_line_id (nullable)                                                                                                                                                                                                                                                                                                |

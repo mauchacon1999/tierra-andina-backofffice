@@ -158,6 +158,7 @@ Tests of one package: `bun --cwd=packages/core test`, `bun --cwd=apps/web run te
 | Reclamo al puesto (mercancía faltante)        | `supplier_claim`                           |
 | Lista de faltantes (compras del jueves)       | `shopping_list_item`                       |
 | Tasa de cambio                                | `exchange_rate`                            |
+| Tasa de Coche (mercado mayorista del día)     | `market_rate`                              |
 | Nómina / adelanto                             | `payroll_payment` / `salary_advance`       |
 
 If a new domain term appears, add it here before using it.

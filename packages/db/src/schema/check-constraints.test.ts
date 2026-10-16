@@ -123,6 +123,8 @@ const CASES: CheckCase[] = [
         tx.insert(exchangeRates).values(valid.exchangeRate(b, { kind: "bcv" })),
       "sale without store": (tx, b) =>
         tx.insert(exchangeRates).values(valid.exchangeRate(b, { storeId: null })),
+      "market (Coche) without store": (tx, b) =>
+        tx.insert(exchangeRates).values(valid.exchangeRate(b, { storeId: null, kind: "market" })),
     },
   },
   // purchase_trips
@@ -131,6 +133,13 @@ const CASES: CheckCase[] = [
     valid: (tx, b) => tx.insert(purchaseTrips).values(valid.purchaseTrip(b)),
     invalid: {
       zero: (tx, b) => tx.insert(purchaseTrips).values(valid.purchaseTrip(b, { bcvRate: "0" })),
+    },
+  },
+  {
+    constraint: "purchase_trips_market_rate_check",
+    valid: (tx, b) => tx.insert(purchaseTrips).values(valid.purchaseTrip(b, { marketRate: "201" })),
+    invalid: {
+      zero: (tx, b) => tx.insert(purchaseTrips).values(valid.purchaseTrip(b, { marketRate: "0" })),
     },
   },
   {
