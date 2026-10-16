@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { normalizeDecimal, sum } from "./decimal";
+import { compareDecimals, normalizeDecimal, sum } from "./decimal";
 
 describe("sum", () => {
   test('adds 0.1 + 0.2 to exactly "0.3"', () => {
@@ -40,5 +40,13 @@ describe("normalizeDecimal", () => {
 
   test("rejects non-numeric input", () => {
     expect(() => normalizeDecimal("abc")).toThrow(TypeError);
+  });
+});
+
+describe("compareDecimals", () => {
+  test("compares exactly, ignoring padding", () => {
+    expect(compareDecimals("0.1", "0.10")).toBe(0);
+    expect(compareDecimals("200", "200.0001")).toBe(-1);
+    expect(compareDecimals("5.0001", "5")).toBe(1);
   });
 });

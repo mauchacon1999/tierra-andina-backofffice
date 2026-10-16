@@ -17,7 +17,7 @@ import {
 
 import { diffChanges, recordAudit } from "@/lib/audit";
 import { AppError, ErrorCode } from "@/lib/errors";
-import { getDefaultMargin } from "@/lib/settings";
+import { getStoreSettings } from "@/modules/settings/settings.service";
 import type { Actor } from "@/lib/types";
 
 import {
@@ -177,7 +177,7 @@ export async function createProduct(
   input: CreateProduct,
 ): Promise<ProductRow> {
   await requireCategory(db, input.categoryId);
-  const lastMargin = input.lastMargin ?? (await getDefaultMargin(db, actor.storeId));
+  const lastMargin = input.lastMargin ?? (await getStoreSettings(db, actor.storeId)).defaultMargin;
   const values = {
     name: cleanProductName(input.name),
     categoryId: input.categoryId,

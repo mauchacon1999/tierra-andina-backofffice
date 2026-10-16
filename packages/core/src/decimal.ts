@@ -44,3 +44,11 @@ export function sum(a: string, b: string): string {
 export function normalizeDecimal(value: string): string {
   return toDecimal(value, "value").toFixed();
 }
+
+/**
+ * Compares two decimal strings exactly: -1 if a < b, 0 if equal, 1 if a > b.
+ * @throws {TypeError} if a value is not a decimal number.
+ */
+export function compareDecimals(a: string, b: string): -1 | 0 | 1 {
+  return toDecimal(a, "a").comparedTo(toDecimal(b, "b")) as -1 | 0 | 1;
+}
