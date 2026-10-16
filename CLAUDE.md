@@ -7,8 +7,7 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 
 > **Current state (2026-10-16):** technical skeleton only — monorepo, Postgres, Drizzle with an
 > empty schema, Hono API with `/health`, Next.js status page, shared packages with example code.
-> `docs/plan.md` and `docs/domain-model.md` are **not in the repo yet**; ask the owner for them
-> before starting any business feature.
+> Business rules and DB design: `docs/domain-model.md`; per-module specs: `docs/modules/`.
 
 ---
 
@@ -48,8 +47,9 @@ tierra-andina/
 │   └── postgres/init/       # creates the <POSTGRES_DB>_test database on a fresh volume
 ├── scripts/                 # repo-level scripts (root `bun test` guard)
 ├── docs/
-│   ├── plan.md              # business plan and phases (pending)
-│   ├── domain-model.md      # domain model and DB design (pending)
+│   ├── plan.md              # business plan and phases
+│   ├── domain-model.md      # business rules and database design (source of truth)
+│   ├── modules/             # per-module specs (products.md, …)
 │   └── api.http             # request examples per endpoint
 ├── docker-compose.yml
 ├── bunfig.toml              # root-only: blocks `bun test` at the root (use `bun run test`)
