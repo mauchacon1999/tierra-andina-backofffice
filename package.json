@@ -14,7 +14,13 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "db:up": "docker compose up -d --wait postgres",
+    "db:down": "docker compose down",
+    "db:generate": "bun --cwd=packages/db run db:generate",
+    "db:migrate": "bun --cwd=packages/db run db:migrate",
+    "db:studio": "bun --cwd=packages/db run db:studio",
+    "db:ping": "bun --cwd=packages/db run db:ping"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

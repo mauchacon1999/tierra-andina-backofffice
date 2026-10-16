@@ -1,2 +1,3 @@
-// @ta/db: cliente Drizzle y config. Se completa en la Etapa 2.
-export {};
+export { closeDb, createDb, db, ping } from "./client";
+export type { CreateDbOptions, Database, DbClient } from "./client";
+export * as schema from "./schema";
