@@ -4,11 +4,21 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "cd ../.. && bun --env-file=.env --watch apps/api/src/index.ts",
+    "start": "bun --env-file=../../.env src/index.ts",
+    "build": "bun build src/index.ts --target=bun --outdir=dist",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@ta/tsconfig": "workspace:*",
     "@types/bun": "latest"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.9.1",
+    "@ta/db": "workspace:*",
+    "@ta/validators": "workspace:*",
+    "hono": "^4.13.13",
+    "zod": "^4.6.7"
   }
 }
