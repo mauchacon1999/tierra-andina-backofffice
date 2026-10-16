@@ -13,5 +13,32 @@ GET {{baseUrl}}/health/db
 ### Unknown route — 404 NOT_FOUND
 GET {{baseUrl}}/does-not-exist
 
-### Versioned business API (mounted, no routes yet) — 404 NOT_FOUND
-GET {{baseUrl}}/api/v1/products
+### Unknown /api/v1 route — 404 NOT_FOUND
+GET {{baseUrl}}/api/v1/does-not-exist
+
+# --- Auth (Better Auth). Browser requests carry Origin; foreign origins get 403 INVALID_ORIGIN.
+# The REST Client keeps the session cookie between requests.
+
+### Sign in — 200 + httpOnly session cookie | 401 INVALID_EMAIL_OR_PASSWORD
+POST {{baseUrl}}/api/auth/sign-in/email
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "email": "owner@tierra-andina.local", "password": "change-me-dev-only" }
+
+### Current user and stores — 200 | 401 UNAUTHENTICATED
+GET {{baseUrl}}/api/v1/me
+
+### Current session (Better Auth) — 200, body null when signed out
+GET {{baseUrl}}/api/auth/get-session
+
+### Sign out — 200
+POST {{baseUrl}}/api/auth/sign-out
+Origin: http://localhost:3000
+
+### Sign up is disabled — 400 EMAIL_PASSWORD_SIGN_UP_DISABLED
+POST {{baseUrl}}/api/auth/sign-up/email
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "name": "Nadie", "email": "nadie@test.local", "password": "password-123" }

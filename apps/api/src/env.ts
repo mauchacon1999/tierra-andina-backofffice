@@ -8,6 +8,12 @@ const envSchema = z.object({
     protocol: /^postgres(ql)?$/,
     message: "must be a postgres://user:password@host:port/database URL",
   }),
+  BETTER_AUTH_SECRET: z
+    .string()
+    .min(32, "must have at least 32 characters (e.g. `openssl rand -base64 32`)"),
+  BETTER_AUTH_URL: z.url({
+    message: "must be the public URL of the API, e.g. http://localhost:4000",
+  }),
 });
 
 export type Env = z.infer<typeof envSchema>;

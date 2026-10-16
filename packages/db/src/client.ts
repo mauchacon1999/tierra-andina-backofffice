@@ -60,3 +60,8 @@ const defaultClient = createDb(requireDatabaseUrl());
 export const db: Database = defaultClient.db;
 export const ping: () => Promise<void> = defaultClient.ping;
 export const closeDb: () => Promise<void> = defaultClient.close;
+
+/** A transaction handle, as received by `db.transaction(async (tx) => …)`. */
+export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
+/** Anything that can run queries: the database or an open transaction. */
+export type Executor = Database | Transaction;

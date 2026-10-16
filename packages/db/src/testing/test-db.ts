@@ -1,6 +1,6 @@
 import { expect } from "bun:test";
 
-import { createDb, type Database, type DbClient } from "../client";
+import { createDb, type DbClient, type Transaction } from "../client";
 import { isLocalDatabaseUrl } from "../migrate";
 
 /*
@@ -8,7 +8,7 @@ import { isLocalDatabaseUrl } from "../migrate";
  * database that is not local or whose name does not end in "_test" (it is reset on every run).
  */
 
-export type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
+export type Tx = Transaction;
 
 export function testDatabaseUrl(): string {
   const url = process.env.DATABASE_URL_TEST;

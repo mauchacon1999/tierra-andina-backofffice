@@ -2,15 +2,13 @@ import { describe, expect, test } from "bun:test";
 
 import { apiErrorSchema } from "@ta/validators";
 
-import { createApp } from "@/app";
+import { createTestApp, TEST_WEB_ORIGIN as WEB_ORIGIN, type TestApp } from "@/testing/test-app";
 
 import pkg from "../package.json" with { type: "json" };
 
-const WEB_ORIGIN = "http://localhost:3000";
-
-// In-memory app: no server, no .env and no database (pingDb is injected).
-function makeApp(pingDb: () => Promise<void> = async () => {}) {
-  return createApp({ webOrigin: WEB_ORIGIN, pingDb, logRequests: false });
+// The app runs in memory (no server) against the test database; pingDb can be replaced.
+function makeApp(pingDb?: () => Promise<void>): TestApp {
+  return createTestApp(pingDb ? { pingDb } : {});
 }
 
 describe("GET /health", () => {

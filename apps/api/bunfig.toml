@@ -1,0 +1,3 @@
+# Integration tests run against DATABASE_URL_TEST; the preload resets and seeds it once per run.
+[test]
+preload = ["./src/testing/preload.ts"]

@@ -52,7 +52,7 @@ Each phase is usable on its own. Phases 1 and 2 remove the notebook and WhatsApp
 
 ### Phase 0 — Foundation and catalogs
 
-- [ ] Monorepo, database, auth with roles (owner, manager, receiver).
+- [x] Monorepo, database, auth with roles (owner, manager, receiver) — API side; web login pending.
 - [ ] Products, suppliers, employees, expense categories, payment methods.
 - [ ] Daily BCV rate and sale rate.
 - [ ] Initial product catalog loaded from the owner's notebook.

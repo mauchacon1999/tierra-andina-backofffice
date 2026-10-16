@@ -30,6 +30,8 @@ All apps read this single root `.env`:
 | `NEXT_PUBLIC_API_URL`                               | web               | `http://localhost:4000`                                     |
 | `SEED_OWNER_EMAIL`, `SEED_OWNER_PASSWORD`           | `db:seed`         | owner login created by the seed (password ≥ 8 chars)        |
 | `SEED_OWNER_NAME` (optional)                        | `db:seed`         | `Dueño`                                                     |
+| `BETTER_AUTH_SECRET`                                | API (auth)        | random, ≥ 32 chars (`openssl rand -base64 32`)              |
+| `BETTER_AUTH_URL`                                   | API (auth)        | `http://localhost:4000`                                     |
 
 ## 2. Start the database
 
@@ -70,6 +72,7 @@ bun dev
 
 - Web: http://localhost:3000 — shows the API and database status (green/red)
 - API: http://localhost:4000/health and http://localhost:4000/health/db
+- Sign in (API only for now): `POST /api/auth/sign-in/email` with the `SEED_OWNER_*` credentials; see [docs/api.http](docs/api.http)
 
 One app only: `bun --cwd=apps/api run dev` or `bun --cwd=apps/web run dev`.
 
@@ -83,7 +86,7 @@ bun run format:check  # Prettier
 bun run build         # production build of API and web
 ```
 
-API unit tests build the Hono app in memory and do not need the database or `.env`.
+API tests build the Hono app in memory (no server) against the **test** database.
 The `@ta/db` integration tests need PostgreSQL running (`bun run db:up`): they reset and seed
 the **test** database on every run.
 Running `bun test` from the root is intentionally blocked; use `bun run test`

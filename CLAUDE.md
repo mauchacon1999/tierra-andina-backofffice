@@ -6,8 +6,9 @@ cost and price calculation, daily cash closings, expenses, debts and weekly repo
 Business context and phases live in `docs/plan.md`. Read it before starting a new feature.
 
 > **Current state (2026-10-16):** monorepo, full database schema in `@ta/db` (32 tables,
-> migrations, idempotent seed, integration tests), Hono API with `/health` only, Next.js status
-> page. No business endpoints or auth instance yet.
+> migrations, idempotent seed, integration tests), Hono API with `/health`, Better Auth
+> (`/api/auth/*`), `requireRole`, audit helper and `GET /api/v1/me`; Next.js status page.
+> No business modules or web login yet.
 > Business rules and DB design: `docs/domain-model.md`; working with the DB: `docs/database.md`;
 > per-module specs: `docs/modules/`.
 
@@ -221,8 +222,24 @@ apps/api/src/
         └── products.test.ts         # integration tests for this module
 ```
 
-`createApp` receives its dependencies (`webOrigin`, `pingDb`, …) instead of reading env, so
-tests build the app in memory with `app.request(...)` — no server, no `.env` needed.
+`createApp` receives its dependencies (`webOrigin`, `pingDb`, `db`, `auth`) instead of reading
+env, so tests build the real app in memory with `app.request(...)` against the test database:
+`createTestApp()`, `createUser()`, `createStore()` and `signIn()` in `src/testing/test-app.ts`.
+API tests need PostgreSQL running; their preload resets and seeds `DATABASE_URL_TEST`.
+
+### Auth, roles and audit
+
+- **Better Auth** (`lib/auth.ts`) serves `/api/auth/*` (sign-in/email, sign-out, get-session)
+  with an httpOnly session cookie. Sign-up is disabled: the seed creates the owner and the
+  owner will create the other users. Its errors are rewritten to the unified format with
+  Spanish messages (`toUnifiedAuthResponse`); add new codes to `AUTH_ERROR_MESSAGES`.
+- Every `/api/v1/*` request runs `sessionMiddleware` (`c.get("user")` is the user or `null`).
+- `requireAuth` → 401 `UNAUTHENTICATED`. `requireRole("owner", …)` → resolves the store from
+  the `X-Store-Id` header or the user's only active membership; 400 `STORE_REQUIRED` when the
+  user has several stores and sent no header; 403 `FORBIDDEN` otherwise.
+- In handlers use `getMembership(c)` (store + role) and `getActor(c)`; pass the `Actor` to the
+  service, which calls `recordAudit(tx, actor, { tableName, recordId, action, changes })` in
+  the same transaction as the write (`diffChanges(before, after)` for updates).
 
 ### Layer rules
 
@@ -241,7 +258,8 @@ tests build the app in memory with `app.request(...)` — no server, no `.env` n
   and unknown routes `404 NOT_FOUND`. The shape is `apiErrorSchema` in `@ta/validators`.
 - Lists are paginated: `{ data, total, page, pageSize }`.
 - Multi-table writes run inside a transaction opened by the service.
-- Every write to an editable table goes through the audit middleware.
+- Every write to an editable table is audited with `recordAudit` (see "Auth, roles and audit").
+- Repositories take an `Executor` (`Database | Transaction` from `@ta/db`) as first argument.
 - Authorization is enforced in routes with `requireRole(...)`, never only in the frontend.
 
 ---
@@ -458,3 +476,9 @@ Things that are not obvious from the code and have already cost time:
 - **New tables use the helpers** in `packages/db/src/schema/_shared.ts` (`id()`, `timestamps`,
   `auditColumns`, `money()`/`rate()`/`quantity()`/`ratio()`) and named constraints
   (`<table>_<rule>_check`, `<table>_<cols>_key`, `<table>_<col>_idx`).
+- **Better Auth relaxes security under `NODE_ENV=test`** (bun test sets it): it skips the origin
+  (CSRF) check unless `advanced.disableOriginCheck` is set. `createAuth` sets it to `false`
+  explicitly so tests exercise production behavior. Check other Better Auth defaults the same
+  way before trusting a green test.
+- **Test order:** `turbo.json` runs `test` with `dependsOn: ["^test"]`, so `@ta/db` tests finish
+  before `@ta/api` tests start; both reset the same test database in their preload.
