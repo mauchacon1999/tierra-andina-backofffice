@@ -12,7 +12,9 @@
     "db:studio": "bun --env-file=../../.env drizzle-kit studio",
     "db:ping": "bun --env-file=../../.env scripts/ping.ts",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:reset": "bun --env-file=../../.env scripts/reset.ts",
+    "db:seed": "bun --env-file=../../.env scripts/seed.ts"
   },
   "devDependencies": {
     "@ta/tsconfig": "workspace:*",
@@ -22,6 +24,7 @@
   "dependencies": {
     "better-auth": "^1.7.10",
     "drizzle-orm": "^0.45.4",
-    "postgres": "^3.4.9"
+    "postgres": "^3.4.9",
+    "zod": "^4.6.7"
   }
 }
