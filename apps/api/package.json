@@ -1,0 +1,14 @@
+{
+  "name": "@ta/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@ta/tsconfig": "workspace:*",
+    "@types/bun": "latest"
+  }
+}

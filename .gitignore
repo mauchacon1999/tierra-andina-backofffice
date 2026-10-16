@@ -1,0 +1,50 @@
+# Dependencias
+node_modules/
+.pnp
+.pnp.js
+
+# Bun
+.bun/
+*.bun-build
+
+# Turborepo
+.turbo/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+# Builds
+dist/
+build/
+*.tsbuildinfo
+
+# Tests / cobertura
+coverage/
+
+# Variables de entorno (solo se versiona .env.example)
+.env
+.env.*
+!.env.example
+
+# Docker: volúmenes y datos locales
+docker-data/
+.docker-data/
+pgdata/
+*.dump
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+bun-debug.log*
+
+# Sistema operativo / editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
