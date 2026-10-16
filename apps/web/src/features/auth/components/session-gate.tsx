@@ -14,7 +14,7 @@ export function SessionGate({ children }: SessionGateProps): React.JSX.Element {
 
   if (!me) {
     return (
-      <p role="status" className="text-zinc-600 dark:text-zinc-400">
+      <p role="status" className="text-muted">
         Cargando…
       </p>
     );

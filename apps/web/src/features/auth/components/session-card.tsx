@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ROLE_LABELS } from "@/features/auth/helpers/role-labels";
 import { useRequireSession } from "@/features/auth/hooks/use-require-session";
 import { useSignOutAction } from "@/features/auth/hooks/use-sign-out-action";
@@ -13,18 +14,23 @@ export function SessionCard(): React.JSX.Element | null {
   if (!me) return null;
 
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:border-zinc-700 dark:bg-zinc-900">
+    <Card className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p className="font-semibold">Hola, {me.user.name}</p>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-sm text-muted">
           {activeMembership
             ? `${activeMembership.storeName} · ${ROLE_LABELS[activeMembership.role]}`
             : "Sin tienda asignada"}
         </p>
       </div>
-      <Button variant="secondary" onClick={() => void onSignOut()} disabled={isSigningOut}>
-        {isSigningOut ? "Saliendo…" : "Salir"}
+      <Button
+        variant="secondary"
+        onClick={() => void onSignOut()}
+        isLoading={isSigningOut}
+        loadingText="Saliendo…"
+      >
+        Salir
       </Button>
-    </section>
+    </Card>
   );
 }

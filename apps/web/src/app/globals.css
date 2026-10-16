@@ -1,20 +1,110 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens — see docs/design-system.md.
+ * Every value is a standard Tailwind palette color (name in the comment). Components use the
+ * semantic utilities generated below (bg-primary, text-danger-text, border-border…), never raw
+ * palette classes, so light/dark mode and future brand tweaks live only here.
+ */
+
 :root {
-  --background: #f8faf7;
-  --foreground: #1c2a1f;
+  /* Neutrals (zinc) */
+  --background: #fafafa; /* zinc-50 */
+  --foreground: #18181b; /* zinc-900 */
+  --surface: #ffffff; /* white — cards, inputs */
+  --surface-muted: #f4f4f5; /* zinc-100 */
+  --muted: #52525b; /* zinc-600 — secondary text */
+  --border: #e4e4e7; /* zinc-200 — card borders */
+  --border-strong: #d4d4d8; /* zinc-300 — input borders */
+
+  /* Primary (emerald) */
+  --primary: #047857; /* emerald-700 */
+  --primary-hover: #065f46; /* emerald-800 */
+  --primary-active: #064e3b; /* emerald-900 */
+  --primary-foreground: #ffffff;
+  --primary-soft: #ecfdf5; /* emerald-50 */
+  --primary-text: #065f46; /* emerald-800 — titles, links, success text */
+  --focus: #10b981; /* emerald-500 — focus ring */
+
+  /* Danger (red) */
+  --danger: #b91c1c; /* red-700 */
+  --danger-hover: #991b1b; /* red-800 */
+  --danger-soft: #fef2f2; /* red-50 */
+  --danger-text: #b91c1c; /* red-700 */
+  --danger-border: #ef4444; /* red-500 */
+
+  /* Warning (amber) */
+  --warning-soft: #fffbeb; /* amber-50 */
+  --warning-text: #92400e; /* amber-800 */
+  --warning-border: #f59e0b; /* amber-500 */
+
+  /* Info (sky) */
+  --info-soft: #f0f9ff; /* sky-50 */
+  --info-text: #075985; /* sky-800 */
+  --info-border: #0ea5e9; /* sky-500 */
+
+  /* Success reuses the brand green */
+  --success-border: #10b981; /* emerald-500 */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f1711;
-    --foreground: #e7efe8;
+    --background: #09090b; /* zinc-950 */
+    --foreground: #f4f4f5; /* zinc-100 */
+    --surface: #18181b; /* zinc-900 */
+    --surface-muted: #27272a; /* zinc-800 */
+    --muted: #a1a1aa; /* zinc-400 */
+    --border: #3f3f46; /* zinc-700 */
+    --border-strong: #52525b; /* zinc-600 */
+
+    /* The button green stays emerald-700: white text on emerald-600 fails WCAG AA. */
+    --primary-soft: #022c22; /* emerald-950 */
+    --primary-text: #34d399; /* emerald-400 */
+
+    --danger-soft: #450a0a; /* red-950 */
+    --danger-text: #f87171; /* red-400 */
+
+    --warning-soft: #451a03; /* amber-950 */
+    --warning-text: #fbbf24; /* amber-400 */
+
+    --info-soft: #082f49; /* sky-950 */
+    --info-text: #38bdf8; /* sky-400 */
   }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-text: var(--primary-text);
+  --color-focus: var(--focus);
+
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-text: var(--danger-text);
+  --color-danger-border: var(--danger-border);
+
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-text: var(--warning-text);
+  --color-warning-border: var(--warning-border);
+
+  --color-info-soft: var(--info-soft);
+  --color-info-text: var(--info-text);
+  --color-info-border: var(--info-border);
+
+  --color-success-border: var(--success-border);
+
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }

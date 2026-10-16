@@ -53,6 +53,7 @@ tierra-andina/
 │   ├── plan.md              # business plan and phases
 │   ├── domain-model.md      # business rules and database design (source of truth)
 │   ├── database.md          # migrations, reset, seed, DB tests, tables per area
+│   ├── design-system.md     # colors, buttons, forms, validation, feedback — UI rules
 │   ├── modules/             # per-module specs (products.md, …)
 │   └── api.http             # request examples per endpoint
 ├── docker-compose.yml
@@ -291,6 +292,10 @@ apps/web/src/
 └── utils/                       # generic pure functions (cn, format-date, format-money)
 ```
 
+- **UI follows `docs/design-system.md`**: colors only through the semantic tokens of
+  `app/globals.css` (`bg-primary`, `text-muted`, `text-danger-text`…; no palette classes and no
+  `dark:` color classes — `src/design-system.test.ts` fails otherwise), primitives from
+  `components/ui/` (`Button`, `TextField`, `Alert`, `Card`, `Spinner`).
 - The web never imports `@ta/db`, `drizzle-orm` or `postgres`: ESLint (`no-restricted-imports`
   in `apps/web/eslint.config.mjs`) fails the lint if it does.
 - All HTTP goes through `lib/api.ts` (`api.get/post/...`). It throws a typed `ApiError`

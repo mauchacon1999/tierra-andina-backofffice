@@ -1,23 +1,25 @@
+import { Card } from "@/components/ui/card";
 import type { CheckState } from "@/features/system-status/types";
 import { cn } from "@/utils/cn";
 
+// Status colors follow docs/design-system.md §2 (success = primary green, error = danger).
 const STYLES = {
   loading: {
-    card: "border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900",
-    dot: "bg-zinc-400 animate-pulse",
-    label: "text-zinc-600 dark:text-zinc-400",
+    tone: "muted",
+    dot: "bg-muted animate-pulse",
+    label: "text-muted",
     text: "Comprobando…",
   },
   ok: {
-    card: "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40",
-    dot: "bg-emerald-500",
-    label: "text-emerald-700 dark:text-emerald-300",
+    tone: "success",
+    dot: "bg-success-border",
+    label: "text-primary-text",
     text: "Operativo",
   },
   error: {
-    card: "border-red-500 bg-red-50 dark:bg-red-950/40",
-    dot: "bg-red-500",
-    label: "text-red-700 dark:text-red-300",
+    tone: "danger",
+    dot: "bg-danger-border",
+    label: "text-danger-text",
     text: "Sin respuesta",
   },
 } as const;
@@ -31,11 +33,7 @@ export function StatusCard({ title, state }: StatusCardProps): React.JSX.Element
   const style = STYLES[state.status];
 
   return (
-    <section
-      aria-live="polite"
-      aria-label={title}
-      className={cn("rounded-2xl border-2 p-4 shadow-sm transition-colors", style.card)}
-    >
+    <Card aria-live="polite" aria-label={title} tone={style.tone}>
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">{title}</h2>
         <span className={cn("flex items-center gap-2 text-sm font-medium", style.label)}>
@@ -45,21 +43,21 @@ export function StatusCard({ title, state }: StatusCardProps): React.JSX.Element
       </div>
 
       {state.status === "ok" && (
-        <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
+        <p className="mt-2 text-sm text-muted">
           {state.detail} · {state.latencyMs} ms
         </p>
       )}
 
       {state.status === "error" && (
-        <div className="mt-2 space-y-1 text-sm text-zinc-700 dark:text-zinc-300">
+        <div className="mt-2 space-y-1 text-sm">
           <p>{state.error.message}</p>
-          <p className="font-mono text-xs break-all text-zinc-500">
+          <p className="font-mono text-xs break-all text-muted">
             {state.error.code}
             {state.error.status > 0 && ` · HTTP ${state.error.status}`}
             {state.error.requestId && ` · ${state.error.requestId}`}
           </p>
         </div>
       )}
-    </section>
+    </Card>
   );
 }

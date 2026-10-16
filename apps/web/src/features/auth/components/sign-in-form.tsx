@@ -1,5 +1,6 @@
 "use client";
 
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { useSignInForm } from "@/features/auth/hooks/use-sign-in-form";
@@ -17,6 +18,8 @@ export function SignInForm(): React.JSX.Element {
         void onSubmit();
       }}
     >
+      {formError && <Alert tone="error">{formError}</Alert>}
+
       <TextField
         label="Correo"
         type="email"
@@ -33,17 +36,8 @@ export function SignInForm(): React.JSX.Element {
         {...form.register("password")}
       />
 
-      {formError && (
-        <p
-          role="alert"
-          className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-950/40 dark:text-red-300"
-        >
-          {formError}
-        </p>
-      )}
-
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Entrando…" : "Entrar"}
+      <Button type="submit" className="w-full" isLoading={isSubmitting} loadingText="Entrando…">
+        Entrar
       </Button>
     </form>
   );

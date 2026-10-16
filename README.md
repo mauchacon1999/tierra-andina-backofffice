@@ -102,5 +102,5 @@ packages/core       @ta/core — pure business logic (decimal.js)
 packages/db         @ta/db — Drizzle client, schema and migrations
 packages/validators @ta/validators — shared Zod schemas
 packages/tsconfig   @ta/tsconfig — shared strict TypeScript config
-docs/               plan, domain model, database guide, module specs, api.http
+docs/               plan, domain model, database guide, design system, module specs, api.http
 ```
