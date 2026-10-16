@@ -1,0 +1,17 @@
+# Tierra Andina API — request examples.
+# Works with the VS Code "REST Client" extension or JetBrains HTTP Client.
+# Every error response has the shape { "error": { "code", "message", "details"? } }.
+
+@baseUrl = http://localhost:4000
+
+### Liveness — 200 { "ok": true, "version": "0.1.0" }
+GET {{baseUrl}}/health
+
+### Database check — 200 { "ok": true, "db": "up" } | 503 DB_UNAVAILABLE
+GET {{baseUrl}}/health/db
+
+### Unknown route — 404 NOT_FOUND
+GET {{baseUrl}}/does-not-exist
+
+### Versioned business API (mounted, no routes yet) — 404 NOT_FOUND
+GET {{baseUrl}}/api/v1/products

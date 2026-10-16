@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 
 import { describeError } from "../lib/describe-error";
-import { ApiError, ErrorCode } from "../lib/errors";
+import { AppError, ErrorCode } from "../lib/errors";
 import type { AppEnv } from "../lib/types";
 import { withTimeout } from "../lib/with-timeout";
 
@@ -19,7 +19,7 @@ export function healthRoutes({ version, pingDb, dbTimeoutMs = 3000 }: HealthDeps
         await withTimeout(pingDb(), dbTimeoutMs, "ping a la base");
       } catch (cause) {
         console.error(`[${c.get("requestId")}] /health/db falló: ${describeError(cause)}`);
-        throw new ApiError(503, ErrorCode.DB_UNAVAILABLE, "La base de datos no responde");
+        throw new AppError(ErrorCode.DB_UNAVAILABLE, "La base de datos no responde", 503);
       }
       return c.json({ ok: true as const, db: "up" as const });
     });

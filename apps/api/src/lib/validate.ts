@@ -2,10 +2,10 @@ import { zValidator } from "@hono/zod-validator";
 import type { ValidationTargets } from "hono";
 import { z } from "zod";
 
-import { ApiError, ErrorCode } from "./errors";
+import { AppError, ErrorCode } from "./errors";
 
 /**
- * Envoltorio de zValidator: si la validación falla, lanza ApiError para que la respuesta
+ * Envoltorio de zValidator: si la validación falla, lanza AppError para que la respuesta
  * salga con el formato único de error. Uso: route.post("/", validate("json", schema), handler)
  */
 export const validate = <Target extends keyof ValidationTargets, Schema extends z.ZodType>(
@@ -14,10 +14,10 @@ export const validate = <Target extends keyof ValidationTargets, Schema extends 
 ) =>
   zValidator(target, schema, (result) => {
     if (!result.success) {
-      throw new ApiError(
-        400,
+      throw new AppError(
         ErrorCode.VALIDATION_ERROR,
         "Los datos enviados no son válidos",
+        400,
         z.flattenError(result.error),
       );
     }

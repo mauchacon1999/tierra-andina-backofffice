@@ -1,15 +1,18 @@
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
-/** Error HTTP controlado que el manejador global convierte al formato único. */
-export class ApiError extends Error {
+/**
+ * Controlled application error. The global error handler turns it into
+ * `{ error: { code, message, details? } }` with the given HTTP status (default 400).
+ */
+export class AppError extends Error {
   constructor(
-    readonly status: ContentfulStatusCode,
     readonly code: string,
     message: string,
+    readonly status: ContentfulStatusCode = 400,
     readonly details?: unknown,
   ) {
     super(message);
-    this.name = "ApiError";
+    this.name = "AppError";
   }
 }
 

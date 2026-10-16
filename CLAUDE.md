@@ -1,0 +1,421 @@
+# CLAUDE.md — Tierra Andina
+
+Administrative system for **Tierra Andina**, a fruit and vegetable shop in Caracas, Venezuela.
+It replaces the notebook, WhatsApp and Excel workflow: purchases at the wholesale market,
+cost and price calculation, daily cash closings, expenses, debts and weekly reports.
+Business context and phases live in `docs/plan.md`. Read it before starting a new feature.
+
+> **Current state (2026-10-16):** technical skeleton only — monorepo, Postgres, Drizzle with an
+> empty schema, Hono API with `/health`, Next.js status page, shared packages with example code.
+> `docs/plan.md` and `docs/domain-model.md` are **not in the repo yet**; ask the owner for them
+> before starting any business feature.
+
+---
+
+## 1. Stack
+
+| Layer                     | Choice                                                                                                    |
+| ------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Runtime / package manager | Bun (workspaces) + Turborepo                                                                              |
+| API                       | Hono on Bun — `apps/api`, port 4000                                                                       |
+| Frontend                  | Next.js App Router + TypeScript + Tailwind — `apps/web`, port 3000                                        |
+| Database                  | PostgreSQL 16 (Docker)                                                                                    |
+| ORM                       | Drizzle ORM + drizzle-kit (postgres.js driver)                                                            |
+| Validation                | Zod (shared schemas in `@ta/validators`)                                                                  |
+| Server state (web)        | SWR _(planned — not installed yet)_                                                                       |
+| Client state (web)        | Zustand _(planned — not installed yet)_                                                                   |
+| Forms (web)               | React Hook Form + `@hookform/resolvers/zod` _(planned — not installed yet)_                               |
+| Decimal math              | decimal.js                                                                                                |
+| Tests                     | `bun test` (core, api) · Vitest + Testing Library (web) _(web currently uses `bun test`; Vitest planned)_ |
+
+Do not add, replace or remove a dependency without asking first and explaining why.
+
+---
+
+## 2. Repository structure
+
+```
+tierra-andina/
+├── apps/
+│   ├── api/                 # Hono API (the only thing that touches the database)
+│   └── web/                 # Next.js frontend (talks to the API over HTTP only)
+├── packages/
+│   ├── core/                # @ta/core — pure business logic, no I/O
+│   ├── db/                  # @ta/db — Drizzle schema, migrations, client
+│   ├── validators/          # @ta/validators — Zod schemas + inferred types
+│   └── tsconfig/            # @ta/tsconfig — shared TS config (base, bun, nextjs)
+├── docker/
+│   └── postgres/init/       # creates the <POSTGRES_DB>_test database on a fresh volume
+├── docs/
+│   ├── plan.md              # business plan and phases (pending)
+│   ├── domain-model.md      # domain model and DB design (pending)
+│   └── api.http             # request examples per endpoint
+├── docker-compose.yml
+├── .env.example             # single env file for the whole monorepo (copy to .env)
+└── CLAUDE.md
+```
+
+Dependency direction (never the other way around):
+
+```
+apps/web ──► @ta/validators, @ta/core
+apps/api ──► @ta/db, @ta/validators, @ta/core
+@ta/db   ──► (nothing internal)
+@ta/core ──► (nothing internal)
+```
+
+---
+
+## 3. Commands
+
+```bash
+bun install              # install everything
+bun run db:up            # start PostgreSQL (waits until healthy)
+bun run db:down          # stop PostgreSQL (data is kept in the volume)
+bun run db:ping          # check the main and test databases respond
+bun dev                  # api + web in watch mode
+bun test                 # all tests
+bun run test             # all tests through Turborepo, per package
+bun run typecheck        # tsc across the monorepo
+bun run lint             # eslint
+bun run format           # prettier --write
+bun run build            # production build
+bun run db:generate      # generate migration from schema changes
+bun run db:migrate       # apply migrations
+bun run db:studio        # open Drizzle Studio
+```
+
+Run a single app: `bun --cwd=apps/api run dev` or `bun --cwd=apps/web run dev`.
+
+---
+
+## 4. Workflow rules (always)
+
+1. **One task at a time.** Do exactly what was asked. If you see something else worth
+   changing, mention it at the end instead of doing it.
+2. **Plan before big changes.** If a task touches more than ~5 files or changes structure,
+   list the plan first and wait for approval.
+3. **Every task ships with tests.** No task is done without tests for the new or changed
+   behavior (see §11).
+4. **Keep docs in sync.** Any change to structure, commands, conventions, endpoints or
+   env vars updates the relevant doc in the same task (see §13).
+5. **Schema changes always generate a migration.** Never edit an applied migration.
+6. **Never commit secrets.** Everything sensitive comes from env vars, validated with Zod.
+7. **Definition of done** (§14) must pass before saying a task is finished.
+
+---
+
+## 5. Language
+
+| What                                                                | Language                        |
+| ------------------------------------------------------------------- | ------------------------------- |
+| Code: identifiers, files, folders, DB tables and columns            | English                         |
+| Comments, JSDoc, commit messages, PR descriptions, docs in the repo | English                         |
+| User-facing UI text, error messages shown to users                  | Spanish (Venezuela)             |
+| API error `code` values                                             | English, `SCREAMING_SNAKE_CASE` |
+
+### Domain glossary (use these names everywhere)
+
+| Spanish (business)                            | English (code)                             |
+| --------------------------------------------- | ------------------------------------------ |
+| Jornada de compra                             | `purchase_trip`                            |
+| Compra / línea de compra                      | `purchase` / `purchase_line`               |
+| Puesto (vendedor en Coche)                    | `stall`                                    |
+| Cesta                                         | `crate`                                    |
+| Cuenta / rama                                 | `bundle`                                   |
+| Rollito                                       | `bunch`                                    |
+| Merma                                         | `shrinkage`                                |
+| Kilaje útil                                   | `usable_quantity`                          |
+| Margen                                        | `margin`                                   |
+| Tasa BCV / tasa de venta / tasa del proveedor | `bcv_rate` / `sale_rate` / `supplier_rate` |
+| Lista de precios                              | `price_list`                               |
+| Cierre diario                                 | `daily_close`                              |
+| Fiado (cliente)                               | `customer_credit`                          |
+| Abono                                         | `credit_payment`                           |
+| Cuenta por pagar                              | `payable`                                  |
+| Gasto fijo / variable                         | `fixed_expense` / `variable_expense`       |
+| Recepción en camioneta                        | `truck_receipt`                            |
+| Pago móvil                                    | `mobile_payment`                           |
+| Punto de venta (tarjeta)                      | `card_terminal`                            |
+
+If a new domain term appears, add it here before using it.
+
+---
+
+## 6. TypeScript
+
+- `strict: true` everywhere. No `any`. Use `unknown` and narrow it.
+- No `@ts-ignore`. If truly unavoidable, use `@ts-expect-error` with a comment explaining why.
+- Types for inputs and outputs come from Zod: `type CreateProduct = z.infer<typeof createProductSchema>`.
+  Never write a type by hand that duplicates a schema.
+- Use `type` for unions and object shapes; `interface` only when extension is needed.
+- No TypeScript `enum`. Use `as const` objects or string literal unions.
+- Exported functions declare their return type.
+- Prefer `satisfies` over type assertions. Avoid `as` except at trusted boundaries.
+- Prefer early returns over nested conditionals.
+- No default exports, except where a framework requires them (Next.js `page.tsx`,
+  `layout.tsx`, etc.).
+
+---
+
+## 7. Money and numbers (critical)
+
+- Money, rates, kilos, quantities and margins are `numeric(14,4)` in PostgreSQL.
+  **Never** `float`, `real` or `double precision`.
+- In TypeScript they travel as `string` and every calculation uses `decimal.js`.
+  Never use `Number()`, `parseFloat()` or `+` on these values.
+- Every stored amount keeps its USD value, its Bs value and the rate used.
+- All calculation rules live in `@ta/core` (§8). The API and the web never reimplement them.
+- Input amounts are validated with `@ta/validators` (`montoSchema`: string, `.` as decimal
+  separator, ≥ 0, max 4 decimals, max 10 integer digits so it fits `numeric(14,4)`).
+- Results are returned in plain notation (`Decimal#toFixed()`), never exponential.
+
+---
+
+## 8. `@ta/core` — business logic
+
+- Pure functions only: no database, no HTTP, no `Date.now()`, no env vars.
+  Pass time and config in as arguments.
+- One file per concept: `pricing.ts`, `rates.ts`, `daily-close.ts`, `rounding.ts`.
+- Every exported function has JSDoc (what it computes, units, rounding behavior)
+  and tests covering normal cases, edge cases and errors.
+- Throw typed domain errors (`ShrinkageExceedsQuantityError`, etc.), never plain strings.
+
+---
+
+## 9. Backend — `apps/api`
+
+### Structure (by module)
+
+```
+apps/api/src/
+├── index.ts                 # server bootstrap (the only file that reads env and wires @ta/db)
+├── app.ts                   # createApp(deps): Hono instance, global middleware, route mounting
+├── env.ts                   # Zod-validated environment
+├── lib/                     # cross-cutting: errors, validate(), logger, pagination, auth client
+├── middleware/              # auth, roles, audit, error handler, request id
+├── routes/                  # infrastructure routes: /health, /api/v1 router mount
+└── modules/
+    └── products/
+        ├── products.routes.ts       # HTTP only: validate, call service, shape response
+        ├── products.service.ts      # business orchestration, transactions, calls core
+        ├── products.repository.ts   # Drizzle queries only
+        ├── products.mapper.ts       # DB row ⇄ API DTO (optional)
+        └── products.test.ts         # integration tests for this module
+```
+
+`createApp` receives its dependencies (`webOrigin`, `pingDb`, …) instead of reading env, so
+tests build the app in memory with `app.request(...)` — no server, no `.env` needed.
+
+### Layer rules
+
+| Layer             | May                                                                        | Must not                                                 |
+| ----------------- | -------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `*.routes.ts`     | Validate with `zValidator`, read auth context, call a service, return JSON | Query the DB, contain business rules                     |
+| `*.service.ts`    | Call repositories and `@ta/core`, open transactions, throw `AppError`      | Know about Hono `Context`, HTTP status codes             |
+| `*.repository.ts` | Run Drizzle queries, accept an optional transaction                        | Contain business rules, call other modules' repositories |
+
+- Routes live under `/api/v1/<module>` with plural kebab-case names (`/api/v1/price-lists`).
+- Validate with `validate(target, schema)` from `lib/validate.ts` (a `zValidator` wrapper):
+  plain `zValidator` would answer with its own error shape instead of the unified one.
+- Errors: throw `AppError(code, message, status?, details?)` from `lib/errors.ts`
+  (status defaults to 400). The error middleware turns every error into
+  `{ error: { code, message, details? } }`; unknown errors become `500 INTERNAL_ERROR`
+  and unknown routes `404 NOT_FOUND`. The shape is `apiErrorSchema` in `@ta/validators`.
+- Lists are paginated: `{ data, total, page, pageSize }`.
+- Multi-table writes run inside a transaction opened by the service.
+- Every write to an editable table goes through the audit middleware.
+- Authorization is enforced in routes with `requireRole(...)`, never only in the frontend.
+
+---
+
+## 10. Frontend — `apps/web`
+
+### Structure (by feature)
+
+```
+apps/web/src/
+├── app/                         # routes only — thin pages that compose features
+│   ├── (owner)/                 # owner screens
+│   ├── (manager)/               # shop manager screens
+│   └── (receiver)/              # truck receiver screens
+├── components/
+│   ├── ui/                      # primitives (button, input, dialog) — no business logic
+│   └── shared/                  # reusable composites (money-input, rate-badge, page-header)
+├── features/
+│   └── purchases/
+│       ├── components/          # feature-specific components
+│       ├── hooks/               # use-purchase-form.ts, use-purchase-totals.ts
+│       ├── api/                 # SWR hooks + request functions for this feature
+│       ├── store/               # Zustand store, only if the feature needs client state
+│       ├── helpers/             # pure helpers tied to this feature's UI
+│       └── types.ts             # UI-only types (API types come from @ta/validators)
+├── hooks/                       # global hooks (use-media-query, use-online-status)
+├── lib/                         # api client, SWR config, query keys, auth session
+├── stores/                      # global Zustand stores (session, offline queue)
+└── utils/                       # generic pure functions (cn, format-date, format-money)
+```
+
+- The web never imports `@ta/db`, `drizzle-orm` or `postgres`: ESLint (`no-restricted-imports`
+  in `apps/web/eslint.config.mjs`) fails the lint if it does.
+- All HTTP goes through `lib/api.ts` (`api.get/post/...`). It throws a typed `ApiError`
+  (`status`, `code`, `message`, `details`, `requestId`; `status: 0` with `NETWORK_ERROR` /
+  `TIMEOUT` when the API did not answer) and validates responses when given a Zod schema.
+
+### Where does this code go?
+
+| Code                                             | Location                      |
+| ------------------------------------------------ | ----------------------------- |
+| Business calculation (price, cost, close totals) | `@ta/core` — never in the web |
+| Generic, domain-free pure function               | `src/utils/`                  |
+| Pure function tied to one feature's UI           | `features/<f>/helpers/`       |
+| Stateful logic, effects, derived state           | a hook (`use-*.ts`)           |
+| Data fetching / mutations                        | `features/<f>/api/` with SWR  |
+| Client-only shared state                         | Zustand store                 |
+| Visual primitive                                 | `components/ui/`              |
+| Reusable composite used by 2+ features           | `components/shared/`          |
+| Component used by one feature                    | `features/<f>/components/`    |
+
+### Components
+
+- Function components, named exports, one component per file.
+- Files in kebab-case (`purchase-line-row.tsx`); components in PascalCase (`PurchaseLineRow`).
+- Props type named `<Component>Props`, declared right above the component.
+- **Components render; hooks think.** Any logic beyond trivial display goes into a hook.
+  A component should mostly be: call hooks → return JSX.
+- No `fetch` or SWR calls directly in components; use the feature's API hooks.
+- Keep components under ~150 lines. Split when larger.
+- Server Components by default for static layout; mark `"use client"` only where needed
+  (interactivity, SWR, Zustand, browser APIs).
+- Mobile-first Tailwind. Use `cn()` from `utils/cn.ts` for conditional classes.
+- Forms: React Hook Form + `zodResolver` with schemas from `@ta/validators`.
+
+### Data fetching with SWR
+
+- One global `SWRConfig` in `lib/swr-config.tsx` with the shared fetcher and error handling.
+- Query keys come from a key factory in `lib/query-keys.ts`, never inline strings:
+  ```ts
+  export const queryKeys = {
+    products: {
+      all: ["products"] as const,
+      list: (params: ProductListParams) => ["products", "list", params] as const,
+      detail: (id: string) => ["products", "detail", id] as const,
+    },
+  };
+  ```
+- Reads: `useSWR`. Writes: `useSWRMutation`. After a mutation, revalidate the affected keys.
+- Wrap each endpoint in a named hook: `useProducts()`, `useCreateProduct()`.
+- Use optimistic updates only where the UX clearly benefits (e.g. truck receipt status).
+
+### Client state with Zustand
+
+- **Server data lives in SWR. Never copy API data into Zustand.**
+- Zustand is for client-only state: session/user role, purchase draft before sending,
+  offline queue, UI preferences.
+- One store per domain (`use-session-store.ts`, `use-offline-queue-store.ts`).
+- Always read with selectors: `useSessionStore((s) => s.role)`, never the whole store.
+- Use `persist` only for state that must survive reloads (offline queue, drafts).
+- Actions live inside the store; components never mutate state directly.
+
+---
+
+## 11. Testing
+
+- **Every task includes tests** for what it adds or changes. A bug fix starts with a
+  failing test that reproduces the bug.
+- Test files sit next to the code: `pricing.ts` → `pricing.test.ts`.
+- `@ta/core`: unit tests for every exported function, including edge cases and errors.
+  Use real business examples (see `docs/plan.md`), with exact decimal expectations.
+- `apps/api`: integration tests per endpoint against `DATABASE_URL_TEST`, covering at least:
+  success, validation error, permission denied, not found.
+- `apps/web`: tests for hooks with logic and for critical components
+  (forms, totals, status changes). Test behavior, not implementation details.
+- Test names describe behavior: `it('rounds the sale price up to the next 0.05 USD')`.
+- Tests must be deterministic: no real time, no random data without a fixed seed.
+
+---
+
+## 12. Comments and naming
+
+- Comments in English. Explain **why**, not what the code already says.
+- JSDoc on every exported function in `@ta/core`, services and shared hooks.
+- `TODO` format: `// TODO(ender): <what and why>`. No anonymous TODOs.
+- No commented-out code. Delete it; Git remembers.
+
+| Thing                 | Convention                | Example                           |
+| --------------------- | ------------------------- | --------------------------------- |
+| Files and folders     | kebab-case                | `daily-close.service.ts`          |
+| Components, types     | PascalCase                | `DailyCloseForm`, `PriceListLine` |
+| Functions, variables  | camelCase                 | `calculateUnitCost`               |
+| Hooks                 | `use` + camelCase         | `usePurchaseTotals`               |
+| Zustand stores        | `use<Name>Store`          | `useOfflineQueueStore`            |
+| Constants             | SCREAMING_SNAKE_CASE      | `DEFAULT_MARGIN`                  |
+| Zod schemas           | camelCase + `Schema`      | `createProductSchema`             |
+| DB tables and columns | snake_case, plural tables | `purchase_lines.unit_cost_usd`    |
+| Booleans              | `is`/`has`/`can` prefix   | `isPublished`, `hasCredit`        |
+
+- Imports: use path aliases (`@/features/...` in web, `@/modules/...` in api).
+  Order: external packages → internal `@ta/*` → aliases → relative.
+- Barrel files (`index.ts`) only at package roots, not inside features.
+
+---
+
+## 13. Keeping docs updated
+
+Update in the **same task** as the change:
+
+| When you change...                             | Update                              |
+| ---------------------------------------------- | ----------------------------------- |
+| Folder structure, commands, conventions, stack | `CLAUDE.md`                         |
+| Setup steps, env vars                          | `README.md` and `.env.example`      |
+| Endpoints (new, changed, removed)              | OpenAPI schemas and `docs/api.http` |
+| Domain vocabulary                              | Glossary in `CLAUDE.md` §5          |
+| Business rules                                 | `docs/plan.md` (and tell the owner) |
+
+At the end of each task, list which docs you updated, or state that none needed changes.
+
+---
+
+## 14. Definition of done
+
+A task is finished only when all of these pass:
+
+- [ ] `bun run typecheck` — no errors
+- [ ] `bun run lint` — no errors
+- [ ] `bun test` — all green, including new tests for this task
+- [ ] Migration generated if the schema changed
+- [ ] Docs updated per §13
+- [ ] Short summary given: what changed, which files, which tests, which docs
+- [ ] Suggested commit message in Conventional Commits format
+      (`feat(purchases): add truck receipt status`)
+
+---
+
+## 15. Technical decisions and gotchas
+
+Things that are not obvious from the code and have already cost time:
+
+- **One `.env` at the repo root.** Every package loads it explicitly
+  (`bun --env-file=../../.env`, `process.loadEnvFile` in `next.config.ts`). Do not add per-app
+  `.env` files.
+- **TypeScript is pinned to `~5.9`.** TS 7 (native) has no JS API, which typescript-eslint and
+  Next's type check need. Do not upgrade until typescript-eslint supports it.
+- **Workspace packages export TypeScript source** (`"exports": { ".": "./src/index.ts" }`), no
+  build step. Bun runs them directly; Turbopack transpiles them (no `transpilePackages` needed).
+- **API watch mode runs from the repo root** (`cd ../.. && bun --watch apps/api/src/index.ts`):
+  otherwise Bun does not watch `packages/*` and changes there do not reload the API.
+- **Next.js env:** `@next/env` cannot load the root `.env` (Next already called it for
+  `apps/web` and returns its cache). `next.config.ts` uses `process.loadEnvFile` and pins
+  `NEXT_PUBLIC_API_URL` in `env` so it is inlined in both server and client bundles.
+- **Next.js 16.4 differs from older versions** (`cacheComponents`, `partialPrefetching`,
+  `LayoutProps` globals). Read `apps/web/node_modules/next/dist/docs/` before using a Next API
+  (see `apps/web/AGENTS.md`).
+- **Test database** `<POSTGRES_DB>_test` is created by `docker/postgres/init` only when the
+  volume is created. If you change `POSTGRES_DB`, recreate it: `docker compose down -v`
+  (deletes local data).
+- **Healthcheck uses TCP** (`pg_isready -h 127.0.0.1`) so the container is not reported healthy
+  while the init scripts are still running.
+- **`bun dev` stops everything if one app crashes** (Turborepo behavior). Run apps separately
+  when debugging one of them.
+- **Line endings are LF** (`.gitattributes`); shell scripts mounted into containers break
+  with CRLF.
