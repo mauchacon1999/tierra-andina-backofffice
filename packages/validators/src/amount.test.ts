@@ -10,8 +10,8 @@ describe("amountSchema", () => {
   });
 
   test("rejects negative amounts", () => {
-    expect(firstMessage("-1")).toBe("El monto no puede ser negativo");
-    expect(firstMessage("-0.5")).toBe("El monto no puede ser negativo");
+    expect(firstMessage("-1")).toBe("El monto no puede ser menor que 0");
+    expect(firstMessage("-0.5")).toBe("El monto no puede ser menor que 0");
   });
 
   test("rejects more than 4 decimals", () => {

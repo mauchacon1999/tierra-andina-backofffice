@@ -96,6 +96,7 @@
       "name": "@ta/validators",
       "version": "0.0.0",
       "dependencies": {
+        "@ta/core": "workspace:*",
         "zod": "^4.6.7",
       },
       "devDependencies": {
