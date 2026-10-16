@@ -8,7 +8,7 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > **Current state (2026-10-16):** monorepo, full database schema in `@ta/db` (32 tables,
 > migrations, idempotent seed, integration tests), Hono API with `/health`, Better Auth
 > (`/api/auth/*`), `requireRole`, audit helper and `GET /api/v1/me`; Next.js status page.
-> No business modules or web login yet.
+> Web: login (`/login`), session-protected home with the system status. No business modules yet.
 > Business rules and DB design: `docs/domain-model.md`; working with the DB: `docs/database.md`;
 > per-module specs: `docs/modules/`.
 
@@ -24,9 +24,9 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 | Database                  | PostgreSQL 16 (Docker)                                                      |
 | ORM                       | Drizzle ORM + drizzle-kit (postgres.js driver)                              |
 | Validation                | Zod (shared schemas in `@ta/validators`)                                    |
-| Server state (web)        | SWR _(planned — not installed yet)_                                         |
-| Client state (web)        | Zustand _(planned — not installed yet)_                                     |
-| Forms (web)               | React Hook Form + `@hookform/resolvers/zod` _(planned — not installed yet)_ |
+| Server state (web)        | SWR                                                                         |
+| Client state (web)        | Zustand                                                                     |
+| Forms (web)               | React Hook Form + `@hookform/resolvers/zod`                                 |
 | Decimal math              | decimal.js                                                                  |
 | Tests                     | `bun test` (core, validators, api) · Vitest + Testing Library + jsdom (web) |
 
@@ -296,6 +296,19 @@ apps/web/src/
 - All HTTP goes through `lib/api.ts` (`api.get/post/...`). It throws a typed `ApiError`
   (`status`, `code`, `message`, `details`, `requestId`; `status: 0` with `NETWORK_ERROR` /
   `TIMEOUT` when the API did not answer) and validates responses when given a Zod schema.
+  It sends cookies (`credentials: "include"`) and the active store as `X-Store-Id`
+  (`stores/use-session-store.ts`).
+
+### Session in the web
+
+- `features/auth`: `useMe()` (GET /api/v1/me via SWR, `isUnauthenticated` on a settled 401),
+  `useSignIn()`, `useSignOut()`, `useSignInForm()` (React Hook Form + `signInSchema`).
+- Protected screens wrap their content in `<SessionGate>` and read the user with
+  `useRequireSession()`: it redirects to `/login` on 401 and keeps `activeStoreId` pointing at a
+  store the user belongs to (`activeMembership` has `storeId`, `storeName`, `role`).
+- The session itself is an httpOnly cookie set by the API; the web never stores tokens.
+- Only the active store id lives in Zustand (persisted); the user and memberships stay in SWR.
+- Role labels for the UI: `features/auth/helpers/role-labels.ts`.
 
 ### Where does this code go?
 
@@ -482,3 +495,10 @@ Things that are not obvious from the code and have already cost time:
   way before trusting a green test.
 - **Test order:** `turbo.json` runs `test` with `dependsOn: ["^test"]`, so `@ta/db` tests finish
   before `@ta/api` tests start; both reset the same test database in their preload.
+- **SWR keeps the last error in the cache.** After a mutation that changes what a key returns
+  (sign-in → /me), write the fresh value with `mutate(key, fetchFresh(), { revalidate: false })`
+  instead of a bare `mutate(key)`: with no screen subscribed, a bare call leaves the old 401 and
+  the next screen redirects to /login (regression test: `use-sign-in.test.tsx`).
+- **Web test setup** (`apps/web/src/testing/setup.ts`): Testing Library only auto-cleans the DOM
+  with Vitest globals, which we do not use, so the setup calls `cleanup()` and clears
+  localStorage after each test. Wrap hooks that use SWR in `SwrTestWrapper` (fresh cache).

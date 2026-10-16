@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { meResponseSchema, membershipRoleSchema } from "./auth";
+import { meResponseSchema, membershipRoleSchema, signInSchema } from "./auth";
 
 describe("membershipRoleSchema", () => {
   test.each(["owner", "manager", "receiver"])("accepts %p", (role) => {
@@ -31,5 +31,28 @@ describe("meResponseSchema", () => {
   test("rejects a membership with an unknown role", () => {
     const invalid = { ...valid, memberships: [{ ...valid.memberships[0], role: "admin" }] };
     expect(meResponseSchema.safeParse(invalid).success).toBe(false);
+  });
+});
+
+describe("signInSchema", () => {
+  const message = (value: unknown) => signInSchema.safeParse(value).error?.issues[0]?.message;
+
+  test("trims and lowercases the email", () => {
+    expect(signInSchema.parse({ email: "  Owner@Tierra.Test ", password: "x" })).toEqual({
+      email: "owner@tierra.test",
+      password: "x",
+    });
+  });
+
+  test("asks for the email when it is empty", () => {
+    expect(message({ email: "   ", password: "x" })).toBe("Escribe tu correo");
+  });
+
+  test("rejects an invalid email", () => {
+    expect(message({ email: "not-an-email", password: "x" })).toBe("El correo no es válido");
+  });
+
+  test("asks for the password when it is empty", () => {
+    expect(message({ email: "a@b.co", password: "" })).toBe("Escribe tu contraseña");
   });
 });

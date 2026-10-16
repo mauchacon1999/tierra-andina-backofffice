@@ -24,3 +24,19 @@ export const meResponseSchema = z.object({
 });
 
 export type MeResponse = z.infer<typeof meResponseSchema>;
+
+/** Sign-in form / POST /api/auth/sign-in/email body. Messages are shown to users. */
+export const signInSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, "Escribe tu correo")
+    .pipe(z.email({ error: "El correo no es válido" }))
+    .transform((email) => email.toLowerCase()),
+  password: z.string().min(1, "Escribe tu contraseña"),
+});
+
+/** What the form holds (before trimming/lowercasing). */
+export type SignInInput = z.input<typeof signInSchema>;
+/** What is sent to the API. */
+export type SignIn = z.output<typeof signInSchema>;

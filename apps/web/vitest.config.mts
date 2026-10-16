@@ -11,6 +11,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.{ts,tsx}"],
+    setupFiles: ["./src/testing/setup.ts"],
     // lib/env.ts validates this at import time; tests never hit a real API.
     env: { NEXT_PUBLIC_API_URL: "http://api.test" },
     restoreMocks: true,

@@ -2,6 +2,7 @@ import { apiErrorSchema } from "@ta/validators";
 import { z } from "zod";
 
 import { publicEnv } from "@/lib/env";
+import { useSessionStore } from "@/stores/use-session-store";
 
 /** Codes produced by this client; every other code comes from the API (NOT_FOUND, DB_UNAVAILABLE…). */
 export type ClientErrorCode = "NETWORK_ERROR" | "TIMEOUT" | "INVALID_RESPONSE";
@@ -57,6 +58,11 @@ export async function apiFetch<T>(
   const timeoutSignal = AbortSignal.timeout(timeoutMs);
   const requestHeaders = new Headers(headers);
   requestHeaders.set("Accept", "application/json");
+  // The API resolves the store from this header when the user belongs to several stores.
+  const activeStoreId = useSessionStore.getState().activeStoreId;
+  if (activeStoreId && !requestHeaders.has("X-Store-Id")) {
+    requestHeaders.set("X-Store-Id", activeStoreId);
+  }
   if (body !== undefined) requestHeaders.set("Content-Type", "application/json");
 
   let response: Response;

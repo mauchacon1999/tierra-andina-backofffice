@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 import { api, ApiError } from "@/lib/api";
+import { useSessionStore } from "@/stores/use-session-store";
 
 function jsonResponse(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
@@ -97,5 +98,30 @@ describe("api client", () => {
     expect(init.method).toBe("POST");
     expect(init.body).toBe(JSON.stringify({ name: "Tomate" }));
     expect(new Headers(init.headers).get("Content-Type")).toBe("application/json");
+  });
+});
+
+describe("api client store header", () => {
+  it("sends the active store as X-Store-Id", async () => {
+    useSessionStore.getState().setActiveStore("store-42");
+    const fetchMock = mockFetch(async () => jsonResponse({ ok: true }));
+
+    try {
+      await api.get("/api/v1/me");
+    } finally {
+      useSessionStore.getState().clear();
+    }
+
+    const [, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(new Headers(init.headers).get("X-Store-Id")).toBe("store-42");
+  });
+
+  it("sends no X-Store-Id when no store is active", async () => {
+    const fetchMock = mockFetch(async () => jsonResponse({ ok: true }));
+
+    await api.get("/api/v1/me");
+
+    const [, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(new Headers(init.headers).has("X-Store-Id")).toBe(false);
   });
 });

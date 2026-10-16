@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 
+import { SwrProvider } from "@/lib/swr-config";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,7 +18,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">): React.JSX.Element {
   return (
     <html lang="es" className="h-full antialiased">
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <SwrProvider>{children}</SwrProvider>
+      </body>
     </html>
   );
 }

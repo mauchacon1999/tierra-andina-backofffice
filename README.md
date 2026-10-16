@@ -72,7 +72,8 @@ bun dev
 
 - Web: http://localhost:3000 — shows the API and database status (green/red)
 - API: http://localhost:4000/health and http://localhost:4000/health/db
-- Sign in (API only for now): `POST /api/auth/sign-in/email` with the `SEED_OWNER_*` credentials; see [docs/api.http](docs/api.http)
+- Sign in at http://localhost:3000/login with the `SEED_OWNER_EMAIL` / `SEED_OWNER_PASSWORD`
+  from your `.env` (after `bun run db:seed`). API requests: [docs/api.http](docs/api.http)
 
 One app only: `bun --cwd=apps/api run dev` or `bun --cwd=apps/web run dev`.
 
