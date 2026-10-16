@@ -8,6 +8,13 @@
       "when": 1792126449292,
       "tag": "0000_organization_and_auth",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792126563262,
+      "tag": "0001_catalog_rates_purchasing_pricing",
+      "breakpoints": true
     }
   ]
 }
