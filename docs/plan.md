@@ -75,7 +75,8 @@ Done when: every product the owner buys is loaded with its purchase and sale uni
 - [~] ~~Supplier claims for partial or missing goods~~ — not in the system: the owner asks
   the stall in person (decision 2026-10-17).
 - [x] On close, publish a price list in USD and Bs from what can be sold (sale rate + rounding).
-- [ ] Share that list as image or text on WhatsApp.
+- [~] ~~Share that list as image or text on WhatsApp~~ — not needed: the manager sees "Precios"
+  in the app (owner, 2026-10-17).
 - [ ] Rate-change alert with a proposed list to approve.
 - [ ] Offline support for the purchase screen (no signal at the market).
 
