@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { countPendingReceipt } from "@/features/purchases/helpers/line-receipt";
 import { formatBusinessDateLong } from "@/utils/format-date";
 import { formatBs, formatDecimal, formatUsd } from "@/utils/format-number";
 
@@ -16,6 +17,7 @@ export type TripHeaderProps = {
 export function TripHeader({ trip }: TripHeaderProps): React.JSX.Element {
   const t = useTranslations("purchases");
   const isOpen = trip.status === "open";
+  const pending = countPendingReceipt(trip);
 
   return (
     <Card tone={isOpen ? "success" : "default"} className="space-y-3">
@@ -40,6 +42,11 @@ export function TripHeader({ trip }: TripHeaderProps): React.JSX.Element {
         <dt className="text-muted">{t("trip.realCost")}</dt>
         <dd className="text-right font-semibold">{formatUsd(trip.totalUsd)}</dd>
       </dl>
+      {isOpen && trip.lines.length > 0 && (
+        <p className="text-sm font-medium" aria-live="polite">
+          {pending > 0 ? t("trip.pendingReceipt", { count: pending }) : t("trip.allReceived")}
+        </p>
+      )}
     </Card>
   );
 }

@@ -3,8 +3,10 @@ import { describe, expect, test } from "bun:test";
 import {
   createSupplierSchema,
   openTripSchema,
+  partialReceiptFormSchema,
   purchaseLineFieldsSchema,
   purchaseLineFormSchema,
+  setReceiptSchema,
   updatePurchaseLineSchema,
 } from "./purchases";
 import { formatValidationMessage as text } from "./messages";
@@ -135,5 +137,52 @@ describe("purchaseLineFormSchema (web)", () => {
       fieldErrors(purchaseLineFormSchema.safeParse({ ...FORM, marginPercent: "12.345" }))
         .marginPercent,
     ).toBe("El margen admite como máximo 2 decimales");
+  });
+});
+
+describe("setReceiptSchema (truck receipt)", () => {
+  test("one shape per status; a partial receipt needs the packs that arrived", () => {
+    expect(setReceiptSchema.parse({ status: "received" })).toEqual({ status: "received" });
+    expect(setReceiptSchema.parse({ status: "missing", note: " no llegó " })).toEqual({
+      status: "missing",
+      note: "no llegó",
+    });
+    expect(setReceiptSchema.parse({ status: "pending" })).toEqual({ status: "pending" });
+    expect(
+      setReceiptSchema.parse({ status: "partial", receivedPacks: "2", receivedQuantity: "47.5" }),
+    ).toEqual({ status: "partial", receivedPacks: "2", receivedQuantity: "47.5" });
+    expect(fieldErrors(setReceiptSchema.safeParse({ status: "partial" }))).toHaveProperty(
+      "receivedPacks",
+    );
+  });
+
+  test("rejects an unknown status and non-positive quantities", () => {
+    expect(setReceiptSchema.safeParse({ status: "lost" }).success).toBe(false);
+    expect(
+      fieldErrors(setReceiptSchema.safeParse({ status: "partial", receivedPacks: "0" })),
+    ).toEqual({ receivedPacks: "Lo recibido debe ser mayor que 0" });
+  });
+});
+
+describe("partialReceiptFormSchema (web)", () => {
+  test("empty weight and note are left out", () => {
+    expect(
+      partialReceiptFormSchema.parse({ receivedPacks: " 2 ", receivedQuantity: "", note: "" }),
+    ).toEqual({ status: "partial", receivedPacks: "2" });
+  });
+
+  test("reports errors on the form fields", () => {
+    expect(
+      fieldErrors(
+        partialReceiptFormSchema.safeParse({
+          receivedPacks: "",
+          receivedQuantity: "1,5",
+          note: "",
+        }),
+      ),
+    ).toEqual({
+      receivedPacks: "Lo recibido debe ser un número con punto decimal (p. ej. 15.50)",
+      receivedQuantity: "El peso recibido debe ser un número con punto decimal (p. ej. 15.50)",
+    });
   });
 });

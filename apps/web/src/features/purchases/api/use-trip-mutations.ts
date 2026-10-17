@@ -33,6 +33,8 @@ function useAfterTripWrite(): (trip: TripDetail | Trip, refreshProducts: boolean
   return async (trip, refreshProducts) => {
     if ("lines" in trip) await mutate(queryKeys.trips.detail(trip.id), trip, { revalidate: false });
     await mutate((key) => isTripsKey(key) && Array.isArray(key) && key[1] === "list");
+    await mutate(queryKeys.shoppingList);
+    await mutate(queryKeys.priceLists.current);
     if (refreshProducts) await mutate(isProductsKey);
   };
 }

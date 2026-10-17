@@ -84,6 +84,13 @@ export const purchaseLines = pgTable(
     receivedBy: uuid("received_by").references(() => users.id),
     receivedAt: timestamp("received_at", { withTimezone: true }),
     receiptNote: text("receipt_note"),
+    /**
+     * Partial receipt only: the cost of what arrived (domain-model §3.2). The purchase-time
+     * usable quantity, unit cost and sale price above keep what was bought.
+     */
+    receivedUsableQuantity: quantity("received_usable_quantity"),
+    receivedUnitCostUsd: money("received_unit_cost_usd"),
+    receivedSalePriceUsd: money("received_sale_price_usd"),
     ...timestamps,
     ...auditColumns,
   },
@@ -112,6 +119,15 @@ export const purchaseLines = pgTable(
     check(
       "purchase_lines_received_packs_check",
       sql`${t.receivedPacks} IS NULL OR (${t.receivedPacks} >= 0 AND ${t.receivedPacks} <= ${t.packs})`,
+    ),
+    check(
+      "purchase_lines_received_costs_check",
+      sql`(${t.receiptStatus} = 'partial'
+          AND ${t.receivedUsableQuantity} IS NOT NULL AND ${t.receivedUsableQuantity} > 0
+          AND ${t.receivedUnitCostUsd} IS NOT NULL AND ${t.receivedUnitCostUsd} >= 0
+          AND ${t.receivedSalePriceUsd} IS NOT NULL AND ${t.receivedSalePriceUsd} >= 0)
+        OR (${t.receiptStatus} <> 'partial' AND ${t.receivedUsableQuantity} IS NULL
+          AND ${t.receivedUnitCostUsd} IS NULL AND ${t.receivedSalePriceUsd} IS NULL)`,
     ),
     check(
       "purchase_lines_received_quantity_check",

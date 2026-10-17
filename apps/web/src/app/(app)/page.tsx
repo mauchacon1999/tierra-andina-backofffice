@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
-import { OwnerShortcuts } from "@/features/home/components/owner-shortcuts";
+import { HomeShortcuts } from "@/features/home/components/home-shortcuts";
 import { StatusPanel } from "@/features/system-status/components/status-panel";
 
 export default async function Home(): Promise<React.JSX.Element> {
@@ -11,7 +11,7 @@ export default async function Home(): Promise<React.JSX.Element> {
         <h1 className="text-3xl font-bold tracking-tight text-primary-text">{t("title")}</h1>
         <p className="mt-1 text-muted">{t("subtitle")}</p>
       </header>
-      <OwnerShortcuts />
+      <HomeShortcuts />
       <StatusPanel />
     </div>
   );

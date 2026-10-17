@@ -23,6 +23,8 @@ export const VALIDATION_MESSAGES_ES_VE = {
     bsRoundingStep: "El redondeo en bolívares",
     saleRateMarkupPct: "El recargo de la tasa de venta",
     defaultMargin: "El margen por defecto",
+    receivedPacks: "Lo recibido",
+    receivedQuantity: "El peso recibido",
   },
   decimal: {
     notText: "{subject} debe enviarse como texto",
@@ -73,6 +75,10 @@ export const VALIDATION_MESSAGES_ES_VE = {
   purchase: {
     productRequired: "Elige un producto",
     shrinkageBelowGross: "La merma debe ser menor que la cantidad bruta",
+  },
+  receipt: {
+    receivedPacksRange: "Debe ser más de 0 y menos de lo comprado",
+    receivedQuantityRange: "Debe ser más de 0 y no más de lo comprado",
   },
 } as const;
 

@@ -16,6 +16,11 @@ export const queryKeys = {
     range: (from: string, to: string) => ["exchange-rates", "range", from, to] as const,
   },
   suppliers: ["suppliers"] as const,
+  receipts: ["receipts"] as const,
+  shoppingList: ["shopping-list"] as const,
+  priceLists: {
+    current: ["price-lists", "current"] as const,
+  },
   trips: {
     all: ["trips"] as const,
     list: (params: TripListQueryInput) => ["trips", "list", params] as const,

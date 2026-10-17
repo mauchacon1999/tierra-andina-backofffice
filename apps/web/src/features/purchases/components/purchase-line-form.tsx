@@ -19,6 +19,9 @@ export type PurchaseLineFormProps = {
   line?: PurchaseLine;
   onDone?: () => void;
   onCancel?: () => void;
+  /** From the pending list: selects this product when `pickToken` changes. */
+  pickedProductId?: string | null;
+  pickToken?: number;
 };
 
 /** Add or edit one purchase of the trip, with its cost computed while typing. */
@@ -27,8 +30,16 @@ export function PurchaseLineForm({
   line,
   onDone,
   onCancel,
+  pickedProductId,
+  pickToken,
 }: PurchaseLineFormProps): React.JSX.Element {
-  const f = useLineForm({ trip, ...(line ? { line } : {}), ...(onDone ? { onDone } : {}) });
+  const f = useLineForm({
+    trip,
+    ...(line ? { line } : {}),
+    ...(onDone ? { onDone } : {}),
+    ...(pickedProductId ? { pickedProductId } : {}),
+    ...(pickToken ? { pickToken } : {}),
+  });
   const t = useTranslations("purchases.line");
   const tc = useTranslations("common");
   const { errors } = f.form.formState;

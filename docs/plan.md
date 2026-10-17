@@ -68,11 +68,14 @@ Done when: every product the owner buys is loaded with its purchase and sale uni
       (last values suggested).
 - [x] Live calculation of real cost, unit cost and sale price.
 - [x] Payment status per line (paid / credit). Payables for credit lines are still pending.
-- [ ] Receiver view: live list of the trip, big buttons Received / Partial / Missing.
+- [x] Receiver view: live list of the trip, big buttons Received / Partial / Missing
+      ("Recepción"; refreshes every 5 s; partial lines re-cost with what arrived).
 - [ ] Push notification to the receiver for each line bought.
-- [ ] Live pending counter for the owner; warning before closing the trip.
-- [ ] Supplier claims for partial or missing goods.
-- [ ] Generate a price list in USD and Bs; share as image or text on WhatsApp.
+- [x] Live pending counter for the owner; warning before closing the trip.
+- [~] ~~Supplier claims for partial or missing goods~~ — not in the system: the owner asks
+  the stall in person (decision 2026-10-17).
+- [x] On close, publish a price list in USD and Bs from what can be sold (sale rate + rounding).
+- [ ] Share that list as image or text on WhatsApp.
 - [ ] Rate-change alert with a proposed list to approve.
 - [ ] Offline support for the purchase screen (no signal at the market).
 
@@ -103,7 +106,8 @@ Done when: the owner sees at a glance what is owed to him and what he owes.
 - [ ] Sales, purchases, expenses, payroll and profit for the week in USD.
 - [ ] Week-over-week comparison, paydays highlighted.
 - [ ] Sales by day of the week.
-- [ ] Thursday shopping list: the manager marks what is missing from the phone.
+- [x] Shopping list before Coche: the owner marks what is missing; buying a product checks it
+      off. The manager can use the same screen once that user exists (still pending in phase 0).
 
 Done when: the Sunday review happens in the system, not in Excel.
 

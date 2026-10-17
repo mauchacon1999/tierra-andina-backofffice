@@ -1,6 +1,7 @@
 import {
   openTripSchema,
   purchaseLineFieldsSchema,
+  setReceiptSchema,
   tripListQuerySchema,
   updatePurchaseLineSchema,
 } from "@ta/validators";
@@ -11,7 +12,7 @@ import type { AppEnv } from "@/lib/types";
 import { validate } from "@/lib/validate";
 import { getActor, getMembership, requireRole } from "@/middleware/auth";
 
-import { toTripDetailDto, toTripDto } from "./purchases.mapper";
+import { toReceiptTripDto, toTripDetailDto, toTripDto } from "./purchases.mapper";
 import {
   addLine,
   closeTrip,
@@ -19,15 +20,18 @@ import {
   getTrip,
   listTrips,
   openTrip,
+  setLineReceipt,
   updateLine,
 } from "./purchases.service";
+import { canSeePrices } from "@/modules/receipts/receipts.service";
 
 const tripParam = z.object({ id: z.uuid({ error: "Identificador inválido" }) });
 const lineParam = tripParam.extend({ lineId: z.uuid({ error: "Identificador inválido" }) });
 
 /**
  * /api/v1/purchase-trips — purchases at the wholesale market. Recording purchases, costs and
- * margins is owner-only (docs/plan.md §4); the receiver view comes with truck receipt.
+ * margins is owner-only (docs/plan.md §4); marking what arrived at the truck is also open to
+ * the receiver, who gets the trip without costs (domain-model §4).
  */
 export function purchaseTripsRoutes(): Hono<AppEnv> {
   const owner = requireRole("owner");
@@ -61,6 +65,25 @@ export function purchaseTripsRoutes(): Hono<AppEnv> {
           c.req.valid("json"),
         );
         return c.json(toTripDetailDto(trip), 201);
+      },
+    )
+    .patch(
+      "/:id/lines/:lineId/receipt",
+      requireRole("owner", "receiver"),
+      validate("param", lineParam),
+      validate("json", setReceiptSchema),
+      async (c) => {
+        const db = c.get("db");
+        const { id, lineId } = c.req.valid("param");
+        const trip = await setLineReceipt(
+          db,
+          getActor(c),
+          id,
+          lineId,
+          c.req.valid("json"),
+          new Date(),
+        );
+        return c.json(toReceiptTripDto(trip, await canSeePrices(db, getMembership(c))));
       },
     )
     .patch(

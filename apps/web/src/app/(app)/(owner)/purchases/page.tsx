@@ -20,9 +20,14 @@ export default async function PurchasesPage(): Promise<React.JSX.Element> {
           <h1 className="text-3xl font-bold tracking-tight text-primary-text">{t("title")}</h1>
           <p className="mt-1 text-muted">{t("subtitle")}</p>
         </div>
-        <ButtonLink href="/rates" variant="secondary" className="shrink-0 whitespace-nowrap">
-          {t("ratesLink")}
-        </ButtonLink>
+        <div className="flex shrink-0 gap-2">
+          <ButtonLink href="/shopping-list" variant="secondary" className="whitespace-nowrap">
+            {t("listLink")}
+          </ButtonLink>
+          <ButtonLink href="/rates" variant="secondary" className="whitespace-nowrap">
+            {t("ratesLink")}
+          </ButtonLink>
+        </div>
       </header>
       <Card>
         <OpenTripForm />

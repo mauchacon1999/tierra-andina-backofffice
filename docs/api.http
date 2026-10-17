@@ -164,6 +164,35 @@ Content-Type: application/json
 ### Trip with lines
 GET {{baseUrl}}/api/v1/purchase-trips/{{openTrip.response.body.id}}
 
-### Close the trip — 200; lines can no longer change
+### Truck receipt (owner or receiver) — 200 the trip as the receiver sees it (prices hidden
+### for receivers unless receiverCanSeePrices). status: received | partial | missing | pending
+PATCH {{baseUrl}}/api/v1/purchase-trips/{{openTrip.response.body.id}}/lines/<line id>/receipt
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "status": "partial", "receivedPacks": "2", "receivedQuantity": "47.5", "note": "Faltó una cesta" }
+
+### Open trips with what to check at the truck — 200 { data: [{ id, businessDate, note, lines }] }
+GET {{baseUrl}}/api/v1/receipts
+
+### Close the trip — 200; lines can no longer change. Publishes the sale price list
+### (422 SALE_RATE_MISSING if that day has no sale rate).
 POST {{baseUrl}}/api/v1/purchase-trips/{{openTrip.response.body.id}}/close
 Origin: http://localhost:3000
+
+### What the shop still needs before Coche — 200 { data: [...] }, oldest first
+GET {{baseUrl}}/api/v1/shopping-list
+
+### Add a missing product — 201
+POST {{baseUrl}}/api/v1/shopping-list
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "productId": "<product uuid>", "note": "se acabó" }
+
+### Drop an open request — 200
+POST {{baseUrl}}/api/v1/shopping-list/<item id>/drop
+Origin: http://localhost:3000
+
+### Sale prices in force (owner or manager) — 200, or 404 PRICE_LIST_NOT_FOUND
+GET {{baseUrl}}/api/v1/price-lists/current

@@ -83,6 +83,15 @@ export async function updateTripById(
   return row;
 }
 
+/** Open trips of a store, newest business day first. */
+export async function findOpenTrips(db: Executor, storeId: string): Promise<TripRow[]> {
+  return db
+    .select(tripWithCount)
+    .from(purchaseTrips)
+    .where(and(eq(purchaseTrips.storeId, storeId), eq(purchaseTrips.status, "open")))
+    .orderBy(desc(purchaseTrips.businessDate), desc(purchaseTrips.createdAt));
+}
+
 /** Lines of a trip with product and supplier names, in the order they were bought. */
 export async function findTripLines(db: Executor, tripId: string): Promise<LineRow[]> {
   return db

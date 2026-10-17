@@ -47,7 +47,16 @@ describe("AppShell", () => {
     const links = sidebar()
       .getAllByRole("link")
       .map((a) => a.textContent);
-    expect(links).toEqual(["Tierra Andina", "Inicio", "Compras", "Tasas del día", "Productos"]);
+    expect(links).toEqual([
+      "Tierra Andina",
+      "Inicio",
+      "Faltantes",
+      "Compras",
+      "Recepción",
+      "Precios",
+      "Tasas del día",
+      "Productos",
+    ]);
     expect(sidebar().getByRole("link", { name: "Compras" }).getAttribute("aria-current")).toBe(
       "page",
     );
@@ -62,6 +71,18 @@ describe("AppShell", () => {
 
     expect(sidebar().queryByRole("link", { name: "Compras" })).toBeNull();
     expect(sidebar().getByRole("link", { name: "Inicio" })).toBeDefined();
+    expect(sidebar().getByRole("link", { name: "Recepción" })).toBeDefined();
+    expect(sidebar().queryByRole("link", { name: "Precios" })).toBeNull();
+  });
+
+  it("the manager sees the shopping list and the prices, not the purchases", () => {
+    session.role = "manager";
+    renderShell();
+
+    const links = sidebar()
+      .getAllByRole("link")
+      .map((a) => a.textContent);
+    expect(links).toEqual(["Tierra Andina", "Inicio", "Faltantes", "Precios"]);
   });
 
   it("collapses to icons with accessible names, and remembers it", () => {

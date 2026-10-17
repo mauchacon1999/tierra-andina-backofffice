@@ -122,6 +122,14 @@ export const purchaseLineSchema = z.object({
   salePriceUsd: z.string(),
   paymentStatus: z.enum(PAYMENT_STATUSES),
   receiptStatus: z.enum(RECEIPT_STATUSES),
+  receivedPacks: z.string().nullable(),
+  receivedQuantity: z.string().nullable(),
+  receiptNote: z.string().nullable(),
+  receivedAt: z.iso.datetime({ offset: true }).nullable(),
+  /** Partial receipts only: the cost of what arrived (the purchase values stay as bought). */
+  receivedUsableQuantity: z.string().nullable(),
+  receivedUnitCostUsd: z.string().nullable(),
+  receivedSalePriceUsd: z.string().nullable(),
   createdAt: z.iso.datetime({ offset: true }),
 });
 
@@ -230,3 +238,82 @@ export const purchaseLineFormSchema = z
   });
 
 export type PurchaseLineFormValues = z.input<typeof purchaseLineFormSchema>;
+
+// Truck receipt (domain-model §4) ------------------------------------------------------------------
+
+export type ReceiptStatus = (typeof RECEIPT_STATUSES)[number];
+
+const receiptNoteSchema = shortTextSchema(200).optional();
+
+/**
+ * PATCH /api/v1/purchase-trips/:id/lines/:lineId/receipt — what arrived at the truck.
+ * "pending" undoes a mark. The ranges of a partial receipt (0 < packs < bought, weight ≤ gross)
+ * need the line, so the API checks them with @ta/core (422 INVALID_RECEIPT).
+ */
+export const setReceiptSchema = z.discriminatedUnion("status", [
+  z.object({ status: z.literal("pending") }),
+  z.object({ status: z.literal("received"), note: receiptNoteSchema }),
+  z.object({ status: z.literal("missing"), note: receiptNoteSchema }),
+  z.object({
+    status: z.literal("partial"),
+    receivedPacks: positiveQuantity("receivedPacks"),
+    receivedQuantity: positiveQuantity("receivedQuantity").optional(),
+    note: receiptNoteSchema,
+  }),
+]);
+
+export type SetReceipt = z.infer<typeof setReceiptSchema>;
+
+/** "Llegó incompleto" form (web): text inputs; empty weight → share of the packs. */
+export const partialReceiptFormSchema = z
+  .object({ receivedPacks: z.string(), receivedQuantity: z.string(), note: z.string() })
+  .transform((value, ctx) => {
+    const parsed = setReceiptSchema.safeParse({
+      status: "partial",
+      receivedPacks: value.receivedPacks.trim(),
+      receivedQuantity: value.receivedQuantity.trim() || undefined,
+      note: value.note.trim() || undefined,
+    });
+    if (parsed.success) return parsed.data;
+    for (const issue of parsed.error.issues) {
+      ctx.addIssue({ code: "custom", path: issue.path, message: issue.message });
+    }
+    return z.NEVER;
+  });
+
+export type PartialReceiptFormValues = z.input<typeof partialReceiptFormSchema>;
+
+/** A line as the receiver sees it: what to check, no costs (prices only if the store allows). */
+export const receiptLineSchema = z.object({
+  id: z.uuid(),
+  productName: z.string(),
+  purchaseUnit: purchaseUnitSchema,
+  saleUnit: saleUnitSchema,
+  packs: z.string(),
+  grossQuantity: z.string(),
+  supplierName: z.string().nullable(),
+  stallReference: z.string().nullable(),
+  receiptStatus: z.enum(RECEIPT_STATUSES),
+  receivedPacks: z.string().nullable(),
+  receivedQuantity: z.string().nullable(),
+  receiptNote: z.string().nullable(),
+  receivedAt: z.iso.datetime({ offset: true }).nullable(),
+  /** Null unless the store setting `receiverCanSeePrices` is on (always shown to the owner). */
+  quotedPriceUsd: z.string().nullable(),
+  createdAt: z.iso.datetime({ offset: true }),
+});
+
+export type ReceiptLine = z.infer<typeof receiptLineSchema>;
+
+export const receiptTripSchema = z.object({
+  id: z.uuid(),
+  businessDate: z.string(),
+  note: z.string().nullable(),
+  lines: z.array(receiptLineSchema),
+});
+
+export type ReceiptTrip = z.infer<typeof receiptTripSchema>;
+
+/** GET /api/v1/receipts — the open trips of the store, newest first. */
+export const receiptTripListSchema = z.object({ data: z.array(receiptTripSchema) });
+export type ReceiptTripList = z.infer<typeof receiptTripListSchema>;

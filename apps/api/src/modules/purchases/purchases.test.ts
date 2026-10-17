@@ -454,7 +454,8 @@ describe("PATCH / DELETE lines", () => {
 describe("POST /api/v1/purchase-trips/:id/close", () => {
   test("closes the trip; afterwards lines cannot change (409 TRIP_CLOSED)", async () => {
     const product = await tomato();
-    const tripId = await openTrip();
+    const date = await dayWithRates({ bcv: "200", market: "201", sale: "210" });
+    const tripId = await openTrip(date);
     const { line } = lastLine(
       (
         await addLine(tripId, {

@@ -237,6 +237,42 @@ const CASES: CheckCase[] = [
       negative: (tx, b) => tx.insert(purchaseLines).values(line(b, { receivedQuantity: "-1" })),
     },
   },
+  {
+    constraint: "purchase_lines_received_costs_check",
+    valid: (tx, b) =>
+      tx.insert(purchaseLines).values(
+        line(b, {
+          receiptStatus: "partial",
+          receivedPacks: "0.5",
+          receivedQuantity: "12",
+          receivedUsableQuantity: "11",
+          receivedUnitCostUsd: "1.8182",
+          receivedSalePriceUsd: "2.75",
+        }),
+      ),
+    invalid: {
+      "partial without its costs": (tx, b) =>
+        tx.insert(purchaseLines).values(line(b, { receiptStatus: "partial" })),
+      "costs on a received line": (tx, b) =>
+        tx.insert(purchaseLines).values(
+          line(b, {
+            receiptStatus: "received",
+            receivedUsableQuantity: "22",
+            receivedUnitCostUsd: "0.9091",
+            receivedSalePriceUsd: "1.40",
+          }),
+        ),
+      "nothing usable": (tx, b) =>
+        tx.insert(purchaseLines).values(
+          line(b, {
+            receiptStatus: "partial",
+            receivedUsableQuantity: "0",
+            receivedUnitCostUsd: "0",
+            receivedSalePriceUsd: "0",
+          }),
+        ),
+    },
+  },
   // supplier_claims
   {
     constraint: "supplier_claims_amounts_check",

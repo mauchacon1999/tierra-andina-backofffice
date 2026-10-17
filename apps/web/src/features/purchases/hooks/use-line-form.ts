@@ -15,7 +15,7 @@ import {
   type TripDetail,
 } from "@ta/validators";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 
 import type { SelectOption } from "@/components/ui/select-field";
@@ -35,6 +35,9 @@ export type UseLineFormOptions = {
   line?: PurchaseLine;
   /** Called after a successful save (edit mode closes the form). */
   onDone?: () => void;
+  /** Product chosen from the shopping list. Applied when `pickToken` changes. */
+  pickedProductId?: string | null;
+  pickToken?: number;
 };
 
 export type UseLineFormResult = {
@@ -100,7 +103,13 @@ function toFormField(apiField: string): keyof PurchaseLineFormValues | null {
  * quoted total, supplier rate and margin, with the cost computed live. A new line pre-fills
  * the product's last shrinkage and margin and estimates the gross quantity from the packs.
  */
-export function useLineForm({ trip, line, onDone }: UseLineFormOptions): UseLineFormResult {
+export function useLineForm({
+  trip,
+  line,
+  onDone,
+  pickedProductId,
+  pickToken = 0,
+}: UseLineFormOptions): UseLineFormResult {
   const isEdit = line !== undefined;
   const t = useTranslations("purchases.line");
   const labels = useUnitLabels();
@@ -136,13 +145,23 @@ export function useLineForm({ trip, line, onDone }: UseLineFormOptions): UseLine
     form.setValue("grossQuantity", estimatedGross);
   }, [isEdit, estimatedGross, form]);
 
-  const selectProduct = (productId: string, from: Product[] = products): void => {
-    form.setValue("productId", productId, { shouldDirty: true, shouldValidate: true });
-    const picked = from.find((p) => p.id === productId);
-    if (!picked || isEdit) return;
-    form.setValue("shrinkage", normalizeDecimal(picked.lastShrinkage));
-    form.setValue("marginPercent", fractionToPercent(picked.lastMargin));
-  };
+  const selectProduct = useCallback(
+    (productId: string, from: Product[] = products): void => {
+      form.setValue("productId", productId, { shouldDirty: true, shouldValidate: true });
+      const picked = from.find((p) => p.id === productId);
+      if (!picked || isEdit) return;
+      form.setValue("shrinkage", normalizeDecimal(picked.lastShrinkage));
+      form.setValue("marginPercent", fractionToPercent(picked.lastMargin));
+    },
+    [form, isEdit, products],
+  );
+
+  const appliedPick = useRef(0);
+  useEffect(() => {
+    if (!pickedProductId || isEdit || pickToken === 0 || appliedPick.current === pickToken) return;
+    appliedPick.current = pickToken;
+    selectProduct(pickedProductId);
+  }, [pickToken, pickedProductId, isEdit, selectProduct]);
 
   const showServerError = (error: unknown): void => {
     if (!isApiError(error)) {

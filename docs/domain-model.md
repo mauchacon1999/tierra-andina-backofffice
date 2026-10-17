@@ -86,7 +86,9 @@ sale_price_bs     = round_up(sale_price_usd × sale_rate, bs_rounding_step)
 - `supplier_rate` defaults to the trip's `market_rate` (Coche rate of the day); `bcv_rate` and
   `market_rate` are copied into the trip from the day's rates when it is opened.
 - Trip totals: `total_usd = Σ real_cost_usd` and `total_bs = Σ amount_bs` of its lines.
-- If goods arrive incomplete (§4), costing uses the **received** quantity.
+- If goods arrive incomplete (§4), costing uses the **received** quantity: the same real cost
+  over what arrived (`pricePartialReceipt`, stored in `received_usable_quantity`,
+  `received_unit_cost_usd`, `received_sale_price_usd`; the purchase-time values are kept).
 
 ### 3.3 Reference cases (must be covered by tests)
 
@@ -101,9 +103,23 @@ sale_price_bs     = round_up(sale_price_usd × sale_rate, bs_rounding_step)
 ### 3.4 Price lists
 
 - A price list is generated after a purchase trip and published to the shop.
-- Thursday's list is optional. When the BCV rate rises, the system proposes updated prices;
-  the owner decides whether to publish.
 - Every published list is kept, so the price in force on any date is known.
+- When the BCV rate rises without a new trip, proposing a list to approve is still pending.
+- Closing a purchase trip publishes the next list. Products that arrived (or are still pending)
+  take the sale price of that line; a partial receipt uses the price of what arrived; missing
+  goods keep their previous price. Bolívares are `price_usd ×` the day's sale rate, rounded up
+  with `bs_rounding_step`. Without that day's sale rate the trip cannot be closed.
+
+### 3.5 Shopping list
+
+Before going to Coche, the owner (and the manager, once that user exists) writes what the shop
+is missing: one row per request, product and an optional note.
+
+- Open requests are what is still to buy, oldest first.
+- Adding a purchase line checks off the oldest open request for that product and links it.
+- Deleting that line, or changing it to another product, puts the request back to open.
+- Dropping a request means it will not be bought.
+- The list is the plan; the trip can still include products that were not on it.
 
 ---
 
@@ -119,9 +135,20 @@ where a **receiver** checks what arrives.
 | `partial`      | Receiver | Arrived incomplete; receiver records received packs and a note |
 | `missing`      | Receiver | Did not arrive                                                 |
 
-- The owner sees live which lines are in the truck and which are pending.
-- Before closing the trip, the system warns about pending lines.
-- `partial` and `missing` lines create a **supplier claim** for the difference.
+- The owner sees live which lines are in the truck and which are pending (refreshed every
+  few seconds) and the count still to receive.
+- Before closing the trip, the system warns about pending lines (closing is still allowed).
+- **Partial:** the receiver records the packs that arrived (and the weight, optional; by default
+  the same share of the gross quantity). What was paid does not change; the unit cost and sale
+  price are recomputed with what arrived, with the shrinkage reduced in the same proportion.
+- **Missing:** nothing arrived; the line keeps its cost in the trip totals (it was paid).
+- The receiver (and the owner) can correct a mark, or undo it back to `pending`, while the trip
+  is open. Every mark is audited.
+- If the owner later changes what was bought (product, packs, gross quantity, shrinkage), the
+  receipt goes back to `pending` to be checked again; a price, rate or margin change re-costs a
+  partial receipt.
+- **No supplier claims in the system** (owner, 2026-10-17): when something is missing the owner
+  goes and asks the stall. The `supplier_claims` table stays unused.
 - Because each line can come from a different stall, **supplier, supplier rate and payment
   status belong to the purchase line**, not to the trip.
 - The receiver role sees only the current trip, product and packs (prices hidden by default,
@@ -244,12 +271,12 @@ have no store, sale rows always have one.
 
 ### 9.4 Purchasing
 
-| Table                 | Key columns                                                                                                                                                                                                                                                                                                                                                                                              |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `purchase_trips`      | store_id, business_date, bcv_rate, market_rate, status (`open`/`closed`), total_usd, total_bs, note                                                                                                                                                                                                                                                                                                      |
-| `purchase_lines`      | trip_id, supplier_id (nullable), stall_reference, product_id, purchase_unit, packs, gross_quantity, shrinkage, usable_quantity, quoted_price_usd, amount_bs, supplier_rate, real_cost_usd, unit_cost_usd, margin, sale_price_usd, payment_status (`paid`/`credit`), receipt_status (`pending`/`received`/`partial`/`missing`), received_packs, received_quantity, received_by, received_at, receipt_note |
-| `supplier_claims`     | purchase_line_id (unique), supplier_id (nullable), missing_packs, amount_usd, status (`open`/`resolved`/`written_off`), resolution_note                                                                                                                                                                                                                                                                  |
-| `shopping_list_items` | store_id, product_id, requested_by, note, status (`open`/`bought`/`dropped`), purchase_line_id (nullable)                                                                                                                                                                                                                                                                                                |
+| Table                 | Key columns                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `purchase_trips`      | store_id, business_date, bcv_rate, market_rate, status (`open`/`closed`), total_usd, total_bs, note                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `purchase_lines`      | trip_id, supplier_id (nullable), stall_reference, product_id, purchase_unit, packs, gross_quantity, shrinkage, usable_quantity, quoted_price_usd, amount_bs, supplier_rate, real_cost_usd, unit_cost_usd, margin, sale_price_usd, payment_status (`paid`/`credit`), receipt_status (`pending`/`received`/`partial`/`missing`), received_packs, received_quantity, received_by, received_at, receipt_note, received_usable_quantity, received_unit_cost_usd, received_sale_price_usd (partial receipts) |
+| `supplier_claims`     | purchase_line_id (unique), supplier_id (nullable), missing_packs, amount_usd, status (`open`/`resolved`/`written_off`), resolution_note                                                                                                                                                                                                                                                                                                                                                                |
+| `shopping_list_items` | store_id, product_id, requested_by, note, status (`open`/`bought`/`dropped`), purchase_line_id (nullable)                                                                                                                                                                                                                                                                                                                                                                                              |
 
 - `quoted_price_usd` is the **total of the line** (3 crates at 20 USD → 60 USD).
 - `amount_bs` = `quoted_price_usd × supplier_rate`: what is paid to the stall in Bs, at the

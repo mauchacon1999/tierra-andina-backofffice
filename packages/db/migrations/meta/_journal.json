@@ -36,6 +36,13 @@
       "when": 1792156073687,
       "tag": "0004_market_rate",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792207054012,
+      "tag": "0005_received_costs",
+      "breakpoints": true
     }
   ]
 }

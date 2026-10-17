@@ -6,8 +6,9 @@ import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
 import type { DataColumn, RowAction } from "@/components/shared/data-table/types";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { useUnitLabels } from "@/features/products/hooks/use-unit-labels";
+import { effectiveCosts } from "@/features/purchases/helpers/line-receipt";
 import { formatBs, formatDecimal, formatQuantity, formatUsd } from "@/utils/format-number";
 
 export type UseLineTableOptions = {
@@ -16,6 +17,13 @@ export type UseLineTableOptions = {
   onEdit: (line: PurchaseLine) => void;
   onDelete: (line: PurchaseLine) => Promise<void>;
 };
+
+const RECEIPT_TONE = {
+  pending: "warning",
+  received: "success",
+  partial: "warning",
+  missing: "danger",
+} as const satisfies Record<PurchaseLine["receiptStatus"], BadgeTone>;
 
 export type UseLineTableResult = {
   columns: DataColumn<PurchaseLine>[];
@@ -98,8 +106,8 @@ export function useLineTable({
       {
         id: "unitCost",
         header: t("columns.unitCost"),
-        cell: (line) => `${formatUsd(line.unitCostUsd)}/${suffix(line)}`,
-        sortValue: (line) => line.unitCostUsd,
+        cell: (line) => `${formatUsd(effectiveCosts(line).unitCostUsd)}/${suffix(line)}`,
+        sortValue: (line) => effectiveCosts(line).unitCostUsd,
         sortAs: "decimal",
         align: "end",
       },
@@ -108,12 +116,31 @@ export function useLineTable({
         header: t("columns.salePrice"),
         cell: (line) => (
           <span className="font-semibold text-primary-text">
-            {formatUsd(line.salePriceUsd)}/{suffix(line)}
+            {formatUsd(effectiveCosts(line).salePriceUsd)}/{suffix(line)}
           </span>
         ),
-        sortValue: (line) => line.salePriceUsd,
+        sortValue: (line) => effectiveCosts(line).salePriceUsd,
         sortAs: "decimal",
         align: "end",
+      },
+      {
+        id: "receipt",
+        header: t("columns.receipt"),
+        cell: (line) => (
+          <span className="inline-flex flex-col items-start gap-0.5">
+            <Badge tone={RECEIPT_TONE[line.receiptStatus]}>
+              {t(`receiptStatus.${line.receiptStatus}`)}
+            </Badge>
+            {line.receiptStatus === "partial" && line.receivedPacks && (
+              <span className="text-xs text-muted">
+                {t("receiptPartial", {
+                  received: labels.packsCount(line.purchaseUnit, line.receivedPacks),
+                })}
+              </span>
+            )}
+          </span>
+        ),
+        sortValue: (line) => line.receiptStatus,
       },
       {
         id: "payment",

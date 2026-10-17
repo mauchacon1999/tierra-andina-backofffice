@@ -29,3 +29,5 @@ export type {
 } from "./products";
 export { amountInBs, sumDecimals } from "./rates";
 export { BUSINESS_TIME_ZONE, isBusinessDate, toBusinessDate } from "./business-date";
+export { InvalidReceiptError, pricePartialReceipt } from "./receipt";
+export type { PartialReceiptInput, PartialReceiptPricing } from "./receipt";

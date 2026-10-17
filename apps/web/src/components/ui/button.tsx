@@ -15,6 +15,8 @@ const SIZES = {
   // 44 px tall: the minimum touch target on phones.
   md: "min-h-11 px-4 py-2 text-base",
   sm: "min-h-9 px-3 py-1.5 text-sm",
+  // Big one-tap actions used standing up (truck receipt buttons).
+  lg: "min-h-12 px-3 py-3 text-base",
 } as const;
 
 export type ButtonVariant = keyof typeof VARIANTS;

@@ -39,6 +39,13 @@ export const TOMATO_LINE: PurchaseLine = {
   salePriceUsd: "1.4000",
   paymentStatus: "paid",
   receiptStatus: "pending",
+  receivedPacks: null,
+  receivedQuantity: null,
+  receiptNote: null,
+  receivedAt: null,
+  receivedUsableQuantity: null,
+  receivedUnitCostUsd: null,
+  receivedSalePriceUsd: null,
   createdAt: "2026-10-16T10:00:00.000Z",
 };
 

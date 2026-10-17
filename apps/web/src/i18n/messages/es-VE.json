@@ -38,12 +38,15 @@
     "main": "Menú principal",
     "home": "Inicio",
     "purchases": "Compras",
+    "shoppingList": "Faltantes",
+    "prices": "Precios",
     "rates": "Tasas del día",
     "products": "Productos",
     "openMenu": "Abrir menú",
     "closeMenu": "Cerrar menú",
     "collapse": "Contraer menú",
-    "expand": "Expandir menú"
+    "expand": "Expandir menú",
+    "receipt": "Recepción"
   },
   "apiErrors": {
     "NETWORK_ERROR": "No se pudo conectar con la API",
@@ -90,9 +93,17 @@
   },
   "home": {
     "shortcuts": "Accesos",
+    "shoppingList": {
+      "title": "Faltantes",
+      "description": "Lo que hay que comprar en Coche"
+    },
     "purchases": {
       "title": "Compras",
       "description": "Jornadas en Coche y costo de cada compra"
+    },
+    "prices": {
+      "title": "Precios",
+      "description": "Lo que se vende, en dólares y bolívares"
     },
     "rates": {
       "title": "Tasas del día",
@@ -103,7 +114,11 @@
       "description": "Catálogo, unidades, merma y margen"
     },
     "title": "Inicio",
-    "subtitle": "Accesos rápidos y estado del sistema"
+    "subtitle": "Accesos rápidos y estado del sistema",
+    "receipt": {
+      "title": "Recepción",
+      "description": "Marca lo que llega a la camioneta"
+    }
   },
   "units": {
     "purchase": {
@@ -249,6 +264,7 @@
       "pageTitle": "Compras",
       "title": "Compras",
       "subtitle": "Jornadas de compra en Coche",
+      "listLink": "Faltantes",
       "ratesLink": "Tasas del día",
       "loadFailed": "No se pudieron cargar las jornadas",
       "empty": "Aún no hay jornadas de compra.",
@@ -302,13 +318,17 @@
       "linesLabel": "Compras de la jornada",
       "noLines": "Aún no hay compras.",
       "editLine": "Editar {product}",
-      "closeHint": "Al cerrar la jornada ya no se pueden agregar ni cambiar compras.",
+      "closeHint": "Al cerrar se publican los precios de lo que se puede vender y ya no se cambian las compras.",
+      "viewPrices": "Ver precios",
       "close": "Cerrar jornada",
       "closeQuestion": "¿Cerrar la jornada?",
       "closing": "Cerrando…",
       "closeFailed": "No se pudo cerrar la jornada",
       "deleteFailed": "No se pudo eliminar la compra",
-      "editTitle": "Editar compra"
+      "editTitle": "Editar compra",
+      "pendingReceipt": "{count, plural, one {# compra por recibir} other {# compras por recibir}}",
+      "allReceived": "Todo recibido en la camioneta",
+      "closeQuestionPending": "{count, plural, one {Queda # compra sin recibir.} other {Quedan # compras sin recibir.}} ¿Cerrar la jornada igual?"
     },
     "line": {
       "addLabel": "Agregar compra",
@@ -351,8 +371,10 @@
         "usableValue": "{gross} → {usable} {suffix}",
         "amountBs": "Pagado",
         "unitCost": "Costo",
-        "salePrice": "Venta"
-      }
+        "salePrice": "Venta",
+        "receipt": "Recepción"
+      },
+      "receiptPartial": "Llegaron {received}"
     },
     "preview": {
       "label": "Costo de la compra",
@@ -363,6 +385,76 @@
       "usableValue": "{quantity} {suffix}",
       "unitCost": "Costo por {suffix}",
       "salePrice": "Venta por {suffix}"
+    },
+    "needed": {
+      "title": "Por comprar",
+      "empty": "Nada pendiente en la lista.",
+      "loadFailed": "No se pudo cargar la lista de faltantes",
+      "buy": "Comprar"
+    }
+  },
+  "receipts": {
+    "pageTitle": "Recepción",
+    "title": "Recepción",
+    "subtitle": "Marca lo que llega a la camioneta.",
+    "noTrips": "No hay jornadas abiertas. Cuando se abra una, sus compras aparecen aquí.",
+    "noLines": "Aún no hay compras en esta jornada.",
+    "loadFailed": "No se pudo cargar la recepción",
+    "pending": "{count, plural, =0 {Todo revisado} one {# por recibir} other {# por recibir}}",
+    "bought": "{packs} · {stall}",
+    "noStall": "Sin puesto",
+    "price": "Precio {price}",
+    "partialSummary": "Llegaron {received} de {bought}",
+    "actions": "Qué llegó de {product}",
+    "received": "Recibido",
+    "partial": "Incompleto",
+    "missing": "No llegó",
+    "undo": "Deshacer",
+    "markFailed": "No se pudo guardar. Intenta de nuevo",
+    "partialTitle": "¿Cuánto llegó de {product}?",
+    "receivedPacks": "{packs} que llegaron",
+    "receivedPacksHint": "De {bought} compradas.",
+    "receivedQuantity": "Peso o cantidad que llegó",
+    "receivedQuantityHint": "Opcional. Vacío: se calcula por lo que llegó.",
+    "note": "Nota",
+    "save": "Guardar",
+    "saving": "Guardando…"
+  },
+  "shoppingList": {
+    "pageTitle": "Faltantes",
+    "title": "Faltantes",
+    "subtitle": "Lo que hace falta en el negocio, antes de ir a Coche.",
+    "addTitle": "Agregar faltante",
+    "product": "Producto",
+    "productPlaceholder": "Elige un producto",
+    "note": "Nota",
+    "add": "Agregar",
+    "saving": "Agregando…",
+    "saveFailed": "No se pudo agregar el faltante",
+    "label": "Lista de faltantes",
+    "empty": "No hay faltantes. Cuando algo se acabe, anótalo aquí.",
+    "loadFailed": "No se pudo cargar la lista",
+    "drop": "Quitar",
+    "dropQuestion": "¿Quitar {product} de la lista?",
+    "columns": {
+      "product": "Producto",
+      "note": "Nota"
+    }
+  },
+  "prices": {
+    "pageTitle": "Precios",
+    "title": "Precios",
+    "subtitle": "Lo que se vende ahora, calculado al cerrar la jornada.",
+    "label": "Lista de precios",
+    "empty": "Todavía no hay precios. Se publican al cerrar una jornada de compra.",
+    "loadFailed": "No se pudo cargar la lista de precios",
+    "meta": "Publicada el {when} · tasa de venta {rate} Bs",
+    "perUnit": "{price} / {unit}",
+    "columns": {
+      "product": "Producto",
+      "margin": "Margen",
+      "priceUsd": "Dólares",
+      "priceBs": "Bolívares"
     }
   }
 }

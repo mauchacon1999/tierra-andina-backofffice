@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,8 @@ import { ConfirmButton } from "@/components/ui/confirm-button";
 import { PurchaseLineForm } from "@/features/purchases/components/purchase-line-form";
 import { TripHeader } from "@/features/purchases/components/trip-header";
 import { TripLines } from "@/features/purchases/components/trip-lines";
+import { TripNeededList } from "@/features/purchases/components/trip-needed-list";
+import { countPendingReceipt } from "@/features/purchases/helpers/line-receipt";
 import { useTripScreen } from "@/features/purchases/hooks/use-trip-screen";
 import { useErrorMessage } from "@/i18n/use-error-message";
 
@@ -21,6 +24,7 @@ export function TripScreen(): React.JSX.Element {
   const t = useTranslations("purchases.trip");
   const tc = useTranslations("common");
   const errorMessage = useErrorMessage();
+  const [pick, setPick] = useState<{ productId: string; token: number } | null>(null);
 
   if (s.error && !s.trip) {
     return (
@@ -55,19 +59,40 @@ export function TripScreen(): React.JSX.Element {
       <TripHeader trip={trip} />
       {s.actionError && <Alert tone="error">{s.actionError}</Alert>}
       {s.isOpen && (
+        <TripNeededList
+          onPick={(productId) =>
+            setPick((current) => ({ productId, token: (current?.token ?? 0) + 1 }))
+          }
+        />
+      )}
+      {s.isOpen && (
         <Card className="space-y-3">
           <h2 className="font-semibold">{t("addLine")}</h2>
-          <PurchaseLineForm trip={trip} />
+          <PurchaseLineForm
+            trip={trip}
+            pickedProductId={pick?.productId ?? null}
+            pickToken={pick?.token ?? 0}
+          />
         </Card>
       )}
 
       <TripLines trip={trip} screen={s} />
 
+      {!s.isOpen && (
+        <ButtonLink href="/prices" variant="secondary">
+          {t("viewPrices")}
+        </ButtonLink>
+      )}
+
       {s.isOpen && (
         <Card className="space-y-3">
           <p className="text-sm text-muted">{t("closeHint")}</p>
           <ConfirmButton
-            question={t("closeQuestion")}
+            question={
+              countPendingReceipt(trip) > 0
+                ? t("closeQuestionPending", { count: countPendingReceipt(trip) })
+                : t("closeQuestion")
+            }
             confirmLabel={t("close")}
             variant="primary"
             onConfirm={s.closeTrip}

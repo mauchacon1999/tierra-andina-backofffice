@@ -165,7 +165,8 @@ Every list of records (products, trips, purchases, rates…) uses `DataTable`
 | `ghost`     | Green text, no background | Low-emphasis actions inside content ("Ver detalle", "Editar")     |
 
 Sizes: `md` (default, 44 px) everywhere; `sm` (36 px) only for secondary actions inside cards
-or toolbars.
+or toolbars; `lg` (48 px) for one-tap actions used standing up with one hand (truck receipt:
+"Recibido / Incompleto / No llegó", the chosen one `primary` with `aria-pressed`).
 
 Rules:
 

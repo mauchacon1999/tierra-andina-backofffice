@@ -15,8 +15,12 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > **purchase trips** (`/api/v1/purchase-trips`, `/api/v1/suppliers`, owner screens `/purchases`,
 > `/purchases/[id]`: open a trip with the day's rates, add/edit/delete lines with live costing,
 > close). **i18n**: next-intl in the web (es-VE messages, typed keys, no hard-coded text) and
-> validation message tokens shared with the API. Next: truck receipt and supplier claims
-> (docs/plan.md phase 1).
+> validation message tokens shared with the API. **Backoffice**: sidebar shell, DataTable
+> (TanStack Table) on every list. **Truck receipt**: `/receipt` for receiver and owner
+> (`/api/v1/receipts`, `PATCH …/lines/:lineId/receipt`), live pending count on the trip.
+> **Shopping list**: `/shopping-list` — what to buy before Coche; a purchase line checks it off.
+> **Price list**: closing a trip publishes `/prices` (`GET /api/v1/price-lists/current`).
+> Next (docs/plan.md phase 1): push notifications, share the price list, rate-change alert, offline.
 > Business rules and DB design: `docs/domain-model.md`; working with the DB: `docs/database.md`;
 > per-module specs: `docs/modules/`.
 
