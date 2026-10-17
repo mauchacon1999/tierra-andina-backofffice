@@ -93,7 +93,7 @@ the list from the system.
 - [ ] Owner view: closes per day with the totals per currency (no USD conversion in the close);
       review, correct, approve. API done; screens next.
 - [~] ~~Import history from the current Excel~~ — not needed: data starts from zero in the
-      system (owner, 2026-10-17).
+  system (owner, 2026-10-17).
 
 Done when: closes no longer arrive by WhatsApp and are no longer typed into Excel.
 
