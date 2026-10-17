@@ -2,12 +2,17 @@ import { beforeAll, describe, expect, test } from "bun:test";
 
 import { schema } from "@ta/db";
 import { testConnection, uniq } from "@ta/db/testing";
-import { priceListSchema, tripDetailSchema, tripSchema } from "@ta/validators";
+import { priceListSchema, priceProposalSchema, tripDetailSchema, tripSchema } from "@ta/validators";
 import { eq } from "drizzle-orm";
 
 import type { LineRecord } from "@/modules/purchases/purchases.repository";
-import { pricesFromTrip } from "@/modules/price-lists/price-lists.service";
+import {
+  getPriceProposal,
+  pricesFromTrip,
+  publishSaleRateProposal,
+} from "@/modules/price-lists/price-lists.service";
 import { call, errorOf, signInRoles, type Json, type RoleSession } from "@/testing/http";
+import { createStore, createUser, signIn } from "@/testing/test-app";
 
 let s: RoleSession;
 let categoryId: string;
@@ -248,3 +253,108 @@ describe("closing a trip publishes sale prices", () => {
     expect((await call(s.app, "GET", "/price-lists/current", null)).status).toBe(401);
   });
 });
+
+describe("sale-rate proposal", () => {
+  test("proposes new bolívar prices when today's sale rate moves one, and publishes them", async () => {
+    const store = await createStore();
+    const owner = await createUser({ storeId: store.id, role: "owner" });
+    const manager = await createUser({ storeId: store.id, role: "manager" });
+    const ownerCookie = await signIn(s.app, owner.email, owner.password);
+    const managerCookie = await signIn(s.app, manager.email, manager.password);
+    const db = testConnection().db;
+
+    expect((await call(s.app, "GET", "/price-lists/proposal", ownerCookie)).status).toBe(404);
+
+    const [category] = await db
+      .select()
+      .from(schema.productCategories)
+      .where(eq(schema.productCategories.code, "vegetable"));
+    if (!category) throw new Error("category");
+    const created = await call(s.app, "POST", "/products", ownerCookie, {
+      name: uniq("Tomate"),
+      categoryId: category.id,
+      purchaseUnit: "crate",
+      saleUnit: "kg",
+      defaultPackQuantity: "24",
+      lastShrinkage: "2",
+      lastMargin: "0.5",
+    });
+    expect(created.status).toBe(201);
+    const productId = (created.body as { id: string }).id;
+
+    const tripDay = "2027-08-02";
+    const reviewDay = "2027-08-03";
+    expect(
+      (
+        await call(s.app, "PUT", `/exchange-rates/${tripDay}`, ownerCookie, {
+          bcv: "200",
+          market: "201",
+          sale: "210",
+        })
+      ).status,
+    ).toBe(200);
+    const opened = await call(s.app, "POST", "/purchase-trips", ownerCookie, {
+      businessDate: tripDay,
+    });
+    const tripId = tripSchema.parse(opened.body).id;
+    await buyAs(ownerCookie, tripId, productId);
+    expect((await call(s.app, "POST", `/purchase-trips/${tripId}/close`, ownerCookie)).status).toBe(
+      200,
+    );
+
+    expect(
+      (
+        await call(s.app, "PUT", `/exchange-rates/${reviewDay}`, ownerCookie, {
+          bcv: "205",
+          market: "206",
+          sale: "211",
+        })
+      ).status,
+    ).toBe(200);
+
+    const preview = priceProposalSchema.parse(await getPriceProposal(db, store.id, reviewDay));
+    expect(preview.bcvChanged).toBe(true);
+    expect(preview.proposedSaleRate).toBe("211.0000");
+    expect(preview.lines).toEqual([
+      expect.objectContaining({
+        productId,
+        priceUsd: "1.4000",
+        priceBs: "294.0000",
+        proposedPriceBs: "296.0000",
+        changed: true,
+      }),
+    ]);
+
+    expect((await call(s.app, "GET", "/price-lists/proposal", managerCookie)).status).toBe(403);
+    expect(
+      errorOf((await call(s.app, "POST", "/price-lists/proposal", ownerCookie)).body).code,
+    ).toBe("SALE_RATE_MISSING");
+
+    const published = await publishSaleRateProposal(
+      db,
+      { userId: owner.id, storeId: store.id },
+      reviewDay,
+    );
+    expect(published.tripId).toBeNull();
+    expect(published.saleRate).toBe("211.0000");
+    expect(published.lines).toEqual([
+      expect.objectContaining({ productId, priceUsd: "1.4000", priceBs: "296.0000" }),
+    ]);
+
+    const after = await getPriceProposal(db, store.id, reviewDay);
+    expect(after?.proposedSaleRate).toBeNull();
+    expect(after?.bcvChanged).toBe(false);
+  });
+});
+
+async function buyAs(cookie: string, tripId: string, productId: string): Promise<void> {
+  const added = await call(s.app, "POST", `/purchase-trips/${tripId}/lines`, cookie, {
+    productId,
+    packs: "1",
+    grossQuantity: "24",
+    shrinkage: "2",
+    quotedPriceUsd: "20",
+    margin: "0.5",
+  });
+  if (added.status !== 201) throw new Error(`line: ${JSON.stringify(added.body)}`);
+}

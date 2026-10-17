@@ -2,8 +2,8 @@
 export { compareDecimals, normalizeDecimal, sum } from "./decimal";
 export { DomainError, InvalidValueError, ShrinkageExceedsQuantityError } from "./errors";
 export { roundUpToStep } from "./rounding";
-export { MAX_MARGIN, priceInBs, priceLine } from "./pricing";
-export type { LinePricing, LinePricingInput } from "./pricing";
+export { MAX_MARGIN, priceInBs, priceLine, proposeSaleRateList } from "./pricing";
+export type { LinePricing, LinePricingInput, ProposedShelfPrice, ShelfPrice } from "./pricing";
 export {
   allowedSaleUnits,
   assertValidProduct,
@@ -28,9 +28,14 @@ export type {
   SaleUnit,
 } from "./products";
 export { amountInBs, sumDecimals } from "./rates";
-export { BUSINESS_TIME_ZONE, isBusinessDate, toBusinessDate } from "./business-date";
+export {
+  BUSINESS_TIME_ZONE,
+  isBusinessDate,
+  toBusinessDate,
+  weekContaining,
+} from "./business-date";
 export { InvalidReceiptError, pricePartialReceipt } from "./receipt";
-export { CURRENCIES, dailyCloseTotals, totalsByCurrency } from "./daily-close";
+export { CURRENCIES, dailyCloseTotals, subtractTotals, totalsByCurrency } from "./daily-close";
 export type {
   CurrencyAmount,
   CurrencyTotals,

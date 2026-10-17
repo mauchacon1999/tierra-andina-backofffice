@@ -4,6 +4,10 @@ import { toBusinessDate } from "@ta/core";
 import { useTranslations } from "next-intl";
 
 import { DataTable } from "@/components/shared/data-table/data-table";
+import { Alert } from "@/components/ui/alert";
+import { ButtonLink } from "@/components/ui/button-link";
+import { useRequireSession } from "@/features/auth/hooks/use-require-session";
+import { usePriceProposal } from "@/features/price-lists/api/use-price-proposal";
 import { usePriceListTable } from "@/features/price-lists/hooks/use-price-list-table";
 import { useErrorMessage } from "@/i18n/use-error-message";
 import { formatBusinessDateLong } from "@/utils/format-date";
@@ -12,12 +16,23 @@ import { formatDecimal } from "@/utils/format-number";
 /** Sale prices in force, for the owner now and the manager when that user exists. */
 export function PriceListScreen(): React.JSX.Element {
   const table = usePriceListTable();
+  const { activeMembership } = useRequireSession();
+  const proposal = usePriceProposal(activeMembership?.role === "owner");
   const t = useTranslations("prices");
   const errorMessage = useErrorMessage();
   const published = table.list?.publishedAt;
+  const needsReview =
+    proposal.proposal?.proposedSaleRate != null || proposal.proposal?.bcvChanged === true;
 
   return (
     <div className="space-y-4">
+      {needsReview && (
+        <Alert tone="warning" title={t("reviewProposal")}>
+          <ButtonLink href="/prices/proposal" variant="secondary">
+            {t("openProposal")}
+          </ButtonLink>
+        </Alert>
+      )}
       {table.list && published && (
         <p className="text-sm text-muted">
           {t("meta", {

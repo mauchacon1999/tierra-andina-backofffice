@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { InvalidValueError, ShrinkageExceedsQuantityError } from "./errors";
-import { priceInBs, priceLine, type LinePricingInput } from "./pricing";
+import { priceInBs, priceLine, proposeSaleRateList, type LinePricingInput } from "./pricing";
 
 // Reference cases of docs/domain-model.md §3.3.
 const TOMATO_CRATE: LinePricingInput = {
@@ -105,5 +105,35 @@ describe("priceInBs", () => {
 
   test("rejects a sale rate ≤ 0", () => {
     expect(() => priceInBs("1.40", "0", "1")).toThrow(InvalidValueError);
+  });
+});
+
+describe("proposeSaleRateList", () => {
+  const tomato = { priceUsd: "1.4000", priceBs: "294.0000" };
+
+  test("a sale rate of 211 moves 1.40 USD from 294 Bs to 296 Bs and keeps the dollars", () => {
+    expect(proposeSaleRateList([tomato], "211", "1")).toEqual([
+      { ...tomato, proposedPriceBs: "296.0000", changed: true },
+    ]);
+  });
+
+  test("returns undefined when the step absorbs the change", () => {
+    expect(
+      proposeSaleRateList([{ priceUsd: "0.0500", priceBs: "11.0000" }], "210.01", "1"),
+    ).toBeUndefined();
+  });
+
+  test("keeps unchanged products in the list and marks only the ones that move", () => {
+    const proposed = proposeSaleRateList(
+      [tomato, { priceUsd: "0.0500", priceBs: "11.0000" }],
+      "210.01",
+      "1",
+    );
+    expect(proposed?.map((line) => line.changed)).toEqual([true, false]);
+    expect(proposed?.[1]?.proposedPriceBs).toBe("11.0000");
+  });
+
+  test("an empty shelf has nothing to propose", () => {
+    expect(proposeSaleRateList([], "211", "1")).toBeUndefined();
   });
 });

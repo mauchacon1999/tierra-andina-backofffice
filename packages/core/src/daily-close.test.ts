@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { dailyCloseTotals, totalsByCurrency } from "./daily-close";
+import { dailyCloseTotals, subtractTotals, totalsByCurrency } from "./daily-close";
 import { InvalidValueError } from "./errors";
 
 // Tuesday 13/10/2026 from the shop's Excel: card terminal, cash Bs, dollars, mobile payment.
@@ -36,6 +36,14 @@ describe("totalsByCurrency", () => {
 
   test("negative amounts are a domain error naming the item", () => {
     expect(() => totalsByCurrency([{ amount: "-1", currency: "VES" }])).toThrow(InvalidValueError);
+  });
+});
+
+describe("subtractTotals", () => {
+  test("credits minus payments, per currency, may be negative", () => {
+    expect(
+      subtractTotals({ VES: "1200.0000", USD: "10.0000" }, { VES: "200.0000", USD: "12.0000" }),
+    ).toEqual({ VES: "1000.0000", USD: "-2.0000" });
   });
 });
 

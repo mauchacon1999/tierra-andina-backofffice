@@ -23,3 +23,26 @@ export function isBusinessDate(value: string): boolean {
   const date = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
+
+/**
+ * The Monday–Sunday week that contains a business day (the shop reviews on Sunday).
+ * "2026-10-17" (Saturday) → 12 to 18 October.
+ * @throws {TypeError} when the date is not a real YYYY-MM-DD day.
+ */
+export function weekContaining(businessDate: string): { from: string; to: string } {
+  if (!isBusinessDate(businessDate)) {
+    throw new TypeError(`weekContaining: "${businessDate}" is not a business date`);
+  }
+  const noon = new Date(`${businessDate}T12:00:00Z`);
+  const sundayBased = noon.getUTCDay();
+  const daysSinceMonday = sundayBased === 0 ? 6 : sundayBased - 1;
+  const monday = new Date(noon);
+  monday.setUTCDate(noon.getUTCDate() - daysSinceMonday);
+  const sunday = new Date(monday);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  return { from: isoDay(monday), to: isoDay(sunday) };
+}
+
+function isoDay(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}

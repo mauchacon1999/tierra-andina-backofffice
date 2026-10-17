@@ -96,6 +96,26 @@
     "lastCheck": "Última comprobación: {time}"
   },
   "home": {
+    "greeting": "Hola, {name}",
+    "week": "Semana del {from} al {to}",
+    "loadFailed": "No se pudo cargar el resumen",
+    "collected": "Cobrado",
+    "collectedHint": "{count, plural, =0 {Todavía no hay cierres esta semana} one {# cierre} other {# cierres}}",
+    "deposited": "En la cuenta",
+    "depositedHint": "Efectivo que marcaste como depositado. En la tienda quedó {usd} y {bs}.",
+    "payables": "Deudas",
+    "payablesHint": "{count, plural, =0 {Nada pendiente} one {# deuda abierta} other {# deudas abiertas}}",
+    "credit": "Fiados",
+    "creditHint": "Lo que los clientes deben, en cada moneda",
+    "alertsTitle": "Avisos",
+    "alertsEmpty": "Nada pendiente por ahora",
+    "alertClosesPending": "{count, plural, one {# cierre por revisar} other {# cierres por revisar}}",
+    "alertRatesMissing": "Faltan tasas de hoy",
+    "alertShoppingOpen": "{count, plural, one {# faltante por comprar} other {# faltantes por comprar}}",
+    "alertReceiptsPending": "{count, plural, one {# compra sin recibir en la camioneta} other {# compras sin recibir en la camioneta}}",
+    "alertNoPriceList": "Todavía no hay lista de precios",
+    "alertPriceProposal": "{count, plural, one {# precio por actualizar} other {# precios por actualizar}}",
+    "alertBcvChanged": "La tasa BCV cambió. Revisa la tasa de venta.",
     "shortcuts": "Accesos",
     "shoppingList": {
       "title": "Faltantes",
@@ -118,7 +138,7 @@
       "description": "Catálogo, unidades, merma y margen"
     },
     "title": "Inicio",
-    "subtitle": "Accesos rápidos y estado del sistema",
+    "subtitle": "Lo que toca hoy",
     "receipt": {
       "title": "Recepción",
       "description": "Marca lo que llega a la camioneta"
@@ -470,8 +490,21 @@
       "product": "Producto",
       "margin": "Margen",
       "priceUsd": "Dólares",
-      "priceBs": "Bolívares"
-    }
+      "priceBs": "Bolívares",
+      "proposedBs": "Bolívares nuevos"
+    },
+    "reviewProposal": "La tasa de hoy pide una lista nueva",
+    "openProposal": "Revisar",
+    "proposalPageTitle": "Revisar precios",
+    "proposalTitle": "Revisar precios",
+    "proposalSubtitle": "Los dólares se quedan. Solo cambian los bolívares que el redondeo mueve.",
+    "proposalLabel": "Precios que cambian",
+    "proposalMeta": "Tasa de venta {from} a {to}. {count, plural, one {# producto cambia} other {# productos cambian}}. El resto se publica igual.",
+    "nothingToPublish": "La tasa de hoy no cambia ningún precio en bolívares.",
+    "bcvChanged": "La tasa BCV cambió respecto a esta lista. Revisa la tasa de venta.",
+    "reviewRates": "Ir a tasas",
+    "publishProposal": "Publicar precios",
+    "publishing": "Publicando…"
   },
   "dailyClose": {
     "pageTitle": "Cierre del día",

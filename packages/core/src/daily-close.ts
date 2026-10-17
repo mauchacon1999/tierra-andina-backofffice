@@ -45,6 +45,14 @@ export function totalsByCurrency(items: readonly CurrencyAmount[]): CurrencyTota
   return { VES: toDbString(totals.VES), USD: toDbString(totals.USD) };
 }
 
+/** left − right per currency. The result may be negative (a customer overpaid, for example). */
+export function subtractTotals(left: CurrencyTotals, right: CurrencyTotals): CurrencyTotals {
+  return {
+    VES: toDbString(toDecimal(left.VES, "left.VES").minus(toDecimal(right.VES, "right.VES"))),
+    USD: toDbString(toDecimal(left.USD, "left.USD").minus(toDecimal(right.USD, "right.USD"))),
+  };
+}
+
 /**
  * Totals of a daily close, per currency: what was collected (the "Total del día" of the shop's
  * Excel, split by currency), what was sold on credit and what was paid out.

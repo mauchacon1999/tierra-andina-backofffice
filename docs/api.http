@@ -28,6 +28,13 @@ Content-Type: application/json
 
 ### Current user and stores — 200 | 401 UNAUTHENTICATED
 GET {{baseUrl}}/api/v1/me
+Origin: http://localhost:3000
+
+### Owner briefing — week (Mon–Sun), deposited cash, open debts, fiados, alerts
+# 200 for the owner. 403 for manager and receiver. There is no bank balance:
+# `week.deposited` is cash marked deposited on this week's closes.
+GET {{baseUrl}}/api/v1/home
+Origin: http://localhost:3000
 
 ### Current session (Better Auth) — 200, body null when signed out
 GET {{baseUrl}}/api/auth/get-session
@@ -196,6 +203,17 @@ Origin: http://localhost:3000
 
 ### Sale prices in force (owner or manager) — 200, or 404 PRICE_LIST_NOT_FOUND
 GET {{baseUrl}}/api/v1/price-lists/current
+
+### Sale-rate proposal (owner) — 200, or 404 PRICE_LIST_NOT_FOUND
+# proposedSaleRate is null when today's rate is missing or moves no rounded Bs price.
+# bcvChanged warns only; it does not reprice dollars.
+GET {{baseUrl}}/api/v1/price-lists/proposal
+Origin: http://localhost:3000
+
+### Publish that proposal — 201 the new list (tripId null). 409 PRICE_PROPOSAL_UNCHANGED,
+# 422 SALE_RATE_MISSING, 403 for a manager.
+POST {{baseUrl}}/api/v1/price-lists/proposal
+Origin: http://localhost:3000
 
 ### Daily close ----------------------------------------------------------------------------------
 ### Amounts only, each in its own currency (no rate). Payment methods: GET /payment-methods

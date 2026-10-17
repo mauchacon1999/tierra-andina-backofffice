@@ -1,4 +1,4 @@
-import { DB_SCALE, toDbString, toDecimal } from "./decimal";
+import { compareDecimals, DB_SCALE, toDbString, toDecimal } from "./decimal";
 import { InvalidValueError, ShrinkageExceedsQuantityError } from "./errors";
 import { roundUpToStep } from "./rounding";
 
@@ -91,4 +91,39 @@ export function priceInBs(salePriceUsd: string, saleRate: string, bsRoundingStep
   const rate = positive(saleRate, "saleRate");
   const rounded = roundUpToStep(price.times(rate).toFixed(), bsRoundingStep);
   return toDecimal(rounded, "priceBs").toFixed(DB_SCALE);
+}
+
+export type ShelfPrice = {
+  priceUsd: string;
+  priceBs: string;
+};
+
+export type ProposedShelfPrice = ShelfPrice & {
+  proposedPriceBs: string;
+  /** True when the rounded bolívar price differs from the one in force. */
+  changed: boolean;
+};
+
+/**
+ * The published USD prices at a new sale rate (domain-model §3.2). Dollars stay; bolívares
+ * are `priceInBs`. Returns undefined when the rounding step absorbs the move, so there is
+ * nothing to approve. The BCV rate is not an input: it does not change a shelf price.
+ * @throws {InvalidValueError} when the rate or step cannot price a line.
+ */
+export function proposeSaleRateList(
+  lines: readonly ShelfPrice[],
+  saleRate: string,
+  bsRoundingStep: string,
+): ProposedShelfPrice[] | undefined {
+  if (lines.length === 0) return undefined;
+  const proposed = lines.map((line) => {
+    const proposedPriceBs = priceInBs(line.priceUsd, saleRate, bsRoundingStep);
+    return {
+      priceUsd: line.priceUsd,
+      priceBs: line.priceBs,
+      proposedPriceBs,
+      changed: compareDecimals(line.priceBs, proposedPriceBs) !== 0,
+    };
+  });
+  return proposed.some((line) => line.changed) ? proposed : undefined;
 }

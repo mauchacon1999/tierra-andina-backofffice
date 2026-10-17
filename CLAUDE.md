@@ -8,7 +8,9 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > **Current state (2026-10-17):** monorepo, full database schema in `@ta/db` (32 tables,
 > migrations, idempotent seed, integration tests), Hono API with `/health`, Better Auth
 > (`/api/auth/*`), `requireRole`, audit helper and `GET /api/v1/me`; Next.js status page.
-> Web: login (`/login`), session-protected home with the system status.
+> Web: login (`/login`), session-protected home. The owner sees this week's
+> collected cash, deposited cash, open debts, fiado balances and real alerts
+> (`GET /api/v1/home`); there is no bank balance.
 > Modules done: **products** (core rules + pricing, validators, `/api/v1/products`, owner screens
 > `/products`, `/products/new`, `/products/[id]`); **store settings** (`/api/v1/settings`);
 > **daily rates** (BCV, Coche, sale: `/api/v1/exchange-rates`, owner screen `/rates`);
@@ -20,12 +22,17 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > (`/api/v1/receipts`, `PATCH …/lines/:lineId/receipt`), live pending count on the trip.
 > **Shopping list**: `/shopping-list` — what to buy before Coche; a purchase line checks it off.
 > **Price list**: closing a trip publishes `/prices` (`GET /api/v1/price-lists/current`).
+> A sale-rate change that moves a rounded Bs price proposes a list the owner approves
+> (`GET/POST /api/v1/price-lists/proposal`, `/prices/proposal`). A BCV change only warns.
 > **Daily close** (phase 2): `/close` (manager/owner: amounts only, each in its currency; lote,
 > credit sales, expenses) and `/closes` (owner: list like the Excel, correct, approve; pending
 > counter in the menu) — `/api/v1/daily-closes`, `/payment-methods`, `/customers`.
 > **Users**: `/users` (owner: create managers/receivers, edit, deactivate, set passwords;
 > users never change their own) — `/api/v1/users`.
-> Next (docs/plan.md): phase 1 leftovers (rate-change alert, push,
+> **Home** (`GET /api/v1/home`, owner): week result from daily closes (USD and Bs
+> apart), cash marked deposited versus kept, open payables, fiado balances, and
+> alerts only when the row exists.
+> Next (docs/plan.md): phase 1 leftovers (push,
 > offline) and phase 3 (debts, expenses, payroll).
 > Business rules and DB design: `docs/domain-model.md`; working with the DB: `docs/database.md`;
 > per-module specs: `docs/modules/`.

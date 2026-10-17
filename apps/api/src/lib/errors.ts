@@ -36,6 +36,7 @@ export const ErrorCode = {
   SHOPPING_ITEM_NOT_OPEN: "SHOPPING_ITEM_NOT_OPEN",
   SALE_RATE_MISSING: "SALE_RATE_MISSING",
   PRICE_LIST_NOT_FOUND: "PRICE_LIST_NOT_FOUND",
+  PRICE_PROPOSAL_UNCHANGED: "PRICE_PROPOSAL_UNCHANGED",
 } as const;
 
 export type ErrorCodeValue = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -78,6 +79,7 @@ export const ERROR_STATUS: Record<ErrorCodeValue, ContentfulStatusCode> = {
   SHOPPING_ITEM_NOT_OPEN: 409,
   SALE_RATE_MISSING: 422,
   PRICE_LIST_NOT_FOUND: 404,
+  PRICE_PROPOSAL_UNCHANGED: 409,
 };
 
 /**

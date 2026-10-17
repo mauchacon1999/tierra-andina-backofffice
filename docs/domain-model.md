@@ -104,7 +104,11 @@ sale_price_bs     = round_up(sale_price_usd × sale_rate, bs_rounding_step)
 
 - A price list is generated after a purchase trip and published to the shop.
 - Every published list is kept, so the price in force on any date is known.
-- When the BCV rate rises without a new trip, proposing a list to approve is still pending.
+- When today's sale rate differs from the published list and at least one rounded bolívar price
+  moves, the owner is offered a new list: the same USD prices, bolívares recomputed with
+  `priceInBs`. Approving publishes it (no trip). A change the rounding step absorbs is not
+  offered. A BCV change does not reprice the shelf; it warns the owner to review the sale rate.
+  The list's BCV is the trip's rate, or the BCV of the day a rate-change list was published.
 - Closing a purchase trip publishes the next list. Products that arrived (or are still pending)
   take the sale price of that line; a partial receipt uses the price of what arrived; missing
   goods keep their previous price. Bolívares are `price_usd ×` the day's sale rate, rounded up

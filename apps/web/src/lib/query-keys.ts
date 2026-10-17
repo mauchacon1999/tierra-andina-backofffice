@@ -3,6 +3,7 @@ import type { ProductListQueryInput, TripListQueryInput } from "@ta/validators";
 /** SWR keys. Always use this factory: never write keys inline (CLAUDE.md §10). */
 export const queryKeys = {
   me: ["me"] as const,
+  home: ["home"] as const,
   settings: ["settings"] as const,
   products: {
     all: ["products"] as const,
@@ -29,6 +30,7 @@ export const queryKeys = {
   shoppingList: ["shopping-list"] as const,
   priceLists: {
     current: ["price-lists", "current"] as const,
+    proposal: ["price-lists", "proposal"] as const,
   },
   trips: {
     all: ["trips"] as const,

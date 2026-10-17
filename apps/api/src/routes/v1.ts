@@ -5,6 +5,7 @@ import { sessionMiddleware } from "@/middleware/auth";
 import { customersRoutes } from "@/modules/customers/customers.routes";
 import { dailyClosesRoutes } from "@/modules/daily-closes/daily-closes.routes";
 import { exchangeRatesRoutes } from "@/modules/exchange-rates/exchange-rates.routes";
+import { homeRoutes } from "@/modules/home/home.routes";
 import { meRoutes } from "@/modules/me/me.routes";
 import { paymentMethodsRoutes } from "@/modules/payment-methods/payment-methods.routes";
 import { priceListsRoutes } from "@/modules/price-lists/price-lists.routes";
@@ -25,6 +26,7 @@ export function v1Routes(): Hono<AppEnv> {
     .route("/product-categories", productCategoriesRoutes())
     .route("/settings", settingsRoutes())
     .route("/exchange-rates", exchangeRatesRoutes())
+    .route("/home", homeRoutes())
     .route("/suppliers", suppliersRoutes())
     .route("/purchase-trips", purchaseTripsRoutes())
     .route("/receipts", receiptsRoutes())
