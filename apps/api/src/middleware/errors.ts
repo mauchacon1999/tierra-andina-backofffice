@@ -1,8 +1,9 @@
-import type { ApiErrorBody } from "@ta/validators";
+import { formatValidationMessage, type ApiErrorBody } from "@ta/validators";
 import type { ErrorHandler, NotFoundHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import { AppError, ErrorCode } from "@/lib/errors";
+import { localizeDetails } from "@/lib/localize-details";
 import type { AppEnv } from "@/lib/types";
 
 function body(code: string, message: string, details?: unknown): ApiErrorBody {
@@ -12,7 +13,15 @@ function body(code: string, message: string, details?: unknown): ApiErrorBody {
 /** Turns any error into the unified shape { error: { code, message, details? } }. */
 export const errorHandler: ErrorHandler<AppEnv> = (err, c) => {
   if (err instanceof AppError) {
-    return c.json(body(err.code, err.message, err.details), err.httpStatus);
+    // Messages may be validation tokens; the API answers in Spanish.
+    return c.json(
+      body(
+        err.code,
+        formatValidationMessage(err.message),
+        err.details === undefined ? undefined : localizeDetails(err.details),
+      ),
+      err.httpStatus,
+    );
   }
 
   if (err instanceof HTTPException) {

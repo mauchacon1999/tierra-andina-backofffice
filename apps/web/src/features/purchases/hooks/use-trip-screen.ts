@@ -1,11 +1,13 @@
 "use client";
 
 import type { TripDetail } from "@ta/validators";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { useCloseTrip, useDeleteLine } from "@/features/purchases/api/use-trip-mutations";
 import { useTrip } from "@/features/purchases/api/use-trips";
-import { isApiError, type ApiError } from "@/lib/api";
+import { useErrorMessage } from "@/i18n/use-error-message";
+import type { ApiError } from "@/lib/api";
 
 export type UseTripScreenResult = {
   trip: TripDetail | undefined;
@@ -27,6 +29,8 @@ export type UseTripScreenResult = {
 /** The purchase trip screen: the trip, its lines, editing one line, deleting, closing. */
 export function useTripScreen(tripId: string): UseTripScreenResult {
   const { trip, isLoading, error, retry } = useTrip(tripId);
+  const t = useTranslations("purchases.trip");
+  const errorMessage = useErrorMessage();
   const close = useCloseTrip(tripId);
   const remove = useDeleteLine(tripId);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
@@ -38,7 +42,7 @@ export function useTripScreen(tripId: string): UseTripScreenResult {
     try {
       await action();
     } catch (failure) {
-      setActionError(isApiError(failure) ? failure.message : fallback);
+      setActionError(errorMessage(failure, fallback));
     }
   };
 
@@ -54,11 +58,11 @@ export function useTripScreen(tripId: string): UseTripScreenResult {
       run(async () => {
         await close.run();
         setEditingLineId(null);
-      }, "No se pudo cerrar la jornada"),
+      }, t("closeFailed")),
     isClosing: close.isRunning,
     deleteLine: async (lineId) => {
       setDeletingLineId(lineId);
-      await run(() => remove.run(lineId), "No se pudo eliminar la compra");
+      await run(() => remove.run(lineId), t("deleteFailed"));
       setDeletingLineId(null);
     },
     deletingLineId,

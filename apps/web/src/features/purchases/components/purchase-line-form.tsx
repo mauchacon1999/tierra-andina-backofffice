@@ -1,6 +1,7 @@
 "use client";
 
 import type { PurchaseLine, TripDetail } from "@ta/validators";
+import { useTranslations } from "next-intl";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,6 @@ import { TextField } from "@/components/ui/text-field";
 import { ProductQuickForm } from "@/features/products/components/product-quick-form";
 import { LinePreview } from "@/features/purchases/components/line-preview";
 import { LineProductField } from "@/features/purchases/components/line-product-field";
-import { PAYMENT_STATUS_LABELS } from "@/features/purchases/helpers/line-labels";
 import { useLineForm } from "@/features/purchases/hooks/use-line-form";
 
 export type PurchaseLineFormProps = {
@@ -21,11 +21,6 @@ export type PurchaseLineFormProps = {
   onCancel?: () => void;
 };
 
-const PAYMENT_OPTIONS = (["paid", "credit"] as const).map((value) => ({
-  value,
-  label: PAYMENT_STATUS_LABELS[value],
-}));
-
 /** Add or edit one purchase of the trip, with its cost computed while typing. */
 export function PurchaseLineForm({
   trip,
@@ -34,7 +29,13 @@ export function PurchaseLineForm({
   onCancel,
 }: PurchaseLineFormProps): React.JSX.Element {
   const f = useLineForm({ trip, ...(line ? { line } : {}), ...(onDone ? { onDone } : {}) });
+  const t = useTranslations("purchases.line");
+  const tc = useTranslations("common");
   const { errors } = f.form.formState;
+  const paymentOptions = (["paid", "credit"] as const).map((value) => ({
+    value,
+    label: t(`paymentStatus.${value}`),
+  }));
   const decimal = { inputMode: "decimal", autoComplete: "off" } as const;
 
   // The quick form is a <form> of its own: it replaces this one instead of nesting.
@@ -42,9 +43,9 @@ export function PurchaseLineForm({
     return (
       <Card tone="muted" className="space-y-3">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="font-semibold">Nuevo producto</h3>
+          <h3 className="font-semibold">{t("newProductTitle")}</h3>
           <Button variant="ghost" size="sm" onClick={() => f.setIsCreatingProduct(false)}>
-            Volver a la compra
+            {t("backToLine")}
           </Button>
         </div>
         <ProductQuickForm onCreated={f.onProductCreated} />
@@ -55,7 +56,7 @@ export function PurchaseLineForm({
   return (
     <form
       noValidate
-      aria-label={f.isEdit ? "Editar compra" : "Agregar compra"}
+      aria-label={f.isEdit ? t("editLabel") : t("addLabel")}
       className="space-y-4"
       onSubmit={(event) => {
         event.preventDefault();
@@ -66,15 +67,15 @@ export function PurchaseLineForm({
       <LineProductField f={f} />
       <div className="grid gap-4 sm:grid-cols-2">
         <SelectField
-          label="Proveedor"
-          placeholder="Sin proveedor registrado"
+          label={t("supplier")}
+          placeholder={t("supplierPlaceholder")}
           options={f.supplierOptions}
           {...f.form.register("supplierId")}
         />
         <TextField
-          label="Puesto"
+          label={t("stall")}
           autoComplete="off"
-          hint="Nombre o número del puesto."
+          hint={t("stallHint")}
           error={errors.stallReference?.message}
           {...f.form.register("stallReference")}
         />
@@ -88,7 +89,7 @@ export function PurchaseLineForm({
           {...f.form.register("packs")}
         />
         <TextField
-          label="Cantidad bruta"
+          label={t("grossQuantity")}
           required
           {...decimal}
           suffix={f.quantitySuffix}
@@ -96,32 +97,32 @@ export function PurchaseLineForm({
           {...f.form.register("grossQuantity")}
         />
         <TextField
-          label="Merma"
+          label={t("shrinkage")}
           {...decimal}
           suffix={f.quantitySuffix}
           error={errors.shrinkage?.message}
           {...f.form.register("shrinkage")}
         />
         <TextField
-          label="Precio total"
+          label={t("quotedPrice")}
           required
           {...decimal}
           suffix="$"
-          hint="Lo que pide el puesto por todo."
+          hint={t("quotedPriceHint")}
           error={errors.quotedPriceUsd?.message}
           {...f.form.register("quotedPriceUsd")}
         />
         <TextField
-          label="Tasa del puesto"
+          label={t("supplierRate")}
           {...decimal}
           suffix="Bs"
           placeholder={f.supplierRatePlaceholder}
-          hint="Vacía: la de Coche."
+          hint={t("supplierRateHint")}
           error={errors.supplierRate?.message}
           {...f.form.register("supplierRate")}
         />
         <TextField
-          label="Margen"
+          label={t("margin")}
           required
           {...decimal}
           suffix="%"
@@ -130,9 +131,9 @@ export function PurchaseLineForm({
         />
       </div>
       <SegmentedControl
-        label="Pago"
+        label={t("payment")}
         name="paymentStatus"
-        options={PAYMENT_OPTIONS}
+        options={paymentOptions}
         value={f.form.watch("paymentStatus")}
         onChange={(value) => f.form.setValue("paymentStatus", value, { shouldDirty: true })}
       />
@@ -142,13 +143,13 @@ export function PurchaseLineForm({
           type="submit"
           className="w-full sm:w-auto"
           isLoading={f.isSubmitting}
-          loadingText="Guardando…"
+          loadingText={tc("saving")}
         >
-          {f.isEdit ? "Guardar cambios" : "Agregar compra"}
+          {f.isEdit ? t("submitEdit") : t("submitAdd")}
         </Button>
         {onCancel && (
           <Button variant="secondary" className="w-full sm:w-auto" onClick={onCancel}>
-            Cancelar
+            {tc("cancel")}
           </Button>
         )}
       </div>

@@ -1,6 +1,6 @@
 import type { Product } from "@ta/validators";
 
-import { SALE_UNIT_SUFFIX, unitsSummary } from "@/features/products/helpers/unit-labels";
+import type { UnitLabels } from "@/features/products/hooks/use-unit-labels";
 import { formatPercentFromFraction, formatQuantity } from "@/utils/format-number";
 
 export type ProductDescription = {
@@ -14,18 +14,19 @@ export type ProductDescription = {
   margin: string;
 };
 
-const PACK_NOUN = { crate: "cesta", bundle: "cuenta" } as const;
-
-/** Human texts for a product in lists and cards (Spanish, es-VE numbers). */
-export function describeProduct(product: Product): ProductDescription {
-  const suffix = SALE_UNIT_SUFFIX[product.saleUnit];
+/** Texts for a product in lists and cards, with the unit labels of the current language. */
+export function describeProduct(product: Product, labels: UnitLabels): ProductDescription {
   return {
-    units: unitsSummary(product.purchaseUnit, product.saleUnit),
+    units: labels.summary(product.purchaseUnit, product.saleUnit),
     pack:
-      product.purchaseUnit === "kg" || product.defaultPackQuantity === null
+      product.defaultPackQuantity === null
         ? null
-        : `${formatQuantity(product.defaultPackQuantity)} ${suffix} por ${PACK_NOUN[product.purchaseUnit]}`,
-    shrinkage: `${formatQuantity(product.lastShrinkage)} ${suffix}`,
+        : labels.perPack(
+            product.purchaseUnit,
+            formatQuantity(product.defaultPackQuantity),
+            product.saleUnit,
+          ),
+    shrinkage: labels.quantity(formatQuantity(product.lastShrinkage), product.saleUnit),
     margin: formatPercentFromFraction(product.lastMargin),
   };
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import type { ProductDetail } from "@ta/validators";
+import { useTranslations } from "next-intl";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -23,19 +24,21 @@ export type ProductFormProps =
 export function ProductForm(props: ProductFormProps): React.JSX.Element {
   const options: UseProductFormOptions = props;
   const f = useProductForm(options);
+  const t = useTranslations("products.form");
+  const tc = useTranslations("common");
   const { categories } = useProductCategories();
   const { errors } = f.form.formState;
 
   if (f.created) {
     return (
       <div className="space-y-4">
-        <Alert tone="success" title="Producto creado">
-          {f.created.name} ya está en el catálogo.
+        <Alert tone="success" title={t("created")}>
+          {t("createdBody", { name: f.created.name })}
         </Alert>
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button onClick={f.resetForAnother}>Crear otro</Button>
+          <Button onClick={f.resetForAnother}>{t("createAnother")}</Button>
           <ButtonLink href="/products" variant="secondary">
-            Ver productos
+            {t("viewProducts")}
           </ButtonLink>
         </div>
       </div>
@@ -52,19 +55,19 @@ export function ProductForm(props: ProductFormProps): React.JSX.Element {
       }}
     >
       {f.formError && <Alert tone="error">{f.formError}</Alert>}
-      {f.isSaved && <Alert tone="success">Cambios guardados.</Alert>}
+      {f.isSaved && <Alert tone="success">{t("saved")}</Alert>}
 
       <TextField
-        label="Nombre"
+        label={t("name")}
         required
         autoComplete="off"
         error={errors.name?.message}
         {...f.form.register("name")}
       />
       <SelectField
-        label="Categoría"
+        label={t("category")}
         required
-        placeholder="Elige una categoría"
+        placeholder={t("categoryPlaceholder")}
         options={categories.map((c) => ({ value: c.id, label: c.name }))}
         error={errors.categoryId?.message}
         {...f.form.register("categoryId")}
@@ -93,20 +96,20 @@ export function ProductForm(props: ProductFormProps): React.JSX.Element {
       )}
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField
-          label="Merma habitual"
+          label={t("shrinkage")}
           inputMode="decimal"
           autoComplete="off"
           suffix={f.saleUnitSuffix}
-          hint="En la unidad de venta. Se sugiere al comprar."
+          hint={t("shrinkageHint")}
           error={errors.lastShrinkage?.message}
           {...f.form.register("lastShrinkage")}
         />
         <TextField
-          label="Margen habitual"
+          label={t("margin")}
           inputMode="decimal"
           autoComplete="off"
           suffix="%"
-          hint="Entre 0 y 500 %."
+          hint={t("marginHint")}
           error={errors.lastMarginPercent?.message}
           {...f.form.register("lastMarginPercent")}
         />
@@ -116,10 +119,10 @@ export function ProductForm(props: ProductFormProps): React.JSX.Element {
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <ButtonLink href="/products" variant="secondary">
-          Cancelar
+          {tc("cancel")}
         </ButtonLink>
-        <Button type="submit" isLoading={f.isSubmitting} loadingText="Guardando…">
-          {props.mode === "create" ? "Crear producto" : "Guardar cambios"}
+        <Button type="submit" isLoading={f.isSubmitting} loadingText={tc("saving")}>
+          {props.mode === "create" ? t("create") : tc("save")}
         </Button>
       </div>
     </form>

@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
@@ -14,6 +16,8 @@ export type DailyRatesFormProps = {
 /** Enter the BCV, Coche and sale rates of a day (Bs per USD). */
 export function DailyRatesForm({ initialDate }: DailyRatesFormProps): React.JSX.Element {
   const r = useDailyRatesForm(initialDate);
+  const t = useTranslations("rates");
+  const tc = useTranslations("common");
   const { errors } = r.form.formState;
 
   return (
@@ -26,10 +30,10 @@ export function DailyRatesForm({ initialDate }: DailyRatesFormProps): React.JSX.
       }}
     >
       {r.formError && <Alert tone="error">{r.formError}</Alert>}
-      {r.isSaved && <Alert tone="success">Tasas guardadas.</Alert>}
+      {r.isSaved && <Alert tone="success">{t("saved")}</Alert>}
 
       <TextField
-        label="Fecha"
+        label={t("date")}
         type="date"
         value={r.date}
         onChange={(event) => event.target.value && r.setDate(event.target.value)}
@@ -37,31 +41,31 @@ export function DailyRatesForm({ initialDate }: DailyRatesFormProps): React.JSX.
       />
       <div className="grid gap-4 sm:grid-cols-3">
         <TextField
-          label="Tasa BCV"
+          label={t("bcv")}
           inputMode="decimal"
           autoComplete="off"
           suffix="Bs"
-          hint="Oficial del día."
+          hint={t("bcvHint")}
           readOnly={r.isLoadingDay}
           error={errors.bcv?.message}
           {...r.form.register("bcv")}
         />
         <TextField
-          label="Tasa de Coche"
+          label={t("market")}
           inputMode="decimal"
           autoComplete="off"
           suffix="Bs"
-          hint="La que cobran los puestos."
+          hint={t("marketHint")}
           readOnly={r.isLoadingDay}
           error={errors.market?.message}
           {...r.form.register("market")}
         />
         <TextField
-          label="Tasa de venta"
+          label={t("sale")}
           inputMode="decimal"
           autoComplete="off"
           suffix="Bs"
-          hint="Opcional, para la lista de precios."
+          hint={t("saleHint")}
           readOnly={r.isLoadingDay}
           error={errors.sale?.message}
           {...r.form.register("sale")}
@@ -71,9 +75,9 @@ export function DailyRatesForm({ initialDate }: DailyRatesFormProps): React.JSX.
         type="submit"
         className="w-full sm:w-auto"
         isLoading={r.isSaving}
-        loadingText="Guardando…"
+        loadingText={tc("saving")}
       >
-        Guardar tasas
+        {t("submit")}
       </Button>
     </form>
   );

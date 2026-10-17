@@ -7,10 +7,11 @@ import {
   rateValueSchema,
   setDailyRatesSchema,
 } from "./exchange-rates";
+import { formatValidationMessage as text } from "./messages";
 import { updateStoreSettingsSchema } from "./settings";
 
 const message = (r: { success: boolean; error?: { issues: { message: string }[] } }) =>
-  r.error?.issues[0]?.message;
+  text(r.error?.issues[0]?.message ?? "");
 
 describe("businessDateSchema", () => {
   test("accepts real dates and rejects impossible ones", () => {
@@ -54,10 +55,8 @@ describe("dailyRatesFormSchema (web form)", () => {
 
   test("reports errors on the field and requires one rate", () => {
     const invalid = dailyRatesFormSchema.safeParse({ bcv: "0", market: "", sale: "" });
-    expect(invalid.error?.issues[0]).toMatchObject({
-      path: ["bcv"],
-      message: "La tasa debe ser mayor que 0",
-    });
+    expect(invalid.error?.issues[0]?.path).toEqual(["bcv"]);
+    expect(message(invalid)).toBe("La tasa debe ser mayor que 0");
     expect(message(dailyRatesFormSchema.safeParse({ bcv: "", market: "", sale: "" }))).toBe(
       "Escribe al menos una tasa",
     );

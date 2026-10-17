@@ -1,8 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
 import { amountSchema } from "./amount";
+import { formatValidationMessage as text } from "./messages";
 
-const firstMessage = (value: unknown) => amountSchema.safeParse(value).error?.issues[0]?.message;
+const firstMessage = (value: unknown) => {
+  const token = amountSchema.safeParse(value).error?.issues[0]?.message;
+  return token === undefined ? undefined : text(token);
+};
 
 describe("amountSchema", () => {
   test.each(["0", "0.0", "15", "15.5", "1234.5678", "9999999999.9999"])("accepts %p", (value) => {

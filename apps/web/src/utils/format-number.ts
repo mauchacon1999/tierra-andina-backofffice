@@ -5,7 +5,7 @@
 
 import { fractionToPercent } from "@ta/core";
 
-const LOCALE = "es-VE";
+import { LOCALE } from "@/i18n/config";
 
 /** "1234.5" → "1.234,50" (with `decimals: 2`). Rounds half-expand like Intl. */
 export function formatDecimal(value: string, decimals: number): string {

@@ -1,11 +1,13 @@
+"use client";
+
 import type { PurchaseLine } from "@ta/validators";
+import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmButton } from "@/components/ui/confirm-button";
-import { SALE_UNIT_SUFFIX } from "@/features/products/helpers/unit-labels";
-import { PACKS_LABELS, PAYMENT_STATUS_LABELS } from "@/features/purchases/helpers/line-labels";
+import { useUnitLabels } from "@/features/products/hooks/use-unit-labels";
 import { formatBs, formatDecimal, formatQuantity, formatUsd } from "@/utils/format-number";
 
 export type PurchaseLineCardProps = {
@@ -25,7 +27,9 @@ export function PurchaseLineCard({
   onDelete,
   isDeleting,
 }: PurchaseLineCardProps): React.JSX.Element {
-  const unit = SALE_UNIT_SUFFIX[line.saleUnit];
+  const t = useTranslations("purchases.line");
+  const labels = useUnitLabels();
+  const suffix = labels.suffix(line.saleUnit);
   const stall = [line.supplierName, line.stallReference].filter(Boolean).join(" · ");
 
   return (
@@ -36,38 +40,46 @@ export function PurchaseLineCard({
           {stall && <p className="text-sm text-muted">{stall}</p>}
         </div>
         <Badge tone={line.paymentStatus === "credit" ? "warning" : "neutral"}>
-          {PAYMENT_STATUS_LABELS[line.paymentStatus]}
+          {t(`paymentStatus.${line.paymentStatus}`)}
         </Badge>
       </div>
       <p className="text-sm text-muted">
-        {formatQuantity(line.packs)} {PACKS_LABELS[line.purchaseUnit].toLowerCase()} ·{" "}
-        {formatQuantity(line.grossQuantity)} {unit} − {formatQuantity(line.shrinkage)} merma ={" "}
-        {formatQuantity(line.usableQuantity)} {unit} útiles
+        {t("quantities", {
+          packs: labels.packsCount(line.purchaseUnit, line.packs),
+          gross: formatQuantity(line.grossQuantity),
+          shrinkage: formatQuantity(line.shrinkage),
+          usable: formatQuantity(line.usableQuantity),
+          suffix,
+        })}
       </p>
       <p className="text-sm text-muted">
-        {formatUsd(line.quotedPriceUsd)} × {formatDecimal(line.supplierRate, 2)} ={" "}
-        {formatBs(line.amountBs)} · costo real {formatUsd(line.realCostUsd)}
+        {t("paymentDetail", {
+          quoted: formatUsd(line.quotedPriceUsd),
+          rate: formatDecimal(line.supplierRate, 2),
+          bs: formatBs(line.amountBs),
+          realCost: formatUsd(line.realCostUsd),
+        })}
       </p>
       <p className="text-sm">
-        Costo {formatUsd(line.unitCostUsd)}/{unit} ·{" "}
+        {t("unitCost", { unitCost: formatUsd(line.unitCostUsd), suffix })} ·{" "}
         <span className="font-semibold text-primary-text">
-          Venta {formatUsd(line.salePriceUsd)}/{unit}
+          {t("salePrice", { sale: formatUsd(line.salePriceUsd), suffix })}
         </span>
       </p>
       {canEdit && (
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <Button variant="secondary" size="sm" onClick={onEdit}>
-            Editar
+            {t("edit")}
           </Button>
           <ConfirmButton
-            question={`¿Eliminar ${line.productName}?`}
-            confirmLabel="Eliminar"
+            question={t("deleteQuestion", { product: line.productName })}
+            confirmLabel={t("delete")}
             onConfirm={onDelete}
             isLoading={isDeleting}
-            loadingText="Eliminando…"
+            loadingText={t("deleting")}
             size="sm"
           >
-            Eliminar
+            {t("delete")}
           </ConfirmButton>
         </div>
       )}

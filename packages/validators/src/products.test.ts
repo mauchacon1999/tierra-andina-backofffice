@@ -9,6 +9,7 @@ import {
   quickProductFormSchema,
   updateProductSchema,
 } from "./products";
+import { formatValidationMessage as text } from "./messages";
 
 const CATEGORY = "01a14314-2825-7000-a1d1-bdf734d05981";
 
@@ -30,7 +31,7 @@ function errorsOf(result: {
   const out: Record<string, string[]> = {};
   for (const issue of result.error?.issues ?? []) {
     const key = issue.path.join(".") || "(form)";
-    (out[key] ??= []).push(issue.message);
+    (out[key] ??= []).push(text(issue.message));
   }
   return out;
 }
@@ -178,15 +179,15 @@ describe("updateProductSchema", () => {
 
 describe("productRuleIssues (re-check after merging a PATCH)", () => {
   test("returns the same messages as the schemas", () => {
-    expect(
-      productRuleIssues({
-        purchaseUnit: "crate",
-        saleUnit: "kg",
-        defaultPackQuantity: "10",
-        lastShrinkage: "12",
-        lastMargin: "0.5",
-      }),
-    ).toEqual([
+    const issues = productRuleIssues({
+      purchaseUnit: "crate",
+      saleUnit: "kg",
+      defaultPackQuantity: "10",
+      lastShrinkage: "12",
+      lastMargin: "0.5",
+    });
+
+    expect(issues.map((i) => ({ ...i, message: text(i.message) }))).toEqual([
       { path: "lastShrinkage", message: "La merma debe ser menor que la cantidad por bulto" },
     ]);
   });

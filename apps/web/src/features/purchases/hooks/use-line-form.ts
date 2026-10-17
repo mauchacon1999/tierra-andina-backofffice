@@ -1,6 +1,5 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   estimateGrossQuantity,
   fractionToPercent,
@@ -15,17 +14,19 @@ import {
   type PurchaseLineFormValues,
   type TripDetail,
 } from "@ta/validators";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 
 import type { SelectOption } from "@/components/ui/select-field";
 import { useProducts } from "@/features/products/api/use-products";
-import { SALE_UNIT_SUFFIX } from "@/features/products/helpers/unit-labels";
+import { useUnitLabels } from "@/features/products/hooks/use-unit-labels";
 import { useAddLine, useUpdateLine } from "@/features/purchases/api/use-trip-mutations";
 import { useSuppliers } from "@/features/purchases/api/use-trips";
-import { PACKS_LABELS } from "@/features/purchases/helpers/line-labels";
 import { computeLinePreview, type LinePreview } from "@/features/purchases/helpers/line-preview";
 import { useSettings } from "@/features/settings/api/use-settings";
+import { useErrorMessage } from "@/i18n/use-error-message";
+import { useZodResolver } from "@/i18n/use-zod-resolver";
 import { isApiError } from "@/lib/api";
 
 export type UseLineFormOptions = {
@@ -59,7 +60,6 @@ export type UseLineFormResult = {
 };
 
 const PRODUCT_QUERY = { pageSize: 100 } as const;
-const FALLBACK_ERROR = "No se pudo guardar la compra. Intenta de nuevo";
 
 const EMPTY: PurchaseLineFormValues = {
   productId: "",
@@ -102,8 +102,11 @@ function toFormField(apiField: string): keyof PurchaseLineFormValues | null {
  */
 export function useLineForm({ trip, line, onDone }: UseLineFormOptions): UseLineFormResult {
   const isEdit = line !== undefined;
+  const t = useTranslations("purchases.line");
+  const labels = useUnitLabels();
+  const errorMessage = useErrorMessage();
   const form = useForm<PurchaseLineFormValues, unknown, PurchaseLineFields>({
-    resolver: zodResolver(purchaseLineFormSchema),
+    resolver: useZodResolver(purchaseLineFormSchema),
     defaultValues: line ? lineToFormValues(line) : EMPTY,
   });
   const { settings } = useSettings();
@@ -143,7 +146,7 @@ export function useLineForm({ trip, line, onDone }: UseLineFormOptions): UseLine
 
   const showServerError = (error: unknown): void => {
     if (!isApiError(error)) {
-      form.setError("root", { message: FALLBACK_ERROR });
+      form.setError("root", { message: t("saveFailed") });
       return;
     }
     const fieldErrors = (error.details as { fieldErrors?: Record<string, string[]> } | undefined)
@@ -156,7 +159,7 @@ export function useLineForm({ trip, line, onDone }: UseLineFormOptions): UseLine
         placed = true;
       }
     }
-    if (!placed) form.setError("root", { message: error.message });
+    if (!placed) form.setError("root", { message: errorMessage(error, t("saveFailed")) });
   };
 
   const onSubmit = form.handleSubmit(async (payload) => {
@@ -196,8 +199,8 @@ export function useLineForm({ trip, line, onDone }: UseLineFormOptions): UseLine
     },
     isCreatingProduct,
     setIsCreatingProduct,
-    packsLabel: PACKS_LABELS[purchaseUnit],
-    quantitySuffix: SALE_UNIT_SUFFIX[product?.saleUnit ?? line?.saleUnit ?? "kg"],
+    packsLabel: labels.packs(purchaseUnit),
+    quantitySuffix: labels.suffix(product?.saleUnit ?? line?.saleUnit ?? "kg"),
     supplierRatePlaceholder: normalizeDecimal(trip.marketRate),
     preview: computeLinePreview(values, {
       bcvRate: trip.bcvRate,

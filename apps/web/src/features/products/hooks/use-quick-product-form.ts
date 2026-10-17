@@ -1,6 +1,5 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   allowedSaleUnits,
   requiresPackQuantity,
@@ -14,14 +13,13 @@ import {
   type QuickCreateProduct,
   type QuickProductFormValues,
 } from "@ta/validators";
+import { useTranslations } from "next-intl";
 import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 
 import { useQuickCreateProduct } from "@/features/products/api/use-product-mutations";
-import {
-  packQuantityLabel,
-  SALE_UNIT_LABELS,
-  SALE_UNIT_SUFFIX,
-} from "@/features/products/helpers/unit-labels";
+import { useUnitLabels } from "@/features/products/hooks/use-unit-labels";
+import { useErrorMessage } from "@/i18n/use-error-message";
+import { useZodResolver } from "@/i18n/use-zod-resolver";
 import { isApiError } from "@/lib/api";
 
 export type UseQuickProductFormResult = {
@@ -53,8 +51,11 @@ const DEFAULTS: QuickProductFormValues = {
 export function useQuickProductForm(
   onCreated: (product: Product) => void,
 ): UseQuickProductFormResult {
+  const t = useTranslations("products.quick");
+  const labels = useUnitLabels();
+  const errorMessage = useErrorMessage();
   const form = useForm<QuickProductFormValues, unknown, QuickCreateProduct>({
-    resolver: zodResolver(quickProductFormSchema),
+    resolver: useZodResolver(quickProductFormSchema),
     defaultValues: DEFAULTS,
   });
   const quickCreate = useQuickCreateProduct();
@@ -76,9 +77,7 @@ export function useQuickProductForm(
       const nameError = fieldErrors?.name?.[0];
       if (nameError) form.setError("name", { message: nameError }, { shouldFocus: true });
       else {
-        form.setError("root", {
-          message: isApiError(error) ? error.message : "No se pudo crear el producto",
-        });
+        form.setError("root", { message: errorMessage(error, t("failed")) });
       }
     }
   });
@@ -96,12 +95,12 @@ export function useQuickProductForm(
     setSaleUnit: (unit) => form.setValue("saleUnit", unit),
     saleUnitOptions: SALE_UNITS.map((unit) => ({
       value: unit,
-      label: SALE_UNIT_LABELS[unit],
+      label: labels.sale(unit),
       disabled: !allowed.includes(unit),
     })),
     showPackQuantity: requiresPackQuantity(purchaseUnit),
-    packQuantityLabel: packQuantityLabel(purchaseUnit, saleUnit),
-    saleUnitSuffix: SALE_UNIT_SUFFIX[saleUnit],
+    packQuantityLabel: labels.packQuantity(purchaseUnit, saleUnit),
+    saleUnitSuffix: labels.suffix(saleUnit),
     onSubmit: () => onSubmit(),
     isSubmitting: quickCreate.isRunning,
     formError: form.formState.errors.root?.message,

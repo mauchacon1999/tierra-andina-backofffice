@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button, type ButtonSize, type ButtonVariant } from "@/components/ui/button";
@@ -9,6 +10,7 @@ export type ConfirmButtonProps = {
   children: string;
   /** What will happen, asked before acting ("¿Eliminar esta compra?"). */
   question: string;
+  /** Defaults to "Confirmar" (common.confirm). */
   confirmLabel?: string;
   onConfirm: () => void | Promise<void>;
   variant?: ButtonVariant;
@@ -26,7 +28,7 @@ export type ConfirmButtonProps = {
 export function ConfirmButton({
   children,
   question,
-  confirmLabel = "Confirmar",
+  confirmLabel,
   onConfirm,
   variant = "danger",
   size = "md",
@@ -35,6 +37,7 @@ export function ConfirmButton({
   className,
 }: ConfirmButtonProps): React.JSX.Element {
   const [isAsking, setIsAsking] = useState(false);
+  const t = useTranslations("common");
 
   if (!isAsking) {
     return (
@@ -63,7 +66,7 @@ export function ConfirmButton({
           onClick={() => setIsAsking(false)}
           disabled={isLoading}
         >
-          Cancelar
+          {t("cancel")}
         </Button>
         <Button
           variant={variant}
@@ -75,7 +78,7 @@ export function ConfirmButton({
             setIsAsking(false);
           }}
         >
-          {confirmLabel}
+          {confirmLabel ?? t("confirm")}
         </Button>
       </div>
     </div>

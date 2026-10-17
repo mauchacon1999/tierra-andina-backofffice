@@ -2,9 +2,10 @@
 
 import { percentToFraction, priceLine, type PurchaseUnit, type SaleUnit } from "@ta/core";
 import { decimalSchema } from "@ta/validators";
-import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
 
-import { PURCHASE_UNIT_LABELS, SALE_UNIT_SUFFIX } from "@/features/products/helpers/unit-labels";
+import { useUnitLabels, type UnitLabels } from "@/features/products/hooks/use-unit-labels";
 import { formatQuantity, formatUsd } from "@/utils/format-number";
 
 export type PriceExampleInput = {
@@ -24,15 +25,44 @@ export type UsePriceExampleResult = {
   example: string | null;
 };
 
-const sampleCostSchema = decimalSchema("El costo");
+const sampleCostSchema = decimalSchema("price");
+
+type PackExample = {
+  unit: string;
+  cost: string;
+  usable: string;
+  unitCost: string;
+  sale: string;
+  suffix: string;
+};
+
+/** Texts of the example in the current language (`products.priceExample` messages). */
+export type PriceExampleText = {
+  units: UnitLabels;
+  pack: (values: PackExample) => string;
+  kilo: (values: Pick<PackExample, "cost" | "sale" | "suffix">) => string;
+};
+
+export function usePriceExampleText(): PriceExampleText {
+  const t = useTranslations("products.priceExample");
+  return {
+    units: useUnitLabels(),
+    pack: (values) => t("pack", values),
+    kilo: (values) => t("kilo", values),
+  };
+}
 
 /**
  * Live "what would it cost" line under the product form (products.md §2), computed with
  * @ta/core `priceLine` (supplier rate = BCV rate, so no rate effect). Not saved.
  */
-export function describePriceExample(input: PriceExampleInput, sampleCost: string): string | null {
+export function describePriceExample(
+  input: PriceExampleInput,
+  sampleCost: string,
+  text: PriceExampleText,
+): string | null {
   if (!sampleCostSchema.safeParse(sampleCost).success) return null;
-  const suffix = SALE_UNIT_SUFFIX[input.saleUnit];
+  const suffix = text.units.suffix(input.saleUnit);
   const isKg = input.purchaseUnit === "kg";
   try {
     const pricing = priceLine({
@@ -45,14 +75,17 @@ export function describePriceExample(input: PriceExampleInput, sampleCost: strin
       margin: percentToFraction(input.lastMarginPercent),
       usdRoundingStep: input.usdRoundingStep,
     });
-    const sale = `venta ${formatUsd(pricing.salePriceUsd)}/${suffix}`;
-    if (isKg) return `Kilo a ${formatUsd(sampleCost)} → ${sale}`;
-    return [
-      `${PURCHASE_UNIT_LABELS[input.purchaseUnit]} a ${formatUsd(sampleCost)}`,
-      `${formatQuantity(pricing.usableQuantity)} ${suffix} útiles`,
-      `${formatUsd(pricing.unitCostUsd)}/${suffix}`,
+    const cost = formatUsd(sampleCost);
+    const sale = formatUsd(pricing.salePriceUsd);
+    if (isKg) return text.kilo({ cost, sale, suffix });
+    return text.pack({
+      unit: text.units.purchase(input.purchaseUnit),
+      cost,
+      usable: formatQuantity(pricing.usableQuantity),
+      unitCost: formatUsd(pricing.unitCostUsd),
       sale,
-    ].join(" → ");
+      suffix,
+    });
   } catch {
     // Incomplete or invalid inputs (no pack quantity yet, shrinkage ≥ pack…): show nothing.
     return null;
@@ -61,36 +94,7 @@ export function describePriceExample(input: PriceExampleInput, sampleCost: strin
 
 export function usePriceExample(input: PriceExampleInput): UsePriceExampleResult {
   const [sampleCost, setSampleCost] = useState("");
-  const {
-    purchaseUnit,
-    saleUnit,
-    defaultPackQuantity,
-    lastShrinkage,
-    lastMarginPercent,
-    usdRoundingStep,
-  } = input;
-  const example = useMemo(
-    () =>
-      describePriceExample(
-        {
-          purchaseUnit,
-          saleUnit,
-          defaultPackQuantity,
-          lastShrinkage,
-          lastMarginPercent,
-          usdRoundingStep,
-        },
-        sampleCost,
-      ),
-    [
-      purchaseUnit,
-      saleUnit,
-      defaultPackQuantity,
-      lastShrinkage,
-      lastMarginPercent,
-      usdRoundingStep,
-      sampleCost,
-    ],
-  );
-  return { sampleCost, setSampleCost, example };
+  const text = usePriceExampleText();
+  // Cheap to compute: no memo, so it always follows the latest form values and messages.
+  return { sampleCost, setSampleCost, example: describePriceExample(input, sampleCost, text) };
 }

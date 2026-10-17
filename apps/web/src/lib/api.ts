@@ -11,7 +11,7 @@ export type ApiErrorInit = {
   /** HTTP status; 0 when there was no response (network down or timeout). */
   status: number;
   code: ClientErrorCode | (string & {});
-  /** Spanish, safe to show to users. */
+  /** From the API: Spanish, safe to show. Client codes: technical (see useErrorMessage). */
   message: string;
   details?: unknown;
   requestId?: string | undefined;
@@ -80,9 +80,8 @@ export async function apiFetch<T>(
     throw new ApiError({
       status: 0,
       code: timedOut ? "TIMEOUT" : "NETWORK_ERROR",
-      message: timedOut
-        ? `La API no respondió en ${timeoutMs} ms`
-        : "No se pudo conectar con la API",
+      // Technical text for logs; screens show the `apiErrors.<code>` message (useErrorMessage).
+      message: timedOut ? `no answer within ${timeoutMs} ms` : "could not reach the API",
       details: cause instanceof Error ? cause.message : cause,
     });
   }
@@ -99,7 +98,7 @@ export async function apiFetch<T>(
     throw new ApiError({
       status: response.status,
       code: "INVALID_RESPONSE",
-      message: `Respuesta inesperada de la API (HTTP ${response.status})`,
+      message: `unexpected error body (HTTP ${response.status})`,
       details: data,
       requestId,
     });
@@ -113,7 +112,7 @@ export async function apiFetch<T>(
     throw new ApiError({
       status: response.status,
       code: "INVALID_RESPONSE",
-      message: "La respuesta de la API no tiene el formato esperado",
+      message: "response does not match the expected schema",
       details: z.flattenError(parsed.error),
       requestId,
     });

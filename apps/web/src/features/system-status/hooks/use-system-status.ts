@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 
 import { getDbHealth, getHealth } from "@/features/system-status/api/health";
@@ -46,16 +47,17 @@ export function useSystemStatus({
   const [api, setApi] = useState<CheckState>({ status: "loading" });
   const [db, setDb] = useState<CheckState>({ status: "loading" });
   const [checkedAt, setCheckedAt] = useState<Date | null>(null);
+  const t = useTranslations("systemStatus");
 
   const check = useCallback(async () => {
     const [apiState, dbState] = await Promise.all([
-      runCheck(getHealth, (r) => `Versión ${r.version}`),
-      runCheck(getDbHealth, () => "PostgreSQL responde"),
+      runCheck(getHealth, (r) => t("apiDetail", { version: r.version })),
+      runCheck(getDbHealth, () => t("dbDetail")),
     ]);
     setApi(apiState);
     setDb(dbState);
     setCheckedAt(new Date());
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     // The first check is scheduled (not run synchronously) to avoid cascading renders in the effect.

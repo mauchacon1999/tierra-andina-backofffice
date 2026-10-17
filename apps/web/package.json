@@ -15,6 +15,7 @@
     "@ta/core": "workspace:*",
     "@ta/validators": "workspace:*",
     "next": "16.4.2",
+    "next-intl": "^4.14.9",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-hook-form": "^7.90.0",

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { meResponseSchema, membershipRoleSchema, signInSchema } from "./auth";
+import { formatValidationMessage as text } from "./messages";
 
 describe("membershipRoleSchema", () => {
   test.each(["owner", "manager", "receiver"])("accepts %p", (role) => {
@@ -35,7 +36,8 @@ describe("meResponseSchema", () => {
 });
 
 describe("signInSchema", () => {
-  const message = (value: unknown) => signInSchema.safeParse(value).error?.issues[0]?.message;
+  const message = (value: unknown) =>
+    text(signInSchema.safeParse(value).error?.issues[0]?.message ?? "");
 
   test("trims and lowercases the email", () => {
     expect(signInSchema.parse({ email: "  Owner@Tierra.Test ", password: "x" })).toEqual({

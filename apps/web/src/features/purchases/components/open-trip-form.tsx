@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
@@ -11,8 +13,10 @@ import { formatDecimal } from "@/utils/format-number";
 /** Opens the purchase trip of a day with that day's BCV and Coche rates. */
 export function OpenTripForm(): React.JSX.Element {
   const f = useOpenTripForm();
+  const t = useTranslations("purchases.openTrip");
+  const tc = useTranslations("common");
   const { errors } = f.form.formState;
-  const hasMissing = f.missingRates.length > 0;
+  const [first, second] = f.missingRates.map((kind) => t(`rateNames.${kind}`));
 
   return (
     <form
@@ -23,45 +27,51 @@ export function OpenTripForm(): React.JSX.Element {
         void f.onSubmit();
       }}
     >
-      <h2 className="font-semibold">Abrir jornada</h2>
-      {f.formError && !hasMissing && <Alert tone="error">{f.formError}</Alert>}
+      <h2 className="font-semibold">{t("title")}</h2>
+      {f.formError && !first && <Alert tone="error">{f.formError}</Alert>}
       <TextField
-        label="Fecha"
+        label={t("date")}
         type="date"
         error={errors.businessDate?.message}
         hint={f.businessDate ? formatBusinessDateLong(f.businessDate) : undefined}
         {...f.form.register("businessDate")}
       />
-      {hasMissing ? (
-        <Alert tone="warning" title={`Falta la tasa ${f.missingRates.join(" y la tasa ")}`}>
-          <p>La jornada copia las tasas del día. Regístralas primero.</p>
+      {first ? (
+        <Alert
+          tone="warning"
+          title={t("missingTitle", { count: f.missingRates.length, first, second: second ?? "" })}
+        >
+          <p>{t("missingBody")}</p>
           <ButtonLink href="/rates" variant="secondary" size="sm" className="mt-2">
-            Ir a Tasas del día
+            {t("goToRates")}
           </ButtonLink>
         </Alert>
       ) : (
-        f.rates && (
+        f.rates?.bcv &&
+        f.rates.market && (
           <p className="text-sm text-muted">
-            BCV {formatDecimal(f.rates.bcv ?? "0", 2)} Bs · Coche{" "}
-            {formatDecimal(f.rates.market ?? "0", 2)} Bs
+            {t("rates", {
+              bcv: formatDecimal(f.rates.bcv, 2),
+              market: formatDecimal(f.rates.market, 2),
+            })}
           </p>
         )
       )}
       <TextField
-        label="Nota"
+        label={t("note")}
         autoComplete="off"
-        hint="Opcional."
+        hint={tc("optional")}
         error={errors.note?.message}
         {...f.form.register("note")}
       />
       <Button
         type="submit"
         className="w-full sm:w-auto"
-        disabled={hasMissing || f.isLoadingRates}
+        disabled={Boolean(first) || f.isLoadingRates}
         isLoading={f.isSubmitting}
-        loadingText="Abriendo…"
+        loadingText={t("submitting")}
       >
-        Abrir jornada
+        {t("submit")}
       </Button>
     </form>
   );

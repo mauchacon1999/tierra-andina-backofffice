@@ -7,11 +7,12 @@ import {
   purchaseLineFormSchema,
   updatePurchaseLineSchema,
 } from "./purchases";
+import { formatValidationMessage as text } from "./messages";
 
 const PRODUCT = "01a14314-282a-7000-9464-3fabd385c6ef";
 
 const fieldErrors = (r: { error?: { issues: { path: PropertyKey[]; message: string }[] } }) =>
-  Object.fromEntries((r.error?.issues ?? []).map((i) => [i.path.join("."), i.message]));
+  Object.fromEntries((r.error?.issues ?? []).map((i) => [i.path.join("."), text(i.message)]));
 
 describe("createSupplierSchema", () => {
   test("cleans the name and defaults to a wholesale stall", () => {

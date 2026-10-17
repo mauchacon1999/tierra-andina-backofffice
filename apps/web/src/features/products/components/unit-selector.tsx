@@ -1,9 +1,10 @@
 "use client";
 
 import { PURCHASE_UNITS, type PurchaseUnit, type SaleUnit } from "@ta/core";
+import { useTranslations } from "next-intl";
 
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { PURCHASE_UNIT_LABELS } from "@/features/products/helpers/unit-labels";
+import { useUnitLabels } from "@/features/products/hooks/use-unit-labels";
 
 export type UnitSelectorProps = {
   purchaseUnit: PurchaseUnit;
@@ -15,8 +16,6 @@ export type UnitSelectorProps = {
   saleUnitError?: string | undefined;
 };
 
-const LOCKED_HINT = "Bloqueado: el producto ya se usó en compras o listas de precios.";
-
 /** "Se compra por" + "Se vende por"; sale units are filtered by the purchase unit. */
 export function UnitSelector({
   purchaseUnit,
@@ -27,25 +26,29 @@ export function UnitSelector({
   isLocked,
   saleUnitError,
 }: UnitSelectorProps): React.JSX.Element {
+  const t = useTranslations("products.form");
+  const labels = useUnitLabels();
+  const lockedHint = isLocked ? t("unitsLocked") : undefined;
+
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <SegmentedControl
-        label="Se compra por"
+        label={t("purchaseUnit")}
         name="purchaseUnit"
-        options={PURCHASE_UNITS.map((unit) => ({ value: unit, label: PURCHASE_UNIT_LABELS[unit] }))}
+        options={PURCHASE_UNITS.map((unit) => ({ value: unit, label: labels.purchase(unit) }))}
         value={purchaseUnit}
         onChange={onPurchaseUnitChange}
         disabled={isLocked}
-        hint={isLocked ? LOCKED_HINT : undefined}
+        hint={lockedHint}
       />
       <SegmentedControl
-        label="Se vende por"
+        label={t("saleUnit")}
         name="saleUnit"
         options={saleUnitOptions}
         value={saleUnit}
         onChange={onSaleUnitChange}
         disabled={isLocked}
-        hint={isLocked ? LOCKED_HINT : undefined}
+        hint={lockedHint}
         error={saleUnitError}
       />
     </div>

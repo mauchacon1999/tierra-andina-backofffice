@@ -6,6 +6,13 @@ export type { Amount } from "./amount";
 export { MEMBERSHIP_ROLES, meResponseSchema, membershipRoleSchema, signInSchema } from "./auth";
 export type { MeResponse, MembershipRole, SignIn, SignInInput } from "./auth";
 export { decimalSchema } from "./amount";
+export { formatValidationMessage, message, VALIDATION_MESSAGES_ES_VE } from "./messages";
+export type {
+  ValidationMessageKey,
+  ValidationMessages,
+  ValidationParams,
+  ValidationSubject,
+} from "./messages";
 export type { DecimalSchemaOptions } from "./amount";
 export { MAX_PAGE_SIZE, paginatedSchema, paginationQuerySchema } from "./pagination";
 export type { Paginated, PaginatedSchema, PaginationQuery } from "./pagination";

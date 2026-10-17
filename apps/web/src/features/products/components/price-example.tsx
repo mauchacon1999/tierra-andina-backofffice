@@ -1,12 +1,14 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { Card } from "@/components/ui/card";
 import { TextField } from "@/components/ui/text-field";
 import {
   usePriceExample,
   type PriceExampleInput,
 } from "@/features/products/hooks/use-price-example";
-import { PURCHASE_UNIT_LABELS } from "@/features/products/helpers/unit-labels";
+import { useUnitLabels } from "@/features/products/hooks/use-unit-labels";
 
 export type PriceExampleProps = {
   input: PriceExampleInput;
@@ -15,25 +17,24 @@ export type PriceExampleProps = {
 /** Live, unsaved example of cost and sale price with the current form values. */
 export function PriceExample({ input }: PriceExampleProps): React.JSX.Element {
   const { sampleCost, setSampleCost, example } = usePriceExample(input);
-  const what = PURCHASE_UNIT_LABELS[input.purchaseUnit].toLowerCase();
+  const t = useTranslations("products.priceExample");
+  const unit = useUnitLabels().purchase(input.purchaseUnit).toLowerCase();
 
   return (
     <Card tone="muted" className="space-y-3">
-      <h2 className="font-semibold">Ejemplo de precio</h2>
+      <h2 className="font-semibold">{t("title")}</h2>
       <TextField
-        label={`Si la ${what} te cuesta`}
+        label={t("sampleCost", { unit })}
         inputMode="decimal"
         autoComplete="off"
         suffix="$"
-        placeholder="20"
-        hint="Solo para probar; no se guarda."
+        placeholder={t("sampleCostPlaceholder")}
+        hint={t("sampleCostHint")}
         value={sampleCost}
         onChange={(event) => setSampleCost(event.target.value)}
       />
       <p aria-live="polite" className="text-sm">
-        {example ?? (
-          <span className="text-muted">Escribe un costo para ver el precio de venta.</span>
-        )}
+        {example ?? <span className="text-muted">{t("empty")}</span>}
       </p>
     </Card>
   );

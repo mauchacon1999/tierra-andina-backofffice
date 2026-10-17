@@ -1,4 +1,7 @@
+"use client";
+
 import type { TripDetail } from "@ta/validators";
+import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -11,6 +14,7 @@ export type TripHeaderProps = {
 
 /** Day, status, the rates copied into the trip and its totals. */
 export function TripHeader({ trip }: TripHeaderProps): React.JSX.Element {
+  const t = useTranslations("purchases");
   const isOpen = trip.status === "open";
 
   return (
@@ -19,17 +23,21 @@ export function TripHeader({ trip }: TripHeaderProps): React.JSX.Element {
         <h2 className="text-lg font-semibold capitalize">
           {formatBusinessDateLong(trip.businessDate)}
         </h2>
-        <Badge tone={isOpen ? "success" : "neutral"}>{isOpen ? "Abierta" : "Cerrada"}</Badge>
+        <Badge tone={isOpen ? "success" : "neutral"}>{t(`status.${trip.status}`)}</Badge>
       </div>
       {trip.note && <p className="text-sm text-muted">{trip.note}</p>}
       <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-        <dt className="text-muted">Tasa BCV</dt>
-        <dd className="text-right">{formatDecimal(trip.bcvRate, 2)} Bs</dd>
-        <dt className="text-muted">Tasa de Coche</dt>
-        <dd className="text-right">{formatDecimal(trip.marketRate, 2)} Bs</dd>
-        <dt className="text-muted">Pagado a los puestos</dt>
+        <dt className="text-muted">{t("trip.bcvRate")}</dt>
+        <dd className="text-right">
+          {t("trip.rateValue", { rate: formatDecimal(trip.bcvRate, 2) })}
+        </dd>
+        <dt className="text-muted">{t("trip.marketRate")}</dt>
+        <dd className="text-right">
+          {t("trip.rateValue", { rate: formatDecimal(trip.marketRate, 2) })}
+        </dd>
+        <dt className="text-muted">{t("trip.paidToStalls")}</dt>
         <dd className="text-right font-medium">{formatBs(trip.totalBs)}</dd>
-        <dt className="text-muted">Costo real</dt>
+        <dt className="text-muted">{t("trip.realCost")}</dt>
         <dd className="text-right font-semibold">{formatUsd(trip.totalUsd)}</dd>
       </dl>
     </Card>

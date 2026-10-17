@@ -8,6 +8,9 @@ screen and component; if something is missing here, add it here first.
   button), `TextField`, `SelectField`, `SegmentedControl` (few exclusive options, real radios),
   `Checkbox`, `Alert`, `Card` (tones), `Badge`, `Spinner`, `ConfirmButton` (two-step action)
 - Guard: `apps/web/src/design-system.test.ts` fails if a component uses a raw palette color
+- Texts: every label, hint, button and message comes from `apps/web/src/i18n/messages/es-VE.json`
+  (next-intl, CLAUDE.md §10 "Text and i18n"); `src/i18n/no-hardcoded-text.test.ts` fails on
+  text written in a component. The wording rules below apply to the messages file.
 
 ---
 

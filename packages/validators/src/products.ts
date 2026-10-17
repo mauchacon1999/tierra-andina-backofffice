@@ -10,48 +10,51 @@ import {
 import { z } from "zod";
 
 import { decimalSchema } from "./amount";
+import { message } from "./messages";
 import { paginatedSchema, paginationQuerySchema } from "./pagination";
 
 /*
  * Product schemas (docs/modules/products.md §4). Rules come from @ta/core so the web form and
- * the API validate exactly the same way. Messages are Spanish (shown to users).
+ * the API validate exactly the same way. Messages are tokens (messages.ts).
  */
 
-export const purchaseUnitSchema = z.enum(PURCHASE_UNITS, { error: "Elige cómo se compra" });
-export const saleUnitSchema = z.enum(SALE_UNITS, { error: "Elige cómo se vende" });
+export const purchaseUnitSchema = z.enum(PURCHASE_UNITS, {
+  error: message("product.purchaseUnitRequired"),
+});
+export const saleUnitSchema = z.enum(SALE_UNITS, { error: message("product.saleUnitRequired") });
 
 export const NAME_MIN = 2;
 export const NAME_MAX = 60;
 
 const nameSchema = z
-  .string({ error: "Escribe el nombre" })
+  .string({ error: message("name.required") })
   .transform(cleanProductName)
   .pipe(
     z
       .string()
-      .min(1, { message: "Escribe el nombre", abort: true })
-      .min(NAME_MIN, `El nombre debe tener al menos ${NAME_MIN} caracteres`)
-      .max(NAME_MAX, `El nombre admite como máximo ${NAME_MAX} caracteres`),
+      .min(1, { message: message("name.required"), abort: true })
+      .min(NAME_MIN, message("name.tooShort", { min: NAME_MIN }))
+      .max(NAME_MAX, message("name.tooLong", { max: NAME_MAX })),
   );
 
-const categoryIdSchema = z.uuid({ error: "Elige una categoría" });
-const packQuantitySchema = decimalSchema("La cantidad por bulto").nullable();
-const shrinkageSchema = decimalSchema("La merma");
+const categoryIdSchema = z.uuid({ error: message("product.categoryRequired") });
+const packQuantitySchema = decimalSchema("packQuantity").nullable();
+const shrinkageSchema = decimalSchema("shrinkage");
 /** Margin as a fraction: "0.5" = 50 %. */
-const marginSchema = decimalSchema("El margen");
+const marginSchema = decimalSchema("margin");
 
-/** Spanish messages for the @ta/core product rules; also used by the API in error details. */
+/** Message tokens for the @ta/core product rules; also used by the API in error details. */
 export const PRODUCT_RULE_MESSAGES: Record<
   ProductDefaultsIssueCode | "INVALID_UNIT_COMBINATION",
   string
 > = {
-  INVALID_UNIT_COMBINATION: "Lo que se compra por kilo solo se puede vender por kilo",
-  PACK_QUANTITY_REQUIRED: "Indica cuánto trae cada bulto",
-  PACK_QUANTITY_NOT_ALLOWED: "Los productos por kilo no llevan cantidad por bulto",
-  PACK_QUANTITY_NOT_POSITIVE: "La cantidad por bulto debe ser mayor que 0",
-  SHRINKAGE_NEGATIVE: "La merma no puede ser negativa",
-  SHRINKAGE_NOT_BELOW_PACK: "La merma debe ser menor que la cantidad por bulto",
-  MARGIN_OUT_OF_RANGE: "El margen debe estar entre 0 % y 500 %",
+  INVALID_UNIT_COMBINATION: message("product.INVALID_UNIT_COMBINATION"),
+  PACK_QUANTITY_REQUIRED: message("product.PACK_QUANTITY_REQUIRED"),
+  PACK_QUANTITY_NOT_ALLOWED: message("product.PACK_QUANTITY_NOT_ALLOWED"),
+  PACK_QUANTITY_NOT_POSITIVE: message("product.PACK_QUANTITY_NOT_POSITIVE"),
+  SHRINKAGE_NEGATIVE: message("product.SHRINKAGE_NEGATIVE"),
+  SHRINKAGE_NOT_BELOW_PACK: message("product.SHRINKAGE_NOT_BELOW_PACK"),
+  MARGIN_OUT_OF_RANGE: message("product.MARGIN_OUT_OF_RANGE"),
 };
 
 type RuleInput = {
@@ -151,7 +154,7 @@ export const updateProductSchema = z
     lastMargin: marginSchema.optional(),
   })
   .refine((value) => Object.values(value).some((v) => v !== undefined), {
-    message: "No hay cambios que guardar",
+    message: message("noChanges"),
   });
 
 export type UpdateProductInput = z.input<typeof updateProductSchema>;
@@ -171,7 +174,7 @@ export function productRuleIssues(value: RuleInput): { path: string; message: st
 // Web form ---------------------------------------------------------------------------------------
 
 /** Percent typed by the owner ("50" = 50 %); 2 decimals keep the fraction within 4. */
-const marginPercentSchema = decimalSchema("El margen", { maxDecimals: 2 });
+const marginPercentSchema = decimalSchema("margin", { maxDecimals: 2 });
 
 /**
  * The product form holds text inputs; it outputs the `CreateProduct` payload:

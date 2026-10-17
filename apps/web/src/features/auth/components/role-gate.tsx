@@ -1,6 +1,7 @@
 "use client";
 
 import type { MembershipRole } from "@ta/validators";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { Alert } from "@/components/ui/alert";
@@ -18,22 +19,23 @@ export type RoleGateProps = {
  */
 export function RoleGate({ roles, children }: RoleGateProps): React.JSX.Element {
   const { me, activeMembership } = useRequireSession();
+  const t = useTranslations();
 
   if (!me) {
     return (
       <p role="status" className="text-muted">
-        Cargando…
+        {t("common.loading")}
       </p>
     );
   }
   if (!activeMembership || !roles.includes(activeMembership.role)) {
     return (
       <div className="space-y-4">
-        <Alert tone="error" title="No tienes permiso para ver esta sección">
-          Pídele acceso al dueño de la tienda.
+        <Alert tone="error" title={t("auth.roleGate.forbiddenTitle")}>
+          {t("auth.roleGate.forbiddenBody")}
         </Alert>
         <ButtonLink href="/" variant="secondary">
-          Volver al inicio
+          {t("common.backHome")}
         </ButtonLink>
       </div>
     );

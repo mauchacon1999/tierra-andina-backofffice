@@ -1,6 +1,7 @@
 "use client";
 
 import type { Product } from "@ta/validators";
+import { useTranslations } from "next-intl";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ export type ProductQuickFormProps = {
 /** Minimal "Nuevo producto" for the purchase screen; category is fixed later from the catalog. */
 export function ProductQuickForm({ onCreated }: ProductQuickFormProps): React.JSX.Element {
   const q = useQuickProductForm(onCreated);
+  const t = useTranslations("products");
   const { errors } = q.form.formState;
 
   return (
@@ -28,7 +30,7 @@ export function ProductQuickForm({ onCreated }: ProductQuickFormProps): React.JS
     >
       {q.formError && <Alert tone="error">{q.formError}</Alert>}
       <TextField
-        label="Nombre"
+        label={t("form.name")}
         required
         autoComplete="off"
         error={errors.name?.message}
@@ -54,8 +56,13 @@ export function ProductQuickForm({ onCreated }: ProductQuickFormProps): React.JS
           {...q.form.register("defaultPackQuantity")}
         />
       )}
-      <Button type="submit" className="w-full" isLoading={q.isSubmitting} loadingText="Creando…">
-        Crear producto
+      <Button
+        type="submit"
+        className="w-full"
+        isLoading={q.isSubmitting}
+        loadingText={t("quick.creating")}
+      >
+        {t("quick.create")}
       </Button>
     </form>
   );

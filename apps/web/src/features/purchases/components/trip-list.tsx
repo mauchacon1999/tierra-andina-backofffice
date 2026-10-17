@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useTrips } from "@/features/purchases/api/use-trips";
+import { useErrorMessage } from "@/i18n/use-error-message";
 import { formatBusinessDateLong } from "@/utils/format-date";
 import { formatBs, formatUsd } from "@/utils/format-number";
 
@@ -15,13 +17,16 @@ const QUERY = { pageSize: 30 } as const;
 /** Latest purchase trips, open ones first; each card opens the trip. */
 export function TripList(): React.JSX.Element {
   const { page, isLoading, error, retry } = useTrips(QUERY);
+  const t = useTranslations("purchases");
+  const tc = useTranslations("common");
+  const errorMessage = useErrorMessage();
 
   if (error && !page) {
     return (
-      <Alert tone="error" title="No se pudieron cargar las jornadas">
-        <p>{error.message}</p>
+      <Alert tone="error" title={t("list.loadFailed")}>
+        <p>{errorMessage(error, error.message)}</p>
         <Button variant="secondary" size="sm" className="mt-2" onClick={retry}>
-          Reintentar
+          {tc("retry")}
         </Button>
       </Alert>
     );
@@ -29,12 +34,12 @@ export function TripList(): React.JSX.Element {
   if (isLoading || !page) {
     return (
       <p role="status" className="text-muted">
-        Cargando…
+        {tc("loading")}
       </p>
     );
   }
   if (page.data.length === 0) {
-    return <p className="text-muted">Aún no hay jornadas de compra.</p>;
+    return <p className="text-muted">{t("list.empty")}</p>;
   }
 
   return (
@@ -51,12 +56,15 @@ export function TripList(): React.JSX.Element {
                   {formatBusinessDateLong(trip.businessDate)}
                 </p>
                 <Badge tone={trip.status === "open" ? "success" : "neutral"}>
-                  {trip.status === "open" ? "Abierta" : "Cerrada"}
+                  {t(`status.${trip.status}`)}
                 </Badge>
               </div>
               <p className="text-sm text-muted">
-                {trip.lineCount} {trip.lineCount === 1 ? "compra" : "compras"} ·{" "}
-                {formatUsd(trip.totalUsd)} · {formatBs(trip.totalBs)}
+                {t("list.summary", {
+                  count: trip.lineCount,
+                  usd: formatUsd(trip.totalUsd),
+                  bs: formatBs(trip.totalBs),
+                })}
               </p>
               {trip.note && <p className="text-sm text-muted">{trip.note}</p>}
             </Card>

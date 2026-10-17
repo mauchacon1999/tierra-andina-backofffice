@@ -1,6 +1,5 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   allowedSaleUnits,
   requiresPackQuantity,
@@ -15,6 +14,7 @@ import {
   type ProductDetail,
   type ProductFormValues,
 } from "@ta/validators";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 
@@ -26,12 +26,10 @@ import {
   toFormField,
 } from "@/features/products/helpers/product-form-values";
 import type { PriceExampleInput } from "@/features/products/hooks/use-price-example";
-import {
-  packQuantityLabel,
-  SALE_UNIT_LABELS,
-  SALE_UNIT_SUFFIX,
-} from "@/features/products/helpers/unit-labels";
+import { useUnitLabels } from "@/features/products/hooks/use-unit-labels";
 import { useSettings } from "@/features/settings/api/use-settings";
+import { useErrorMessage } from "@/i18n/use-error-message";
+import { useZodResolver } from "@/i18n/use-zod-resolver";
 import { isApiError } from "@/lib/api";
 
 export type UseProductFormOptions =
@@ -65,13 +63,14 @@ export type UseProductFormResult = {
   resetForAnother: () => void;
 };
 
-const FALLBACK_ERROR = "No se pudo guardar el producto. Intenta de nuevo";
-
 /** Product create/edit form logic (docs/modules/products.md §2). */
 export function useProductForm(options: UseProductFormOptions): UseProductFormResult {
   const isEdit = options.mode === "edit";
+  const t = useTranslations("products.form");
+  const labels = useUnitLabels();
+  const errorMessage = useErrorMessage();
   const form = useForm<ProductFormValues, unknown, CreateProduct>({
-    resolver: zodResolver(productFormSchema),
+    resolver: useZodResolver(productFormSchema),
     defaultValues: isEdit ? productToFormValues(options.product) : EMPTY_PRODUCT_FORM,
   });
   const { settings, isLoaded: settingsLoaded } = useSettings();
@@ -111,7 +110,7 @@ export function useProductForm(options: UseProductFormOptions): UseProductFormRe
 
   const showServerError = (error: unknown): void => {
     if (!isApiError(error)) {
-      form.setError("root", { message: FALLBACK_ERROR });
+      form.setError("root", { message: t("saveFailed") });
       return;
     }
     const fieldErrors = (error.details as { fieldErrors?: Record<string, string[]> } | undefined)
@@ -124,7 +123,7 @@ export function useProductForm(options: UseProductFormOptions): UseProductFormRe
         placed = true;
       }
     }
-    if (!placed) form.setError("root", { message: error.message });
+    if (!placed) form.setError("root", { message: errorMessage(error, t("saveFailed")) });
   };
 
   const onSubmit = form.handleSubmit(async (payload) => {
@@ -150,13 +149,13 @@ export function useProductForm(options: UseProductFormOptions): UseProductFormRe
     setSaleUnit,
     saleUnitOptions: SALE_UNITS.map((unit) => ({
       value: unit,
-      label: SALE_UNIT_LABELS[unit],
+      label: labels.sale(unit),
       disabled: !allowed.includes(unit),
     })),
     isUnitLocked: isEdit && options.product.isUnitLocked,
     showPackQuantity: requiresPackQuantity(purchaseUnit),
-    packQuantityLabel: packQuantityLabel(purchaseUnit, saleUnit),
-    saleUnitSuffix: SALE_UNIT_SUFFIX[saleUnit],
+    packQuantityLabel: labels.packQuantity(purchaseUnit, saleUnit),
+    saleUnitSuffix: labels.suffix(saleUnit),
     onSubmit: () => onSubmit(),
     isSubmitting: createProduct.isRunning || updateProduct.isRunning || form.formState.isSubmitting,
     formError: form.formState.errors.root?.message,

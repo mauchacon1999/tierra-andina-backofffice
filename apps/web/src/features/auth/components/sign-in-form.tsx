@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
@@ -7,6 +9,7 @@ import { useSignInForm } from "@/features/auth/hooks/use-sign-in-form";
 
 export function SignInForm(): React.JSX.Element {
   const { form, onSubmit, isSubmitting, formError } = useSignInForm();
+  const t = useTranslations("auth.signIn");
   const { errors } = form.formState;
 
   return (
@@ -21,7 +24,7 @@ export function SignInForm(): React.JSX.Element {
       {formError && <Alert tone="error">{formError}</Alert>}
 
       <TextField
-        label="Correo"
+        label={t("email")}
         type="email"
         autoComplete="email"
         inputMode="email"
@@ -29,15 +32,20 @@ export function SignInForm(): React.JSX.Element {
         {...form.register("email")}
       />
       <TextField
-        label="Contraseña"
+        label={t("password")}
         type="password"
         autoComplete="current-password"
         error={errors.password?.message}
         {...form.register("password")}
       />
 
-      <Button type="submit" className="w-full" isLoading={isSubmitting} loadingText="Entrando…">
-        Entrar
+      <Button
+        type="submit"
+        className="w-full"
+        isLoading={isSubmitting}
+        loadingText={t("submitting")}
+      >
+        {t("submit")}
       </Button>
     </form>
   );

@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ConfirmButton } from "@/components/ui/confirm-button";
+import { IntlTestWrapper } from "@/testing/intl-wrapper";
 
 describe("ConfirmButton", () => {
   it("asks before acting and acts only on confirm", async () => {
@@ -10,6 +11,7 @@ describe("ConfirmButton", () => {
       <ConfirmButton question="¿Eliminar tomate?" confirmLabel="Sí, eliminar" onConfirm={onConfirm}>
         Eliminar
       </ConfirmButton>,
+      { wrapper: IntlTestWrapper },
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Eliminar" }));
@@ -27,6 +29,7 @@ describe("ConfirmButton", () => {
       <ConfirmButton question="¿Cerrar la jornada?" onConfirm={onConfirm}>
         Cerrar jornada
       </ConfirmButton>,
+      { wrapper: IntlTestWrapper },
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Cerrar jornada" }));

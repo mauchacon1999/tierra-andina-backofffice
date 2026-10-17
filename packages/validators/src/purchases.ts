@@ -3,12 +3,13 @@ import { z } from "zod";
 
 import { decimalSchema } from "./amount";
 import { businessDateSchema, rateValueSchema } from "./exchange-rates";
+import { message, type ValidationSubject } from "./messages";
 import { paginatedSchema, paginationQuerySchema } from "./pagination";
 import { saleUnitSchema, purchaseUnitSchema } from "./products";
 
 /*
  * Purchases (docs/plan.md phase 1, domain-model §3–§4). Money and quantities are decimal
- * strings; the API computes costs with @ta/core `priceLine`. Messages are Spanish.
+ * strings; the API computes costs with @ta/core `priceLine`. Messages are tokens (messages.ts).
  */
 
 // Suppliers --------------------------------------------------------------------------------------
@@ -17,21 +18,21 @@ export const SUPPLIER_KINDS = ["wholesale_stall", "local"] as const;
 export const supplierKindSchema = z.enum(SUPPLIER_KINDS);
 
 const supplierNameSchema = z
-  .string({ error: "Escribe el nombre" })
+  .string({ error: message("name.required") })
   .transform(cleanProductName)
   .pipe(
     z
       .string()
-      .min(1, { message: "Escribe el nombre", abort: true })
-      .min(2, "El nombre debe tener al menos 2 caracteres")
-      .max(60, "El nombre admite como máximo 60 caracteres"),
+      .min(1, { message: message("name.required"), abort: true })
+      .min(2, message("name.tooShort", { min: 2 }))
+      .max(60, message("name.tooLong", { max: 60 })),
   );
 
 const shortTextSchema = (max: number) =>
   z
     .string()
     .transform((v) => v.trim())
-    .pipe(z.string().max(max, `Máximo ${max} caracteres`));
+    .pipe(z.string().max(max, message("text.tooLong", { max })));
 
 export const createSupplierSchema = z.object({
   name: supplierNameSchema,
@@ -129,9 +130,9 @@ export type PurchaseLine = z.infer<typeof purchaseLineSchema>;
 export const tripDetailSchema = tripSchema.extend({ lines: z.array(purchaseLineSchema) });
 export type TripDetail = z.infer<typeof tripDetailSchema>;
 
-const positiveQuantity = (subject: string) =>
+const positiveQuantity = (subject: ValidationSubject) =>
   decimalSchema(subject).refine((v) => compareDecimals(v, "0") > 0, {
-    message: `${subject} debe ser mayor que 0`,
+    message: message("decimal.positive", { subject }),
   });
 
 /**
@@ -140,15 +141,15 @@ const positiveQuantity = (subject: string) =>
  * Cross-field rules (shrinkage < gross) are applied by the API with @ta/core (422).
  */
 export const purchaseLineFieldsSchema = z.object({
-  productId: z.uuid({ error: "Elige un producto" }),
+  productId: z.uuid({ error: message("purchase.productRequired") }),
   supplierId: z.uuid().nullable().optional(),
   stallReference: shortTextSchema(60).optional(),
-  packs: positiveQuantity("La cantidad de bultos"),
-  grossQuantity: positiveQuantity("La cantidad bruta"),
-  shrinkage: decimalSchema("La merma").default("0"),
-  quotedPriceUsd: decimalSchema("El precio"),
+  packs: positiveQuantity("packs"),
+  grossQuantity: positiveQuantity("grossQuantity"),
+  shrinkage: decimalSchema("shrinkage").default("0"),
+  quotedPriceUsd: decimalSchema("price"),
   supplierRate: rateValueSchema.optional(),
-  margin: decimalSchema("El margen").optional(),
+  margin: decimalSchema("margin").optional(),
   paymentStatus: z.enum(PAYMENT_STATUSES).default("paid"),
 });
 
@@ -161,21 +162,21 @@ export const updatePurchaseLineSchema = z
     productId: z.uuid().optional(),
     supplierId: z.uuid().nullable().optional(),
     stallReference: shortTextSchema(60).optional(),
-    packs: positiveQuantity("La cantidad de bultos").optional(),
-    grossQuantity: positiveQuantity("La cantidad bruta").optional(),
-    shrinkage: decimalSchema("La merma").optional(),
-    quotedPriceUsd: decimalSchema("El precio").optional(),
+    packs: positiveQuantity("packs").optional(),
+    grossQuantity: positiveQuantity("grossQuantity").optional(),
+    shrinkage: decimalSchema("shrinkage").optional(),
+    quotedPriceUsd: decimalSchema("price").optional(),
     supplierRate: rateValueSchema.optional(),
-    margin: decimalSchema("El margen").optional(),
+    margin: decimalSchema("margin").optional(),
     paymentStatus: z.enum(PAYMENT_STATUSES).optional(),
   })
   .refine((v) => Object.values(v).some((x) => x !== undefined), {
-    message: "No hay cambios que guardar",
+    message: message("noChanges"),
   });
 
 export type UpdatePurchaseLine = z.infer<typeof updatePurchaseLineSchema>;
 
-export const SHRINKAGE_BELOW_GROSS_MESSAGE = "La merma debe ser menor que la cantidad bruta";
+export const SHRINKAGE_BELOW_GROSS_MESSAGE = message("purchase.shrinkageBelowGross");
 
 /** Line form (web): text inputs; margin as percent. Outputs the API payload. */
 export const purchaseLineFormSchema = z
@@ -203,7 +204,7 @@ export const purchaseLineFormSchema = z
       supplierRate: value.supplierRate.trim() || undefined,
       paymentStatus: value.paymentStatus,
     };
-    const marginPercent = decimalSchema("El margen", { maxDecimals: 2 }).safeParse(
+    const marginPercent = decimalSchema("margin", { maxDecimals: 2 }).safeParse(
       value.marginPercent.trim(),
     );
     if (!marginPercent.success) {

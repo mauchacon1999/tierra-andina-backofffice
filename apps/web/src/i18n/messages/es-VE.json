@@ -1,0 +1,325 @@
+{
+  "common": {
+    "appName": "Tierra Andina",
+    "loading": "Cargando…",
+    "retry": "Reintentar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar cambios",
+    "saving": "Guardando…",
+    "open": "Abrir",
+    "backHome": "Volver al inicio",
+    "pageTitle": "{title} · Tierra Andina",
+    "empty": "—",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "pageOf": "Página {page} de {total}",
+    "pagination": "Paginación",
+    "optional": "Opcional."
+  },
+  "app": {
+    "description": "Sistema administrativo de la verdulería Tierra Andina (Caracas)",
+    "tagline": "Sistema administrativo"
+  },
+  "apiErrors": {
+    "NETWORK_ERROR": "No se pudo conectar con la API",
+    "TIMEOUT": "La API tardó demasiado en responder. Intenta de nuevo",
+    "INVALID_RESPONSE": "La respuesta de la API no tiene el formato esperado"
+  },
+  "auth": {
+    "signIn": {
+      "pageTitle": "Entrar",
+      "subtitle": "Inicia sesión para continuar",
+      "email": "Correo",
+      "password": "Contraseña",
+      "submit": "Entrar",
+      "submitting": "Entrando…",
+      "failed": "No se pudo iniciar sesión. Intenta de nuevo"
+    },
+    "session": {
+      "greeting": "Hola, {name}",
+      "storeAndRole": "{store} · {role}",
+      "noStore": "Sin tienda asignada",
+      "signOut": "Salir",
+      "signingOut": "Saliendo…"
+    },
+    "roleGate": {
+      "forbiddenTitle": "No tienes permiso para ver esta sección",
+      "forbiddenBody": "Pídele acceso al dueño de la tienda."
+    },
+    "roles": {
+      "owner": "Dueño",
+      "manager": "Encargado",
+      "receiver": "Receptor"
+    }
+  },
+  "systemStatus": {
+    "api": "API",
+    "database": "Base de datos",
+    "checking": "Comprobando…",
+    "ok": "Operativo",
+    "down": "Sin respuesta",
+    "apiDetail": "Versión {version}",
+    "dbDetail": "PostgreSQL responde",
+    "latency": "{detail} · {ms} ms",
+    "lastCheck": "Última comprobación: {time}"
+  },
+  "home": {
+    "shortcuts": "Accesos",
+    "purchases": {
+      "title": "Compras",
+      "description": "Jornadas en Coche y costo de cada compra"
+    },
+    "rates": {
+      "title": "Tasas del día",
+      "description": "BCV, Coche y tasa de venta"
+    },
+    "products": {
+      "title": "Productos",
+      "description": "Catálogo, unidades, merma y margen"
+    }
+  },
+  "units": {
+    "purchase": {
+      "crate": "Cesta",
+      "bundle": "Cuenta",
+      "kg": "Kilo"
+    },
+    "sale": {
+      "kg": "Kilo",
+      "unit": "Unidad"
+    },
+    "suffix": {
+      "kg": "kg",
+      "unit": "und"
+    },
+    "packs": {
+      "crate": "Cestas",
+      "bundle": "Cuentas",
+      "kg": "Kilos"
+    },
+    "packsCount": {
+      "crate": "{quantity} {isOne, select, yes {cesta} other {cestas}}",
+      "bundle": "{quantity} {isOne, select, yes {cuenta} other {cuentas}}",
+      "kg": "{quantity} {isOne, select, yes {kilo} other {kilos}}"
+    },
+    "packQuantity": {
+      "crateKg": "Kilos aprox. por cesta",
+      "crateUnit": "Unidades aprox. por cesta",
+      "bundleKg": "Kilos aprox. por cuenta",
+      "bundleUnit": "Rollitos por cuenta"
+    },
+    "perPack": {
+      "crate": "{quantity} {suffix} por cesta",
+      "bundle": "{quantity} {suffix} por cuenta"
+    },
+    "summary": "{purchase} → {sale}",
+    "quantity": "{quantity} {suffix}"
+  },
+  "products": {
+    "list": {
+      "pageTitle": "Productos",
+      "title": "Productos",
+      "subtitle": "Todo lo que se compra y se vende",
+      "new": "Nuevo producto",
+      "loadFailed": "No se pudieron cargar los productos",
+      "emptyFiltered": "No hay productos con esos filtros.",
+      "empty": "Aún no hay productos.",
+      "create": "Crear producto",
+      "count": "{count, plural, one {# producto} other {# productos}}",
+      "inactive": "Inactivo",
+      "columns": {
+        "name": "Nombre",
+        "category": "Categoría",
+        "units": "Unidades",
+        "pack": "Bulto",
+        "shrinkage": "Merma",
+        "margin": "Margen"
+      },
+      "cardDetails": "Merma {shrinkage} · Margen {margin}",
+      "cardDetailsWithPack": "{pack} · Merma {shrinkage} · Margen {margin}",
+      "cardCategory": "{category} · {units}"
+    },
+    "filters": {
+      "search": "Buscar",
+      "searchPlaceholder": "Tomate, cilantro…",
+      "category": "Categoría",
+      "allCategories": "Todas",
+      "showInactive": "Ver inactivos"
+    },
+    "form": {
+      "newPageTitle": "Nuevo producto",
+      "editPageTitle": "Editar producto",
+      "name": "Nombre",
+      "category": "Categoría",
+      "categoryPlaceholder": "Elige una categoría",
+      "purchaseUnit": "Se compra por",
+      "saleUnit": "Se vende por",
+      "unitsLocked": "Bloqueado: el producto ya se usó en compras o listas de precios.",
+      "shrinkage": "Merma habitual",
+      "shrinkageHint": "En la unidad de venta. Se sugiere al comprar.",
+      "margin": "Margen habitual",
+      "marginHint": "Entre 0 y 500 %.",
+      "create": "Crear producto",
+      "created": "Producto creado",
+      "createdBody": "{name} ya está en el catálogo.",
+      "createAnother": "Crear otro",
+      "viewProducts": "Ver productos",
+      "saved": "Cambios guardados.",
+      "saveFailed": "No se pudo guardar el producto. Intenta de nuevo"
+    },
+    "edit": {
+      "loadFailed": "No se pudo abrir el producto",
+      "deactivateHint": "Si ya no lo compras, desactívalo: no aparecerá en compras ni en listas nuevas.",
+      "activateHint": "Este producto está inactivo. Actívalo para volver a usarlo.",
+      "deactivate": "Desactivar",
+      "deactivating": "Desactivando…",
+      "activate": "Activar",
+      "activating": "Activando…"
+    },
+    "quick": {
+      "title": "Nuevo producto",
+      "create": "Crear producto",
+      "creating": "Creando…",
+      "failed": "No se pudo crear el producto"
+    },
+    "priceExample": {
+      "title": "Ejemplo de precio",
+      "sampleCost": "Si la {unit} te cuesta",
+      "sampleCostHint": "Solo para probar; no se guarda.",
+      "sampleCostPlaceholder": "20",
+      "empty": "Escribe un costo para ver el precio de venta.",
+      "pack": "{unit} a {cost} → {usable} {suffix} útiles → {unitCost}/{suffix} → venta {sale}/{suffix}",
+      "kilo": "Kilo a {cost} → venta {sale}/{suffix}"
+    }
+  },
+  "rates": {
+    "pageTitle": "Tasas del día",
+    "title": "Tasas del día",
+    "subtitle": "La tasa BCV y la de Coche se copian a la jornada de compra de ese día.",
+    "date": "Fecha",
+    "bcv": "Tasa BCV",
+    "bcvHint": "Oficial del día.",
+    "market": "Tasa de Coche",
+    "marketHint": "La que cobran los puestos.",
+    "sale": "Tasa de venta",
+    "saleHint": "Opcional, para la lista de precios.",
+    "submit": "Guardar tasas",
+    "saved": "Tasas guardadas.",
+    "saveFailed": "No se pudieron guardar las tasas",
+    "history": {
+      "title": "Últimos {days} días",
+      "empty": "Aún no hay tasas registradas.",
+      "day": "Día",
+      "bcv": "BCV",
+      "market": "Coche",
+      "sale": "Venta"
+    }
+  },
+  "purchases": {
+    "list": {
+      "pageTitle": "Compras",
+      "title": "Compras",
+      "subtitle": "Jornadas de compra en Coche",
+      "ratesLink": "Tasas del día",
+      "loadFailed": "No se pudieron cargar las jornadas",
+      "empty": "Aún no hay jornadas de compra.",
+      "summary": "{count, plural, one {# compra} other {# compras}} · {usd} · {bs}"
+    },
+    "status": {
+      "open": "Abierta",
+      "closed": "Cerrada"
+    },
+    "openTrip": {
+      "title": "Abrir jornada",
+      "date": "Fecha",
+      "note": "Nota",
+      "submit": "Abrir jornada",
+      "submitting": "Abriendo…",
+      "failed": "No se pudo abrir la jornada",
+      "rates": "BCV {bcv} Bs · Coche {market} Bs",
+      "missingTitle": "{count, plural, one {Falta la tasa {first}} other {Falta la tasa {first} y la tasa {second}}}",
+      "missingBody": "La jornada copia las tasas del día. Regístralas primero.",
+      "goToRates": "Ir a Tasas del día",
+      "rateNames": {
+        "bcv": "BCV",
+        "market": "Coche"
+      }
+    },
+    "trip": {
+      "pageTitle": "Jornada de compra",
+      "title": "Jornada de compra",
+      "backToList": "Jornadas",
+      "loadFailed": "No se pudo abrir la jornada",
+      "viewTrips": "Ver jornadas",
+      "bcvRate": "Tasa BCV",
+      "marketRate": "Tasa de Coche",
+      "rateValue": "{rate} Bs",
+      "paidToStalls": "Pagado a los puestos",
+      "realCost": "Costo real",
+      "addLine": "Agregar compra",
+      "lines": "Compras ({count})",
+      "linesLabel": "Compras de la jornada",
+      "noLines": "Aún no hay compras.",
+      "editLine": "Editar {product}",
+      "closeHint": "Al cerrar la jornada ya no se pueden agregar ni cambiar compras.",
+      "close": "Cerrar jornada",
+      "closeQuestion": "¿Cerrar la jornada?",
+      "closing": "Cerrando…",
+      "closeFailed": "No se pudo cerrar la jornada",
+      "deleteFailed": "No se pudo eliminar la compra"
+    },
+    "line": {
+      "addLabel": "Agregar compra",
+      "editLabel": "Editar compra",
+      "product": "Producto",
+      "productPlaceholder": "Elige un producto",
+      "newProduct": "+ Nuevo producto",
+      "newProductTitle": "Nuevo producto",
+      "backToLine": "Volver a la compra",
+      "supplier": "Proveedor",
+      "supplierPlaceholder": "Sin proveedor registrado",
+      "stall": "Puesto",
+      "stallHint": "Nombre o número del puesto.",
+      "grossQuantity": "Cantidad bruta",
+      "shrinkage": "Merma",
+      "quotedPrice": "Precio total",
+      "quotedPriceHint": "Lo que pide el puesto por todo.",
+      "supplierRate": "Tasa del puesto",
+      "supplierRateHint": "Vacía: la de Coche.",
+      "margin": "Margen",
+      "payment": "Pago",
+      "submitAdd": "Agregar compra",
+      "submitEdit": "Guardar cambios",
+      "saveFailed": "No se pudo guardar la compra. Intenta de nuevo",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "deleting": "Eliminando…",
+      "deleteQuestion": "¿Eliminar {product}?",
+      "paymentStatus": {
+        "paid": "Pagado",
+        "credit": "A crédito"
+      },
+      "receiptStatus": {
+        "pending": "Por recibir",
+        "received": "Recibido",
+        "partial": "Incompleto",
+        "missing": "No llegó"
+      },
+      "quantities": "{packs} · {gross} {suffix} − {shrinkage} merma = {usable} {suffix} útiles",
+      "paymentDetail": "{quoted} × {rate} = {bs} · costo real {realCost}",
+      "unitCost": "Costo {unitCost}/{suffix}",
+      "salePrice": "Venta {sale}/{suffix}"
+    },
+    "preview": {
+      "label": "Costo de la compra",
+      "empty": "Completa cantidad y precio para ver el costo.",
+      "paid": "Pagas",
+      "realCost": "Costo real",
+      "usable": "Útil",
+      "usableValue": "{quantity} {suffix}",
+      "unitCost": "Costo por {suffix}",
+      "salePrice": "Venta por {suffix}"
+    }
+  }
+}

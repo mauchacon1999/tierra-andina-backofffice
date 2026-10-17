@@ -2,6 +2,7 @@ import { compareDecimals, MAX_MARGIN } from "@ta/core";
 import { z } from "zod";
 
 import { decimalSchema } from "./amount";
+import { message, type ValidationSubject } from "./messages";
 
 /*
  * Store settings (domain-model §9.1). The API speaks camelCase; the DB stores snake_case keys
@@ -10,20 +11,19 @@ import { decimalSchema } from "./amount";
 
 export const SALE_RATE_MODES = ["manual", "bcv_plus_pct"] as const;
 
-const positive = (subject: string) =>
+const positive = (subject: ValidationSubject) =>
   decimalSchema(subject).refine((v) => compareDecimals(v, "0") > 0, {
-    message: `${subject} debe ser mayor que 0`,
+    message: message("decimal.positive", { subject }),
   });
 
 export const storeSettingsSchema = z.object({
-  usdRoundingStep: positive("El redondeo en dólares"),
-  bsRoundingStep: positive("El redondeo en bolívares"),
+  usdRoundingStep: positive("usdRoundingStep"),
+  bsRoundingStep: positive("bsRoundingStep"),
   saleRateMode: z.enum(SALE_RATE_MODES),
-  saleRateMarkupPct: decimalSchema("El recargo de la tasa de venta"),
-  defaultMargin: decimalSchema("El margen por defecto").refine(
-    (v) => compareDecimals(v, MAX_MARGIN) <= 0,
-    { message: "El margen por defecto debe estar entre 0 % y 500 %" },
-  ),
+  saleRateMarkupPct: decimalSchema("saleRateMarkupPct"),
+  defaultMargin: decimalSchema("defaultMargin").refine((v) => compareDecimals(v, MAX_MARGIN) <= 0, {
+    message: message("settings.defaultMarginRange"),
+  }),
   receiverCanSeePrices: z.boolean(),
 });
 
@@ -33,7 +33,7 @@ export type StoreSettings = z.infer<typeof storeSettingsSchema>;
 export const updateStoreSettingsSchema = storeSettingsSchema
   .partial()
   .refine((value) => Object.values(value).some((v) => v !== undefined), {
-    message: "No hay cambios que guardar",
+    message: message("noChanges"),
   });
 
 export type UpdateStoreSettings = z.infer<typeof updateStoreSettingsSchema>;

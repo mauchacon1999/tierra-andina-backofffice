@@ -1,11 +1,14 @@
 import { toBusinessDate } from "@ta/core";
 
+import { LOCALE } from "@/i18n/config";
+
 /*
  * Business days are "YYYY-MM-DD" strings in America/Caracas (domain-model §8). They are
  * formatted from the string itself, never through a local Date, so no time zone can shift them.
  */
 
-const WEEKDAYS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+// Weekday names come from Intl in the app locale; the date is read at noon UTC so no zone shifts it.
+const WEEKDAY = new Intl.DateTimeFormat(LOCALE, { weekday: "long", timeZone: "UTC" });
 
 /** Today's business day in Caracas, from the device clock. */
 export function todayBusinessDate(now: Date = new Date()): string {
@@ -20,7 +23,7 @@ export function formatBusinessDate(date: string): string {
 
 /** "2026-10-19" → "lunes 19/10/2026" */
 export function formatBusinessDateLong(date: string): string {
-  const weekday = WEEKDAYS[new Date(`${date}T12:00:00Z`).getUTCDay()] ?? "";
+  const weekday = WEEKDAY.format(new Date(`${date}T12:00:00Z`));
   return `${weekday} ${formatBusinessDate(date)}`;
 }
 

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { message } from "./messages";
+
 /** Roles per store (domain-model §7). Mirrors the `membership_role` enum in @ta/db. */
 export const MEMBERSHIP_ROLES = ["owner", "manager", "receiver"] as const;
 
@@ -25,15 +27,15 @@ export const meResponseSchema = z.object({
 
 export type MeResponse = z.infer<typeof meResponseSchema>;
 
-/** Sign-in form / POST /api/auth/sign-in/email body. Messages are shown to users. */
+/** Sign-in form / POST /api/auth/sign-in/email body. */
 export const signInSchema = z.object({
   email: z
     .string()
     .trim()
-    .min(1, "Escribe tu correo")
-    .pipe(z.email({ error: "El correo no es válido" }))
+    .min(1, message("auth.emailRequired"))
+    .pipe(z.email({ error: message("auth.emailInvalid") }))
     .transform((email) => email.toLowerCase()),
-  password: z.string().min(1, "Escribe tu contraseña"),
+  password: z.string().min(1, message("auth.passwordRequired")),
 });
 
 /** What the form holds (before trimming/lowercasing). */

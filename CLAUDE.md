@@ -14,7 +14,9 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > **daily rates** (BCV, Coche, sale: `/api/v1/exchange-rates`, owner screen `/rates`);
 > **purchase trips** (`/api/v1/purchase-trips`, `/api/v1/suppliers`, owner screens `/purchases`,
 > `/purchases/[id]`: open a trip with the day's rates, add/edit/delete lines with live costing,
-> close). Next: truck receipt and supplier claims (docs/plan.md phase 1).
+> close). **i18n**: next-intl in the web (es-VE messages, typed keys, no hard-coded text) and
+> validation message tokens shared with the API. Next: truck receipt and supplier claims
+> (docs/plan.md phase 1).
 > Business rules and DB design: `docs/domain-model.md`; working with the DB: `docs/database.md`;
 > per-module specs: `docs/modules/`.
 
@@ -33,6 +35,7 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 | Server state (web)        | SWR                                                                         |
 | Client state (web)        | Zustand                                                                     |
 | Forms (web)               | React Hook Form + `@hookform/resolvers/zod`                                 |
+| i18n (web)                | next-intl (one locale, es-VE; no locale in the URL)                         |
 | Decimal math              | decimal.js                                                                  |
 | Tests                     | `bun test` (core, validators, api) · Vitest + Testing Library + jsdom (web) |
 
@@ -131,7 +134,7 @@ Tests of one package: `bun --cwd=packages/core test`, `bun --cwd=apps/web run te
 | ------------------------------------------------------------------- | ------------------------------- |
 | Code: identifiers, files, folders, DB tables and columns            | English                         |
 | Comments, JSDoc, commit messages, PR descriptions, docs in the repo | English                         |
-| User-facing UI text, error messages shown to users                  | Spanish (Venezuela)             |
+| User-facing UI text, error messages shown to users (never in code)  | Spanish (Venezuela), §10 i18n   |
 | API error `code` values                                             | English, `SCREAMING_SNAKE_CASE` |
 
 ### Domain glossary (use these names everywhere)
@@ -295,6 +298,7 @@ apps/web/src/
 │       ├── helpers/             # pure helpers tied to this feature's UI
 │       └── types.ts             # UI-only types (API types come from @ta/validators)
 ├── hooks/                       # global hooks (use-media-query, use-online-status)
+├── i18n/                        # next-intl: config, messages/<locale>.json, request.ts, hooks
 ├── lib/                         # api client, SWR config, query keys, auth session
 ├── stores/                      # global Zustand stores (session, offline queue)
 └── utils/                       # generic pure functions (cn, format-date, format-money)
@@ -323,7 +327,7 @@ apps/web/src/
   store the user belongs to (`activeMembership` has `storeId`, `storeName`, `role`).
 - The session itself is an httpOnly cookie set by the API; the web never stores tokens.
 - Only the active store id lives in Zustand (persisted); the user and memberships stay in SWR.
-- Role labels for the UI: `features/auth/helpers/role-labels.ts`.
+- Role labels for the UI: `auth.roles.<role>` messages.
 
 ### Where does this code go?
 
@@ -351,7 +355,33 @@ apps/web/src/
 - Server Components by default for static layout; mark `"use client"` only where needed
   (interactivity, SWR, Zustand, browser APIs).
 - Mobile-first Tailwind. Use `cn()` from `utils/cn.ts` for conditional classes.
-- Forms: React Hook Form + `zodResolver` with schemas from `@ta/validators`.
+- Forms: React Hook Form + `useZodResolver(schema)` (`@/i18n/use-zod-resolver`, never plain
+  `zodResolver`) with schemas from `@ta/validators`.
+
+### Text and i18n (next-intl)
+
+- **No UI text in code.** Every string users read lives in
+  `src/i18n/messages/es-VE.json`, grouped by feature (`purchases.line.margin`). Components and
+  hooks use `useTranslations("namespace")`; Server Components (pages, `generateMetadata`)
+  use `await getTranslations()`. Keys are typed (`src/i18n/next-intl.d.ts`): a missing key
+  fails `tsc`. `src/i18n/no-hardcoded-text.test.ts` fails on JSX text, text props
+  (`label="…"`) and sentence literals. Unit symbols (`$`, `Bs`, `%`) may stay inline.
+- Plurals and agreement use ICU (`{count, plural, one {# compra} other {# compras}}`). Never
+  pass a decimal through `Number()` for that: compare with `compareDecimals` and use a `select`
+  (`units.packsCount`).
+- **Validation messages are tokens.** `@ta/validators` schemas emit `message("decimal.positive",
+{ subject: "rate" })` → `"decimal.positive|subject=rate"`; the Spanish catalog is
+  `VALIDATION_MESSAGES_ES_VE` (`packages/validators/src/messages.ts`). The web gets it as the
+  `validation` namespace and `useZodResolver` formats the tokens; the API formats them in the
+  error middleware (`lib/localize-details.ts`), so its responses stay in Spanish. New schema
+  messages go into that catalog, never as literal text.
+- Request errors: `useErrorMessage()(error, fallback)` — translated `apiErrors.<code>` for the
+  client's own codes (`NETWORK_ERROR`, `TIMEOUT`, `INVALID_RESPONSE`), the API's (Spanish)
+  message otherwise. `lib/api.ts` messages are technical (logs), never shown as-is.
+- Numbers and dates are formatted with `LOCALE` from `src/i18n/config.ts`
+  (`utils/format-number.ts`, `utils/format-date.ts`).
+- Pure helpers that build text receive the labels/translator from a hook
+  (`describeProduct(product, useUnitLabels())`).
 
 ### Data fetching with SWR
 
@@ -516,7 +546,12 @@ Things that are not obvious from the code and have already cost time:
   the next screen redirects to /login (regression test: `use-sign-in.test.tsx`).
 - **Web test setup** (`apps/web/src/testing/setup.ts`): Testing Library only auto-cleans the DOM
   with Vitest globals, which we do not use, so the setup calls `cleanup()` and clears
-  localStorage after each test. Wrap hooks that use SWR in `SwrTestWrapper` (fresh cache).
+  localStorage after each test. Wrap hooks that use SWR in `SwrTestWrapper` (fresh cache, also
+  provides the messages); anything that calls `useTranslations` without SWR needs
+  `IntlTestWrapper` (real es-VE messages, so tests assert on the texts users read).
+- **next-intl and static pages**: `src/i18n/request.ts` must not read `requestLocale`: it calls
+  `headers()`, which makes every page dynamic (and errors under `cacheComponents`). With one
+  locale the config returns `LOCALE` directly.
 - **Rule errors answer 422, shape errors 400.** API routes validate requests with the
   "fields" schemas (`createProductFieldsSchema`…) and the service applies the `@ta/core` rules,
   so rule violations come back with their own code (`INVALID_UNIT_COMBINATION`…). Forms use
