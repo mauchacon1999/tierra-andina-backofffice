@@ -15,12 +15,13 @@ import {
   type ProductDetail,
   type ProductFormValues,
 } from "@ta/validators";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 
 import { useCreateProduct, useUpdateProduct } from "@/features/products/api/use-product-mutations";
 import {
   EMPTY_PRODUCT_FORM,
+  emptyProductForm,
   productToFormValues,
   toFormField,
 } from "@/features/products/helpers/product-form-values";
@@ -30,6 +31,7 @@ import {
   SALE_UNIT_LABELS,
   SALE_UNIT_SUFFIX,
 } from "@/features/products/helpers/unit-labels";
+import { useSettings } from "@/features/settings/api/use-settings";
 import { isApiError } from "@/lib/api";
 
 export type UseProductFormOptions =
@@ -72,6 +74,7 @@ export function useProductForm(options: UseProductFormOptions): UseProductFormRe
     resolver: zodResolver(productFormSchema),
     defaultValues: isEdit ? productToFormValues(options.product) : EMPTY_PRODUCT_FORM,
   });
+  const { settings, isLoaded: settingsLoaded } = useSettings();
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct(isEdit ? options.product.id : "");
   const [created, setCreated] = useState<Product | null>(null);
@@ -82,6 +85,13 @@ export function useProductForm(options: UseProductFormOptions): UseProductFormRe
     name: ["purchaseUnit", "saleUnit", "defaultPackQuantity", "lastShrinkage", "lastMarginPercent"],
   }) as [PurchaseUnit, SaleUnit, string, string, string];
   const allowed = allowedSaleUnits(purchaseUnit);
+
+  // A new product starts at the store default margin once the settings arrive (unless edited).
+  const defaultMarginPercent = emptyProductForm(settings.defaultMargin).lastMarginPercent;
+  useEffect(() => {
+    if (isEdit || !settingsLoaded || form.getFieldState("lastMarginPercent").isDirty) return;
+    form.setValue("lastMarginPercent", defaultMarginPercent);
+  }, [isEdit, settingsLoaded, defaultMarginPercent, form]);
 
   const setPurchaseUnit = (unit: PurchaseUnit): void => {
     form.setValue("purchaseUnit", unit, { shouldDirty: true });
@@ -156,12 +166,18 @@ export function useProductForm(options: UseProductFormOptions): UseProductFormRe
       defaultPackQuantity,
       lastShrinkage,
       lastMarginPercent,
+      usdRoundingStep: settings.usdRoundingStep,
     },
     isSaved: hasSaved && !form.formState.isDirty,
     created,
     resetForAnother: () => {
       const { categoryId } = form.getValues();
-      form.reset({ ...EMPTY_PRODUCT_FORM, categoryId, purchaseUnit, saleUnit });
+      form.reset({
+        ...emptyProductForm(settings.defaultMargin),
+        categoryId,
+        purchaseUnit,
+        saleUnit,
+      });
       setCreated(null);
     },
   };

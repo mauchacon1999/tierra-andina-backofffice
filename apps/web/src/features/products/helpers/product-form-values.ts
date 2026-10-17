@@ -1,10 +1,10 @@
 import { fractionToPercent, normalizeDecimal } from "@ta/core";
-import type { ProductDetail, ProductFormValues } from "@ta/validators";
+import { DEFAULT_STORE_SETTINGS, type ProductDetail, type ProductFormValues } from "@ta/validators";
 
-/** Margin shown on a new product until store settings are exposed by the API (§9.1: 0.50). */
-// TODO(ender): read `default_margin` and `usd_rounding_step` from a settings endpoint once it exists.
-export const DEFAULT_MARGIN_PERCENT = "50";
-export const USD_ROUNDING_STEP = "0.05";
+/** Empty create form; the margin starts at the store default (`settings.defaultMargin`). */
+export function emptyProductForm(defaultMargin: string): ProductFormValues {
+  return { ...EMPTY_PRODUCT_FORM, lastMarginPercent: fractionToPercent(defaultMargin) };
+}
 
 export const EMPTY_PRODUCT_FORM: ProductFormValues = {
   name: "",
@@ -13,7 +13,7 @@ export const EMPTY_PRODUCT_FORM: ProductFormValues = {
   saleUnit: "kg",
   defaultPackQuantity: "",
   lastShrinkage: "0",
-  lastMarginPercent: DEFAULT_MARGIN_PERCENT,
+  lastMarginPercent: fractionToPercent(DEFAULT_STORE_SETTINGS.defaultMargin),
 };
 
 /** Stored product → form text values ("24.0000" → "24", "0.5000" → "50" %). */

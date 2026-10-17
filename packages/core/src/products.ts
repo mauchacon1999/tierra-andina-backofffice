@@ -1,3 +1,5 @@
+import type Decimal from "decimal.js";
+
 import { toDecimal } from "./decimal";
 import { DomainError } from "./errors";
 import { MAX_MARGIN } from "./pricing";
@@ -152,4 +154,31 @@ export function percentToFraction(percent: string): string {
 /** "0.5000" (fraction) → "50" (%). Exact; no float. */
 export function fractionToPercent(fraction: string): string {
   return toDecimal(fraction, "fraction").times(100).toFixed();
+}
+
+/**
+ * Gross quantity (in the sale unit) to pre-fill a purchase line: packs × the product's pack
+ * quantity (3 crates × 24 kg → "72"); for kilo products the packs already are kilos.
+ * Exact, no rounding. Null when it cannot be estimated (pack product without pack quantity,
+ * or packs/pack quantity that are not positive decimals).
+ */
+export function estimateGrossQuantity(
+  packs: string,
+  purchaseUnit: PurchaseUnit,
+  packQuantity: string | null,
+): string | null {
+  const count = positiveOrNull(packs);
+  if (!count) return null;
+  if (!requiresPackQuantity(purchaseUnit)) return count.toFixed();
+  const perPack = packQuantity === null ? null : positiveOrNull(packQuantity);
+  return perPack ? count.times(perPack).toFixed() : null;
+}
+
+function positiveOrNull(value: string): Decimal | null {
+  try {
+    const d = toDecimal(value, "value");
+    return d.gt(0) ? d : null;
+  } catch {
+    return null;
+  }
 }

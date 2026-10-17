@@ -65,7 +65,8 @@ month (paydays). Cash starts at zero every day; the previous day's cash is kept 
 | `bundle`      | Spring onion                | `kg`           | gross kg − shrinkage kg           |
 | `kg`          | Taro, celery: 10 kg         | `kg`           | gross kg − shrinkage kg           |
 
-- Gross quantity varies per purchase and is entered every time.
+- Gross quantity varies per purchase and is entered every time (the form pre-fills
+  packs × default pack quantity as an estimate until the weighed quantity is typed).
 - **Shrinkage** is decided per purchase line (the system suggests the last value used).
 - **Margin** is decided per product and can change on every purchase (suggests the last value).
 
@@ -82,6 +83,9 @@ sale_price_bs     = round_up(sale_price_usd × sale_rate, bs_rounding_step)
 - `quoted_price_usd` is the total of the purchase line (3 crates at 20 USD → 60 USD), and the
   stall is paid `quoted_price_usd × supplier_rate` in Bs (stored as `amount_bs`).
 - `real_cost_usd` captures the supplier's rate rounding so it never silently eats the margin.
+- `supplier_rate` defaults to the trip's `market_rate` (Coche rate of the day); `bcv_rate` and
+  `market_rate` are copied into the trip from the day's rates when it is opened.
+- Trip totals: `total_usd = Σ real_cost_usd` and `total_bs = Σ amount_bs` of its lines.
 - If goods arrive incomplete (§4), costing uses the **received** quantity.
 
 ### 3.3 Reference cases (must be covered by tests)

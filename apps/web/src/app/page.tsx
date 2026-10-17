@@ -1,6 +1,6 @@
 import { SessionCard } from "@/features/auth/components/session-card";
 import { SessionGate } from "@/features/auth/components/session-gate";
-import { ProductsShortcut } from "@/features/products/components/products-shortcut";
+import { OwnerShortcuts } from "@/features/home/components/owner-shortcuts";
 import { StatusPanel } from "@/features/system-status/components/status-panel";
 
 export default function Home(): React.JSX.Element {
@@ -14,7 +14,7 @@ export default function Home(): React.JSX.Element {
       <SessionGate>
         <div className="space-y-6">
           <SessionCard />
-          <ProductsShortcut />
+          <OwnerShortcuts />
           <StatusPanel />
         </div>
       </SessionGate>

@@ -6,7 +6,7 @@ screen and component; if something is missing here, add it here first.
 - Tokens: `apps/web/src/app/globals.css`
 - Primitives: `apps/web/src/components/ui/` — `Button`, `ButtonLink` (a link that looks like a
   button), `TextField`, `SelectField`, `SegmentedControl` (few exclusive options, real radios),
-  `Checkbox`, `Alert`, `Card` (tones), `Badge`, `Spinner`
+  `Checkbox`, `Alert`, `Card` (tones), `Badge`, `Spinner`, `ConfirmButton` (two-step action)
 - Guard: `apps/web/src/design-system.test.ts` fails if a component uses a raw palette color
 
 ---
@@ -137,7 +137,9 @@ Rules:
 - **Do not disable a submit button because the form is invalid**: let them press it and show
   the errors (users must learn what is missing).
 - **Destructive actions** use `danger` and ask for confirmation with what will happen
-  ("¿Anular el cierre del 12/10? Esta acción no se puede deshacer").
+  ("¿Anular el cierre del 12/10? Esta acción no se puede deshacer"). Use `ConfirmButton`: the
+  first tap shows the question with "Cancelar" and the confirm button in place (no modal).
+  Irreversible but not destructive actions ("Cerrar jornada") use it with `variant="primary"`.
 - **Placement:** on phones the main form button is full width (`w-full`) at the end of the
   form. On wider screens, actions are right-aligned, primary last; "Cancelar" before it.
 - Icon-only buttons need `aria-label` (Spanish) and still a 44 px target.

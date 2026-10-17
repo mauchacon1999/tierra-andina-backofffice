@@ -7,6 +7,20 @@ import { useProductForm } from "@/features/products/hooks/use-product-form";
 import { ApiError } from "@/lib/api";
 import { SwrTestWrapper } from "@/testing/swr-wrapper";
 
+vi.mock("@/features/settings/api/use-settings", () => ({
+  useSettings: () => ({
+    settings: {
+      usdRoundingStep: "0.05",
+      bsRoundingStep: "1",
+      saleRateMode: "manual",
+      saleRateMarkupPct: "0",
+      defaultMargin: "0.6",
+      receiverCanSeePrices: false,
+    },
+    isLoaded: true,
+    error: undefined,
+  }),
+}));
 vi.mock("@/features/products/api/product-requests", () => ({
   createProduct: vi.fn(),
   updateProduct: vi.fn(),
@@ -51,6 +65,12 @@ function fillTomato(result: ReturnType<typeof setupCreate>["result"]) {
 }
 
 describe("useProductForm — units", () => {
+  it("starts with the store default margin (60 %)", async () => {
+    const { result } = setupCreate();
+
+    await waitFor(() => expect(result.current.form.getValues("lastMarginPercent")).toBe("60"));
+  });
+
   it("starts as crate → kilo with the pack quantity field", () => {
     const { result } = setupCreate();
 

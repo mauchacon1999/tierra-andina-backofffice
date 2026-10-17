@@ -4,6 +4,7 @@ import {
   allowedSaleUnits,
   assertValidProduct,
   cleanProductName,
+  estimateGrossQuantity,
   fractionToPercent,
   InvalidProductDefaultsError,
   InvalidUnitCombinationError,
@@ -168,5 +169,26 @@ describe("percent ⇄ fraction", () => {
     expect(percentToFraction("500")).toBe("5");
     expect(fractionToPercent("0.5000")).toBe("50");
     expect(fractionToPercent("0.0725")).toBe("7.25");
+  });
+});
+
+describe("estimateGrossQuantity", () => {
+  test("packs × pack quantity: 3 tomato crates of 24 kg → 72 kg", () => {
+    expect(estimateGrossQuantity("3", "crate", "24.0000")).toBe("72");
+    expect(estimateGrossQuantity("1.5", "bundle", "28")).toBe("42");
+  });
+
+  test("kilo products: the packs are the kilos", () => {
+    expect(estimateGrossQuantity("12.5", "kg", null)).toBe("12.5");
+  });
+
+  test.each([
+    ["no pack quantity", "3", "crate", null],
+    ["zero pack quantity", "3", "crate", "0"],
+    ["empty packs", "", "crate", "24"],
+    ["zero packs", "0", "kg", null],
+    ["not a number", "tres", "crate", "24"],
+  ] as const)("null when it cannot be estimated (%s)", (_case, packs, unit, perPack) => {
+    expect(estimateGrossQuantity(packs, unit, perPack)).toBeNull();
   });
 });

@@ -4,7 +4,6 @@ import { percentToFraction, priceLine, type PurchaseUnit, type SaleUnit } from "
 import { decimalSchema } from "@ta/validators";
 import { useMemo, useState } from "react";
 
-import { USD_ROUNDING_STEP } from "@/features/products/helpers/product-form-values";
 import { PURCHASE_UNIT_LABELS, SALE_UNIT_SUFFIX } from "@/features/products/helpers/unit-labels";
 import { formatQuantity, formatUsd } from "@/utils/format-number";
 
@@ -14,6 +13,8 @@ export type PriceExampleInput = {
   defaultPackQuantity: string;
   lastShrinkage: string;
   lastMarginPercent: string;
+  /** Store setting `usdRoundingStep`, e.g. "0.05". */
+  usdRoundingStep: string;
 };
 
 export type UsePriceExampleResult = {
@@ -42,7 +43,7 @@ export function describePriceExample(input: PriceExampleInput, sampleCost: strin
       supplierRate: "1",
       bcvRate: "1",
       margin: percentToFraction(input.lastMarginPercent),
-      usdRoundingStep: USD_ROUNDING_STEP,
+      usdRoundingStep: input.usdRoundingStep,
     });
     const sale = `venta ${formatUsd(pricing.salePriceUsd)}/${suffix}`;
     if (isKg) return `Kilo a ${formatUsd(sampleCost)} → ${sale}`;
@@ -60,14 +61,36 @@ export function describePriceExample(input: PriceExampleInput, sampleCost: strin
 
 export function usePriceExample(input: PriceExampleInput): UsePriceExampleResult {
   const [sampleCost, setSampleCost] = useState("");
-  const { purchaseUnit, saleUnit, defaultPackQuantity, lastShrinkage, lastMarginPercent } = input;
+  const {
+    purchaseUnit,
+    saleUnit,
+    defaultPackQuantity,
+    lastShrinkage,
+    lastMarginPercent,
+    usdRoundingStep,
+  } = input;
   const example = useMemo(
     () =>
       describePriceExample(
-        { purchaseUnit, saleUnit, defaultPackQuantity, lastShrinkage, lastMarginPercent },
+        {
+          purchaseUnit,
+          saleUnit,
+          defaultPackQuantity,
+          lastShrinkage,
+          lastMarginPercent,
+          usdRoundingStep,
+        },
         sampleCost,
       ),
-    [purchaseUnit, saleUnit, defaultPackQuantity, lastShrinkage, lastMarginPercent, sampleCost],
+    [
+      purchaseUnit,
+      saleUnit,
+      defaultPackQuantity,
+      lastShrinkage,
+      lastMarginPercent,
+      usdRoundingStep,
+      sampleCost,
+    ],
   );
   return { sampleCost, setSampleCost, example };
 }

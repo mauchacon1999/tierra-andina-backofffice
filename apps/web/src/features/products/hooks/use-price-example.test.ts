@@ -13,6 +13,7 @@ const TOMATO: PriceExampleInput = {
   defaultPackQuantity: "24",
   lastShrinkage: "2",
   lastMarginPercent: "50",
+  usdRoundingStep: "0.05",
 };
 
 describe("describePriceExample", () => {
@@ -29,6 +30,15 @@ describe("describePriceExample", () => {
         "10",
       ),
     ).toBe("Cuenta a 10,00 $ → 26 und útiles → 0,38 $/und → venta 0,60 $/und");
+  });
+
+  it("rounds the sale price up to the store step (0.10 → 1,40; 1 → 2,00)", () => {
+    expect(describePriceExample({ ...TOMATO, usdRoundingStep: "0.10" }, "20")).toContain(
+      "venta 1,40 $/kg",
+    );
+    expect(describePriceExample({ ...TOMATO, usdRoundingStep: "1" }, "20")).toContain(
+      "venta 2,00 $/kg",
+    );
   });
 
   it("kilo products are priced per kilo", () => {

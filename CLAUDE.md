@@ -10,7 +10,11 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > (`/api/auth/*`), `requireRole`, audit helper and `GET /api/v1/me`; Next.js status page.
 > Web: login (`/login`), session-protected home with the system status.
 > Modules done: **products** (core rules + pricing, validators, `/api/v1/products`, owner screens
-> `/products`, `/products/new`, `/products/[id]`). Next: purchases (docs/plan.md phase 1).
+> `/products`, `/products/new`, `/products/[id]`); **store settings** (`/api/v1/settings`);
+> **daily rates** (BCV, Coche, sale: `/api/v1/exchange-rates`, owner screen `/rates`);
+> **purchase trips** (`/api/v1/purchase-trips`, `/api/v1/suppliers`, owner screens `/purchases`,
+> `/purchases/[id]`: open a trip with the day's rates, add/edit/delete lines with live costing,
+> close). Next: truck receipt and supplier claims (docs/plan.md phase 1).
 > Business rules and DB design: `docs/domain-model.md`; working with the DB: `docs/database.md`;
 > per-module specs: `docs/modules/`.
 
@@ -300,7 +304,7 @@ apps/web/src/
   `app/globals.css` (`bg-primary`, `text-muted`, `text-danger-text`…; no palette classes and no
   `dark:` color classes — `src/design-system.test.ts` fails otherwise), primitives from
   `components/ui/` (`Button`, `ButtonLink`, `TextField`, `SelectField`, `SegmentedControl`,
-  `Checkbox`, `Alert`, `Card`, `Badge`, `Spinner`). Owner-only screens live under
+  `Checkbox`, `Alert`, `Card`, `Badge`, `Spinner`, `ConfirmButton`). Owner-only screens live under
   `app/(owner)/` (its layout wraps them in `RoleGate`).
 - The web never imports `@ta/db`, `drizzle-orm` or `postgres`: ESLint (`no-restricted-imports`
   in `apps/web/eslint.config.mjs`) fails the lint if it does.
@@ -525,5 +529,11 @@ Things that are not obvious from the code and have already cost time:
   fails the test). Always use a block body: `beforeEach(() => { mock.mockReset(); })`.
 - **Percent formatting**: do not use Intl's `style: "percent"` (Node prints "50%", other engines
   "50 %"); use `formatPercentFromFraction` (`utils/format-number.ts`).
+- **Drizzle `sql` in correlated subqueries**: a column interpolated in a `sql` template renders
+  unqualified (`"id"`), so `WHERE pl.trip_id = ${trips.id}` silently compares the inner table
+  with itself. Alias the inner table and qualify the outer column with
+  `sql.identifier("purchase_trips")` (see `lineCount` in `purchases.repository.ts`).
+- **No nested forms**: a form that offers another form (the purchase line's "Nuevo producto")
+  renders it _instead of_ itself; RHF keeps the hidden form's values.
 - **Product names**: uniqueness uses `normalizeProductName` (case, accents and spacing ignored)
   but keeps the ñ: "Ñame" and "Name" are different products.

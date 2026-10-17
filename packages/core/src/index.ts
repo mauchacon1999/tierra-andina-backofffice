@@ -8,6 +8,7 @@ export {
   allowedSaleUnits,
   assertValidProduct,
   cleanProductName,
+  estimateGrossQuantity,
   fractionToPercent,
   InvalidProductDefaultsError,
   InvalidUnitCombinationError,

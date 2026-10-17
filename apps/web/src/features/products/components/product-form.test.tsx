@@ -8,6 +8,20 @@ import { SwrTestWrapper } from "@/testing/swr-wrapper";
 
 const CATEGORY = "01a14314-2825-7000-a1d1-bdf734d05981";
 
+vi.mock("@/features/settings/api/use-settings", () => ({
+  useSettings: () => ({
+    settings: {
+      usdRoundingStep: "0.05",
+      bsRoundingStep: "1",
+      saleRateMode: "manual",
+      saleRateMarkupPct: "0",
+      defaultMargin: "0.6",
+      receiverCanSeePrices: false,
+    },
+    isLoaded: true,
+    error: undefined,
+  }),
+}));
 vi.mock("@/features/products/api/product-requests", () => ({
   createProduct: vi.fn(),
   updateProduct: vi.fn(),
