@@ -318,6 +318,29 @@ describe("GET /api/v1/products", () => {
     expect([...page1.data, ...page2.data].every((p) => p.purchaseUnit === "crate")).toBe(true);
   });
 
+  test("sorts by name or category, ascending or descending", async () => {
+    const tag = uniq("Ord").replace(/-/g, "");
+    await createAsOwner({ name: `${tag} b`, categoryId: categories.vegetable });
+    await createAsOwner({ name: `${tag} a`, categoryId: categories.fruit });
+    await createAsOwner({ name: `${tag} c`, categoryId: categories.fruit });
+    const names = async (sort: string) =>
+      productListSchema
+        .parse((await call("GET", `/products?search=${tag}&sort=${sort}`, ownerCookie)).body)
+        .data.map((p) => p.name.slice(-1));
+
+    expect(await names("name")).toEqual(["a", "b", "c"]);
+    expect(await names("-name")).toEqual(["c", "b", "a"]);
+    // "Frutas" before "Hortalizas"; within a category, by name.
+    expect(await names("category")).toEqual(["a", "c", "b"]);
+    expect(await names("-category")).toEqual(["b", "a", "c"]);
+    expect(await names("-updated")).toEqual(["c", "a", "b"]);
+  });
+
+  test("400 for an unknown sort", async () => {
+    const res = await call("GET", "/products?sort=price", ownerCookie);
+    expect(res.status).toBe(400);
+  });
+
   test("lists active products by default and inactive ones with isActive=false", async () => {
     const tag = uniq("Act").replace(/-/g, "");
     const active = await createAsOwner({ name: `${tag} a` });

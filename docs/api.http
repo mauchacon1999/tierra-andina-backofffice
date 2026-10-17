@@ -52,7 +52,8 @@ Content-Type: application/json
 GET {{baseUrl}}/api/v1/product-categories
 
 ### List — 200 { data, total, page, pageSize }; search ignores case and accents
-GET {{baseUrl}}/api/v1/products?search=tomate&isActive=true&page=1&pageSize=20
+### sort: name | category | updated, "-" prefix for descending (default name)
+GET {{baseUrl}}/api/v1/products?search=tomate&isActive=true&sort=-category&page=1&pageSize=20
 
 ### Create — 201 product (decimals as 4-decimal strings; lastMargin omitted → store default)
 # @name createProduct

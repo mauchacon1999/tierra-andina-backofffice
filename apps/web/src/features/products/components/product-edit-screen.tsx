@@ -17,7 +17,7 @@ import { useErrorMessage } from "@/i18n/use-error-message";
 export function ProductEditScreen(): React.JSX.Element {
   const { id } = useParams<{ id: string }>();
   const { product, error, isLoading, retry } = useProduct(id);
-  const toggle = useToggleProductActive(id);
+  const toggle = useToggleProductActive();
   const t = useTranslations("products.edit");
   const tl = useTranslations("products.list");
   const tf = useTranslations("products.form");
@@ -66,7 +66,7 @@ export function ProductEditScreen(): React.JSX.Element {
           variant={product.isActive ? "danger" : "secondary"}
           isLoading={toggle.isRunning}
           loadingText={product.isActive ? t("deactivating") : t("activating")}
-          onClick={() => void toggle.run(!product.isActive)}
+          onClick={() => void toggle.run({ id, isActive: !product.isActive })}
         >
           {product.isActive ? t("deactivate") : t("activate")}
         </Button>

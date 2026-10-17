@@ -312,6 +312,11 @@ apps/web/src/
   `components/ui/` (`Button`, `ButtonLink`, `TextField`, `SelectField`, `SegmentedControl`,
   `Checkbox`, `Alert`, `Card`, `Badge`, `Spinner`, `ConfirmButton`, `Dialog`, `IconButton`,
   `Tooltip`). Icons: `lucide-react`, always `aria-hidden` next to a text or an accessible name.
+- **Lists of records use `DataTable`** (`components/shared/data-table/`, TanStack Table v9;
+  rules in design-system §3.3): columns as `DataColumn[]` built in a feature hook
+  (`use-product-table.tsx`), memoized; paginated lists sort on the server (`sort` query param),
+  fully loaded ones in the browser. Table on desktop, cards on phones (`useMediaQuery`,
+  `hooks/use-media-query.ts`). Row actions with `confirm` open a `ConfirmDialog`.
 - **Backoffice shell**: every signed-in page lives under `app/(app)/`, whose layout renders
   `SessionGate` + `AppShell` (`features/navigation`): sidebar on desktop (collapsible to icons,
   preference in `stores/use-ui-store.ts`), top bar + drawer on phones. Pages render only their
@@ -552,6 +557,12 @@ Things that are not obvious from the code and have already cost time:
   (sign-in → /me), write the fresh value with `mutate(key, fetchFresh(), { revalidate: false })`
   instead of a bare `mutate(key)`: with no screen subscribed, a bare call leaves the old 401 and
   the next screen redirects to /login (regression test: `use-sign-in.test.tsx`).
+- **Web layouts in tests**: jsdom has no `matchMedia`; the setup answers "phone" to every
+  query, so `DataTable` renders cards. Call `setDesktop(true)` (`src/testing/media.ts`) to test
+  the table. jsdom also lacks `<dialog>.showModal()`; the setup polyfills it.
+- **TanStack Table v9** wants stable inputs: features at module scope, `columns` memoized and
+  a module-level empty array as fallback data (`data ?? []` inline rebuilds the row model on
+  every render). Hooks feeding it return stable empties (`NO_DAYS` in `use-daily-rates.ts`).
 - **Web test setup** (`apps/web/src/testing/setup.ts`): Testing Library only auto-cleans the DOM
   with Vitest globals, which we do not use, so the setup calls `cleanup()` and clears
   localStorage after each test. Wrap hooks that use SWR in `SwrTestWrapper` (fresh cache, also

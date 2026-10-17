@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Card } from "@/components/ui/card";
 import { ConfirmButton } from "@/components/ui/confirm-button";
-import { PurchaseLineCard } from "@/features/purchases/components/purchase-line-card";
 import { PurchaseLineForm } from "@/features/purchases/components/purchase-line-form";
 import { TripHeader } from "@/features/purchases/components/trip-header";
+import { TripLines } from "@/features/purchases/components/trip-lines";
 import { useTripScreen } from "@/features/purchases/hooks/use-trip-screen";
 import { useErrorMessage } from "@/i18n/use-error-message";
 
@@ -54,39 +54,14 @@ export function TripScreen(): React.JSX.Element {
     <div className="space-y-6">
       <TripHeader trip={trip} />
       {s.actionError && <Alert tone="error">{s.actionError}</Alert>}
-      {s.isOpen && s.editingLineId === null && (
+      {s.isOpen && (
         <Card className="space-y-3">
           <h2 className="font-semibold">{t("addLine")}</h2>
           <PurchaseLineForm trip={trip} />
         </Card>
       )}
 
-      <section className="space-y-3" aria-label={t("linesLabel")}>
-        <h2 className="font-semibold">{t("lines", { count: trip.lines.length })}</h2>
-        {trip.lines.length === 0 && <p className="text-sm text-muted">{t("noLines")}</p>}
-        {trip.lines.map((line) =>
-          s.editingLineId === line.id ? (
-            <Card key={line.id} tone="muted" className="space-y-3">
-              <h3 className="font-semibold">{t("editLine", { product: line.productName })}</h3>
-              <PurchaseLineForm
-                trip={trip}
-                line={line}
-                onDone={() => s.setEditingLineId(null)}
-                onCancel={() => s.setEditingLineId(null)}
-              />
-            </Card>
-          ) : (
-            <PurchaseLineCard
-              key={line.id}
-              line={line}
-              canEdit={s.isOpen && s.editingLineId === null}
-              onEdit={() => s.setEditingLineId(line.id)}
-              onDelete={() => s.deleteLine(line.id)}
-              isDeleting={s.deletingLineId === line.id}
-            />
-          ),
-        )}
-      </section>
+      <TripLines trip={trip} screen={s} />
 
       {s.isOpen && (
         <Card className="space-y-3">

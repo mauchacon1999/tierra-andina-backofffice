@@ -6,6 +6,7 @@ import { closeTrip, deleteLine, getTrip } from "@/features/purchases/api/purchas
 import { TripScreen } from "@/features/purchases/components/trip-screen";
 import { ApiError } from "@/lib/api";
 import { OPEN_TRIP, TOMATO_LINE } from "@/testing/purchase-fixtures";
+import { setDesktop } from "@/testing/media";
 import { SwrTestWrapper } from "@/testing/swr-wrapper";
 
 vi.mock("next/navigation", async () => {
@@ -39,14 +40,20 @@ describe("TripScreen", () => {
   });
 
   it("an open trip shows its rates, totals, the line form and its purchases", async () => {
+    setDesktop(true);
     vi.mocked(getTrip).mockResolvedValue(WITH_LINE);
     render(<TripScreen />, { wrapper: SwrTestWrapper });
 
-    expect(await screen.findByText("Tomate perita")).toBeDefined();
+    const table = await screen.findByRole("table", { name: "Compras de la jornada" });
+    const row = within(table).getAllByRole("row")[1]!;
+    expect(within(row).getByText("Tomate perita")).toBeDefined();
+    expect(within(row).getByText("Puesto 14")).toBeDefined();
+    expect(within(row).getByText("1 cesta")).toBeDefined();
+    expect(within(row).getByText("24 → 22 kg")).toBeDefined();
+    expect(within(row).getByText("1,40 $/kg")).toBeDefined();
     expect(screen.getByText("201,00 Bs")).toBeDefined();
-    expect(screen.getByText("4.020,00 Bs")).toBeDefined();
+    expect(screen.getAllByText("4.020,00 Bs").length).toBeGreaterThan(0);
     expect(screen.getByText("Formulario de compra")).toBeDefined();
-    expect(screen.getByText("Venta 1,40 $/kg")).toBeDefined();
   });
 
   it("closing asks first, then the trip is read-only", async () => {
@@ -64,18 +71,19 @@ describe("TripScreen", () => {
     expect(await screen.findByText("Cerrada")).toBeDefined();
     expect(closeTrip).toHaveBeenCalledWith(OPEN_TRIP.id);
     expect(screen.queryByText("Formulario de compra")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Editar" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Eliminar" })).toBeNull();
+    // No actions on a closed trip.
+    expect(screen.queryByRole("button", { name: "Acciones de Tomate perita" })).toBeNull();
   });
 
-  it("editing a purchase swaps its card for the form", async () => {
+  it("editing a purchase opens its form in a dialog", async () => {
     vi.mocked(getTrip).mockResolvedValue(WITH_LINE);
     render(<TripScreen />, { wrapper: SwrTestWrapper });
 
-    fireEvent.click(await screen.findByRole("button", { name: "Editar" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Acciones de Tomate perita" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Editar" }));
 
-    expect(screen.getByText("Formulario de Tomate perita")).toBeDefined();
-    expect(screen.queryByText("Formulario de compra")).toBeNull();
+    const dialog = screen.getByRole("dialog", { name: "Editar Tomate perita" });
+    expect(within(dialog).getByText("Formulario de Tomate perita")).toBeDefined();
   });
 
   it("deletes a purchase after confirming", async () => {
@@ -83,8 +91,11 @@ describe("TripScreen", () => {
     vi.mocked(deleteLine).mockResolvedValue({ ...OPEN_TRIP });
     render(<TripScreen />, { wrapper: SwrTestWrapper });
 
-    fireEvent.click(await screen.findByRole("button", { name: "Eliminar" }));
-    fireEvent.click(screen.getByRole("button", { name: "Eliminar" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Acciones de Tomate perita" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Eliminar" }));
+    const dialog = screen.getByRole("dialog", { name: "¿Eliminar Tomate perita?" });
+    expect(deleteLine).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Eliminar" }));
 
     await waitFor(() => expect(deleteLine).toHaveBeenCalledWith(OPEN_TRIP.id, TOMATO_LINE.id));
     expect(await screen.findByText("Aún no hay compras.")).toBeDefined();

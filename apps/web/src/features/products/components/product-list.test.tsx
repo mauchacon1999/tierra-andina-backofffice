@@ -1,19 +1,22 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { ProductList as ProductListPage } from "@ta/validators";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { listProducts } from "@/features/products/api/product-requests";
+import { listProducts, setProductActive } from "@/features/products/api/product-requests";
 import { ProductList } from "@/features/products/components/product-list";
 import { ApiError } from "@/lib/api";
+import { setDesktop } from "@/testing/media";
 import { SwrTestWrapper } from "@/testing/swr-wrapper";
 
+const replace = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+  useRouter: () => ({ replace, push: vi.fn() }),
   usePathname: () => "/products",
   useSearchParams: () => new URLSearchParams(),
 }));
 vi.mock("@/features/products/api/product-requests", () => ({
   listProducts: vi.fn(),
+  setProductActive: vi.fn(),
   listProductCategories: vi.fn().mockResolvedValue([]),
 }));
 
@@ -42,24 +45,57 @@ const PAGE: ProductListPage = {
 describe("ProductList", () => {
   beforeEach(() => {
     vi.mocked(listProducts).mockReset();
+    replace.mockReset();
   });
 
-  it("shows the products with their units, pack, shrinkage and margin", async () => {
+  it("phones: one card per product with its units, pack, shrinkage and margin", async () => {
     vi.mocked(listProducts).mockResolvedValue(PAGE);
     render(<ProductList />, { wrapper: SwrTestWrapper });
 
     expect(await screen.findByText("1 producto")).toBeDefined();
-    // Card (phones) and table row (desktop) both render; CSS shows one of them.
-    expect(screen.getAllByText("Tomate perita")).toHaveLength(2);
-    expect(screen.getByText("Hortalizas · Cesta → Kilo")).toBeDefined();
-    expect(screen.getByText("24 kg por cesta · Merma 2 kg · Margen 50 %")).toBeDefined();
+    const card = within(screen.getByRole("list", { name: "Productos" })).getByRole("listitem");
+    expect(within(card).getByRole("link", { name: "Tomate perita" }).getAttribute("href")).toBe(
+      "/products/p1",
+    );
+    for (const text of ["Hortalizas", "Cesta → Kilo", "24 kg por cesta", "2 kg", "50 %"]) {
+      expect(within(card).getByText(text)).toBeDefined();
+    }
     expect(listProducts).toHaveBeenCalledWith({
       search: undefined,
       categoryId: undefined,
       isActive: "true",
+      sort: "name",
       page: 1,
       pageSize: 20,
     });
+  });
+
+  it("desktop: sorting by a header puts the order in the URL (the API sorts)", async () => {
+    setDesktop(true);
+    vi.mocked(listProducts).mockResolvedValue(PAGE);
+    render(<ProductList />, { wrapper: SwrTestWrapper });
+
+    await screen.findByRole("table", { name: "Productos" });
+    fireEvent.click(screen.getByRole("button", { name: "Ordenar por Nombre" }));
+    expect(replace).toHaveBeenCalledWith("/products?sort=-name", { scroll: false });
+
+    fireEvent.click(screen.getByRole("button", { name: "Ordenar por Categoría" }));
+    expect(replace).toHaveBeenLastCalledWith("/products?sort=category", { scroll: false });
+  });
+
+  it("row actions: edit opens the product, deactivate calls the API", async () => {
+    setDesktop(true);
+    vi.mocked(listProducts).mockResolvedValue(PAGE);
+    vi.mocked(setProductActive).mockResolvedValue({ ...PAGE.data[0]!, isActive: false });
+    render(<ProductList />, { wrapper: SwrTestWrapper });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Acciones de Tomate perita" }));
+    expect(screen.getByRole("menuitem", { name: "Editar" }).getAttribute("href")).toBe(
+      "/products/p1",
+    );
+    fireEvent.click(screen.getByRole("menuitem", { name: "Desactivar" }));
+
+    await waitFor(() => expect(setProductActive).toHaveBeenCalledWith("p1", false));
   });
 
   it("shows an empty state with the action that fills it", async () => {

@@ -33,13 +33,16 @@ export type UseRatesHistoryResult = {
   error: ApiError | undefined;
 };
 
+// Stable empty list: tables rebuild their rows when the array changes.
+const NO_DAYS: DailyRates[] = [];
+
 /** Days with rates between two dates, newest first. */
 export function useRatesHistory(from: string, to: string): UseRatesHistoryResult {
   const { data, error, isLoading } = useSWR<DailyRates[], ApiError>(
     queryKeys.exchangeRates.range(from, to),
     () => listDailyRates(from, to),
   );
-  return { days: data ?? [], isLoading, error };
+  return { days: data ?? NO_DAYS, isLoading, error };
 }
 
 export type UseSetDailyRatesResult = {

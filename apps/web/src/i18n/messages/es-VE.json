@@ -16,7 +16,19 @@
     "pageOf": "Página {page} de {total}",
     "pagination": "Paginación",
     "optional": "Opcional.",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "edit": "Editar",
+    "delete": "Eliminar"
+  },
+  "dataTable": {
+    "rowActions": "Acciones de {name}",
+    "actions": "Acciones",
+    "sortBy": "Ordenar por {column}",
+    "sortedAsc": "orden ascendente",
+    "sortedDesc": "orden descendente",
+    "loadFailed": "No se pudieron cargar los datos",
+    "confirm": "Confirmar",
+    "working": "Procesando…"
   },
   "app": {
     "description": "Sistema administrativo de la verdulería Tierra Andina (Caracas)",
@@ -148,11 +160,13 @@
         "units": "Unidades",
         "pack": "Bulto",
         "shrinkage": "Merma",
-        "margin": "Margen"
+        "margin": "Margen",
+        "status": "Estado"
       },
       "cardDetails": "Merma {shrinkage} · Margen {margin}",
       "cardDetailsWithPack": "{pack} · Merma {shrinkage} · Margen {margin}",
-      "cardCategory": "{category} · {units}"
+      "cardCategory": "{category} · {units}",
+      "active": "Activo"
     },
     "filters": {
       "search": "Buscar",
@@ -240,6 +254,18 @@
       "empty": "Aún no hay jornadas de compra.",
       "summary": "{count, plural, one {# compra} other {# compras}} · {usd} · {bs}"
     },
+    "trips": {
+      "label": "Jornadas de compra",
+      "open": "Abrir",
+      "columns": {
+        "date": "Fecha",
+        "status": "Estado",
+        "lines": "Compras",
+        "totalUsd": "Costo real",
+        "totalBs": "Pagado",
+        "note": "Nota"
+      }
+    },
     "status": {
       "open": "Abierta",
       "closed": "Cerrada"
@@ -281,7 +307,8 @@
       "closeQuestion": "¿Cerrar la jornada?",
       "closing": "Cerrando…",
       "closeFailed": "No se pudo cerrar la jornada",
-      "deleteFailed": "No se pudo eliminar la compra"
+      "deleteFailed": "No se pudo eliminar la compra",
+      "editTitle": "Editar compra"
     },
     "line": {
       "addLabel": "Agregar compra",
@@ -306,9 +333,7 @@
       "submitAdd": "Agregar compra",
       "submitEdit": "Guardar cambios",
       "saveFailed": "No se pudo guardar la compra. Intenta de nuevo",
-      "edit": "Editar",
       "delete": "Eliminar",
-      "deleting": "Eliminando…",
       "deleteQuestion": "¿Eliminar {product}?",
       "paymentStatus": {
         "paid": "Pagado",
@@ -320,10 +345,14 @@
         "partial": "Incompleto",
         "missing": "No llegó"
       },
-      "quantities": "{packs} · {gross} {suffix} − {shrinkage} merma = {usable} {suffix} útiles",
-      "paymentDetail": "{quoted} × {rate} = {bs} · costo real {realCost}",
-      "unitCost": "Costo {unitCost}/{suffix}",
-      "salePrice": "Venta {sale}/{suffix}"
+      "columns": {
+        "packs": "Bultos",
+        "usable": "Bruto → útil",
+        "usableValue": "{gross} → {usable} {suffix}",
+        "amountBs": "Pagado",
+        "unitCost": "Costo",
+        "salePrice": "Venta"
+      }
     },
     "preview": {
       "label": "Costo de la compra",

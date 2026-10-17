@@ -2,6 +2,7 @@
 
 import { compareDecimals, type PurchaseUnit, type SaleUnit } from "@ta/core";
 import { useTranslations } from "next-intl";
+import { useMemo } from "react";
 
 import { formatQuantity } from "@/utils/format-number";
 
@@ -31,29 +32,36 @@ const PACK_QUANTITY_KEYS = {
   bundle: { kg: "bundleKg", unit: "bundleUnit" },
 } as const;
 
-/** Unit names as the shop says them (products.md §1.2 / §2), from the `units` messages. */
+/**
+ * Unit names as the shop says them (products.md §1.2 / §2), from the `units` messages.
+ * Stable between renders (memoized on the translator), so it can be a memo dependency.
+ */
 export function useUnitLabels(): UnitLabels {
   const t = useTranslations("units");
-  return {
-    purchase: (unit) => t(`purchase.${unit}`),
-    sale: (unit) => t(`sale.${unit}`),
-    suffix: (unit) => t(`suffix.${unit}`),
-    packs: (unit) => t(`packs.${unit}`),
-    packsCount: (unit, packs) =>
-      t(`packsCount.${unit}`, {
-        quantity: formatQuantity(packs),
-        isOne: compareDecimals(packs, "1") === 0 ? "yes" : "no",
-      }),
-    packQuantity: (purchaseUnit, saleUnit) =>
-      purchaseUnit === "kg"
-        ? null
-        : t(`packQuantity.${PACK_QUANTITY_KEYS[purchaseUnit][saleUnit]}`),
-    summary: (purchaseUnit, saleUnit) =>
-      t("summary", { purchase: t(`purchase.${purchaseUnit}`), sale: t(`sale.${saleUnit}`) }),
-    quantity: (quantity, saleUnit) => t("quantity", { quantity, suffix: t(`suffix.${saleUnit}`) }),
-    perPack: (purchaseUnit, quantity, saleUnit) =>
-      purchaseUnit === "kg"
-        ? null
-        : t(`perPack.${purchaseUnit}`, { quantity, suffix: t(`suffix.${saleUnit}`) }),
-  };
+  return useMemo(
+    (): UnitLabels => ({
+      purchase: (unit) => t(`purchase.${unit}`),
+      sale: (unit) => t(`sale.${unit}`),
+      suffix: (unit) => t(`suffix.${unit}`),
+      packs: (unit) => t(`packs.${unit}`),
+      packsCount: (unit, packs) =>
+        t(`packsCount.${unit}`, {
+          quantity: formatQuantity(packs),
+          isOne: compareDecimals(packs, "1") === 0 ? "yes" : "no",
+        }),
+      packQuantity: (purchaseUnit, saleUnit) =>
+        purchaseUnit === "kg"
+          ? null
+          : t(`packQuantity.${PACK_QUANTITY_KEYS[purchaseUnit][saleUnit]}`),
+      summary: (purchaseUnit, saleUnit) =>
+        t("summary", { purchase: t(`purchase.${purchaseUnit}`), sale: t(`sale.${saleUnit}`) }),
+      quantity: (quantity, saleUnit) =>
+        t("quantity", { quantity, suffix: t(`suffix.${saleUnit}`) }),
+      perPack: (purchaseUnit, quantity, saleUnit) =>
+        purchaseUnit === "kg"
+          ? null
+          : t(`perPack.${purchaseUnit}`, { quantity, suffix: t(`suffix.${saleUnit}`) }),
+    }),
+    [t],
+  );
 }

@@ -91,12 +91,18 @@ export function useUpdateProduct(id: string): MutationResult<UpdateProduct, Prod
   };
 }
 
-export function useToggleProductActive(id: string): MutationResult<boolean, Product> {
+/** Activates or deactivates any product (from the list or the edit screen). */
+export function useToggleProductActive(): MutationResult<
+  { id: string; isActive: boolean },
+  Product
+> {
   const revalidate = useRevalidateProducts();
-  const { trigger, isMutating } = useSWRMutation<Product, ApiError, readonly string[], boolean>(
-    ["products", "mutation", "active", id],
-    (_key, { arg }) => setProductActive(id, arg),
-  );
+  const { trigger, isMutating } = useSWRMutation<
+    Product,
+    ApiError,
+    readonly string[],
+    { id: string; isActive: boolean }
+  >(["products", "mutation", "active"], (_key, { arg }) => setProductActive(arg.id, arg.isActive));
   return {
     run: async (arg) => {
       const product = await trigger(arg);

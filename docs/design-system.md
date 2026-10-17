@@ -132,6 +132,25 @@ Use `<Card>` for any boxed content: `tone` = `default` | `muted` | `success` | `
 on CSS order (this already broke the status cards once). Use the primitive's `tone`/`variant`
 prop, or add a new one. `className` is for layout only (width, margin, flex, grid).
 
+### 3.3 Lists of records (DataTable)
+
+Every list of records (products, trips, purchases, rates…) uses `DataTable`
+(`components/shared/data-table/`, TanStack Table v9). Do not hand-write `<table>`s or card lists.
+
+- **Desktop:** a real `<table>` with sortable headers (arrow icon, `aria-sort`), numbers
+  right-aligned (`tabular-nums`), and a "⋯" button per row with its actions.
+- **Phones:** one `Card` per row — the `isPrimary` column as title, the rest as label/value
+  pairs (`hideInCard` drops one), same "⋯" menu.
+- **Sorting:** `mode: "client"` when every row is loaded (a trip's purchases, rate history);
+  `mode: "server"` for paginated lists (the API sorts: `?sort=-name`) — never sort only the
+  visible page. Decimal columns use `sortAs: "decimal"` (exact, no floats).
+- **Row actions** (`RowAction`): "Editar" (`href` or a dialog), activate/deactivate, delete.
+  Destructive ones have `tone: "danger"` and `confirm` → `ConfirmDialog` ("¿Eliminar Tomate?").
+  Rows that cannot be changed simply have no actions.
+- **States:** loading (`Cargando…`), empty (`empty`: message + the action that fills it) and
+  error (Alert with "Reintentar") are built in; pagination below the list.
+- Editing a row opens its form in a `Dialog`; the list stays where it was.
+
 ---
 
 ## 4. Buttons and actions

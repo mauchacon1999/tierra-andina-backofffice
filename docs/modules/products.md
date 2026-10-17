@@ -119,7 +119,8 @@ Pure functions with tests:
 - `createProductSchema` — all form fields, refined with the core functions above.
 - `quickCreateProductSchema` — name, purchaseUnit, saleUnit, defaultPackQuantity.
 - `updateProductSchema` — partial of create.
-- `productListQuerySchema` — search, categoryId, isActive, purchaseUnit, page, pageSize.
+- `productListQuerySchema` — search, categoryId, isActive, purchaseUnit, sort (`name`, `category`,
+  `updated`; `-` prefix for descending; default `name`), page, pageSize.
 - Decimal fields as numeric strings with up to 4 decimals.
 
 ---

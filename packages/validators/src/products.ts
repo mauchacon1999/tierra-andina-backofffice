@@ -245,7 +245,18 @@ export type QuickProductFormValues = z.input<typeof quickProductFormSchema>;
 
 // List query and responses ------------------------------------------------------------------------
 
-/** GET /api/v1/products?search=&categoryId=&isActive=&purchaseUnit=&page=&pageSize= */
+/** List order: a column, "-" prefix for descending. Name ascending by default. */
+export const PRODUCT_SORTS = [
+  "name",
+  "-name",
+  "category",
+  "-category",
+  "updated",
+  "-updated",
+] as const;
+export type ProductSort = (typeof PRODUCT_SORTS)[number];
+
+/** GET /api/v1/products?search=&categoryId=&isActive=&purchaseUnit=&sort=&page=&pageSize= */
 export const productListQuerySchema = paginationQuerySchema.extend({
   search: z.string().trim().max(NAME_MAX).optional(),
   categoryId: z.uuid().optional(),
@@ -255,6 +266,7 @@ export const productListQuerySchema = paginationQuerySchema.extend({
     .default("true")
     .transform((v) => v === "true"),
   purchaseUnit: purchaseUnitSchema.optional(),
+  sort: z.enum(PRODUCT_SORTS).default("name"),
 });
 
 export type ProductListQueryInput = z.input<typeof productListQuerySchema>;

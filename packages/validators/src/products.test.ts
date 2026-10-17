@@ -278,8 +278,13 @@ describe("quickProductFormSchema", () => {
 });
 
 describe("productListQuerySchema", () => {
-  test("defaults: page 1, 20 per page, active products", () => {
-    expect(productListQuerySchema.parse({})).toEqual({ page: 1, pageSize: 20, isActive: true });
+  test("defaults: page 1, 20 per page, active products, by name", () => {
+    expect(productListQuerySchema.parse({})).toEqual({
+      page: 1,
+      pageSize: 20,
+      isActive: true,
+      sort: "name",
+    });
   });
 
   test("parses query-string values", () => {
@@ -290,12 +295,21 @@ describe("productListQuerySchema", () => {
         isActive: "false",
         search: "  tomate ",
         purchaseUnit: "crate",
+        sort: "-updated",
       }),
-    ).toEqual({ page: 2, pageSize: 50, isActive: false, search: "tomate", purchaseUnit: "crate" });
+    ).toEqual({
+      page: 2,
+      pageSize: 50,
+      isActive: false,
+      search: "tomate",
+      purchaseUnit: "crate",
+      sort: "-updated",
+    });
   });
 
   test("rejects a page size above 100 and an unknown unit", () => {
     expect(productListQuerySchema.safeParse({ pageSize: "500" }).success).toBe(false);
     expect(productListQuerySchema.safeParse({ purchaseUnit: "sack" }).success).toBe(false);
+    expect(productListQuerySchema.safeParse({ sort: "price" }).success).toBe(false);
   });
 });

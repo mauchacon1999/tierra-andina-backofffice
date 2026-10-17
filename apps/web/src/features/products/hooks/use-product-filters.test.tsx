@@ -23,13 +23,14 @@ describe("useProductFilters", () => {
     vi.useRealTimers();
   });
 
-  it("defaults to active products, page 1", () => {
+  it("defaults to active products by name, page 1", () => {
     const { result } = renderHook(() => useProductFilters());
 
     expect(result.current.query).toEqual({
       search: undefined,
       categoryId: undefined,
       isActive: "true",
+      sort: "name",
       page: 1,
       pageSize: 20,
     });
@@ -47,6 +48,14 @@ describe("useProductFilters", () => {
       isActive: "false",
       page: 3,
     });
+  });
+
+  it("reads a valid sort from the URL and ignores an unknown one", () => {
+    nav.params = new URLSearchParams("sort=-category");
+    expect(renderHook(() => useProductFilters()).result.current.query.sort).toBe("-category");
+
+    nav.params = new URLSearchParams("sort=price");
+    expect(renderHook(() => useProductFilters()).result.current.query.sort).toBe("name");
   });
 
   it("ignores an invalid page number", () => {

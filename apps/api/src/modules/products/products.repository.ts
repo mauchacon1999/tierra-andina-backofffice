@@ -1,7 +1,7 @@
 import { type Executor, schema } from "@ta/db";
 import { normalizeProductName } from "@ta/core";
-import type { ProductListQuery } from "@ta/validators";
-import { and, asc, count, eq, getTableColumns, ilike, ne, type SQL } from "drizzle-orm";
+import type { ProductListQuery, ProductSort } from "@ta/validators";
+import { and, asc, count, desc, eq, getTableColumns, ilike, ne, type SQL } from "drizzle-orm";
 
 const { products, productCategories, purchaseLines, priceListLines } = schema;
 
@@ -31,7 +31,20 @@ function listFilters(query: ProductListQuery): SQL | undefined {
   return and(...conditions);
 }
 
-/** One page of products (with category name), ordered by name, plus the total count. */
+const SORT_COLUMNS = {
+  name: products.normalizedName,
+  category: productCategories.name,
+  updated: products.updatedAt,
+} as const;
+
+/** ORDER BY for a sort key; the name and then the id break ties so pages never overlap. */
+function listOrder(sort: ProductSort): SQL[] {
+  const isDesc = sort.startsWith("-");
+  const column = SORT_COLUMNS[(isDesc ? sort.slice(1) : sort) as keyof typeof SORT_COLUMNS];
+  return [isDesc ? desc(column) : asc(column), asc(products.normalizedName), asc(products.id)];
+}
+
+/** One page of products (with category name) in the requested order, plus the total count. */
 export async function findProducts(
   db: Executor,
   query: ProductListQuery,
@@ -43,7 +56,7 @@ export async function findProducts(
       .from(products)
       .innerJoin(productCategories, eq(productCategories.id, products.categoryId))
       .where(where)
-      .orderBy(asc(products.normalizedName))
+      .orderBy(...listOrder(query.sort))
       .limit(query.pageSize)
       .offset((query.page - 1) * query.pageSize),
     db.select({ total: count() }).from(products).where(where),

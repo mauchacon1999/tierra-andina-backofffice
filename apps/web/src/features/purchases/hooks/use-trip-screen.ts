@@ -1,6 +1,6 @@
 "use client";
 
-import type { TripDetail } from "@ta/validators";
+import type { PurchaseLine, TripDetail } from "@ta/validators";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -15,13 +15,13 @@ export type UseTripScreenResult = {
   error: ApiError | undefined;
   retry: () => void;
   isOpen: boolean;
-  /** Line shown with its edit form instead of its card (one at a time). */
-  editingLineId: string | null;
-  setEditingLineId: (id: string | null) => void;
+  /** Line being edited in the dialog, if any. */
+  editingLine: PurchaseLine | null;
+  editLine: (line: PurchaseLine) => void;
+  stopEditing: () => void;
   closeTrip: () => Promise<void>;
   isClosing: boolean;
   deleteLine: (lineId: string) => Promise<void>;
-  deletingLineId: string | null;
   /** Last failed close/delete, shown above the lines. */
   actionError: string | null;
 };
@@ -34,7 +34,6 @@ export function useTripScreen(tripId: string): UseTripScreenResult {
   const close = useCloseTrip(tripId);
   const remove = useDeleteLine(tripId);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
-  const [deletingLineId, setDeletingLineId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const run = async (action: () => Promise<unknown>, fallback: string): Promise<void> => {
@@ -52,20 +51,17 @@ export function useTripScreen(tripId: string): UseTripScreenResult {
     error,
     retry,
     isOpen: trip?.status === "open",
-    editingLineId,
-    setEditingLineId,
+    // Read from the trip, so the dialog always shows the saved values of the line.
+    editingLine: trip?.lines.find((line) => line.id === editingLineId) ?? null,
+    editLine: (line) => setEditingLineId(line.id),
+    stopEditing: () => setEditingLineId(null),
     closeTrip: () =>
       run(async () => {
         await close.run();
         setEditingLineId(null);
       }, t("closeFailed")),
     isClosing: close.isRunning,
-    deleteLine: async (lineId) => {
-      setDeletingLineId(lineId);
-      await run(() => remove.run(lineId), t("deleteFailed"));
-      setDeletingLineId(null);
-    },
-    deletingLineId,
+    deleteLine: (lineId) => run(() => remove.run(lineId), t("deleteFailed")),
     actionError,
   };
 }
