@@ -15,11 +15,23 @@
     "next": "Siguiente",
     "pageOf": "Página {page} de {total}",
     "pagination": "Paginación",
-    "optional": "Opcional."
+    "optional": "Opcional.",
+    "close": "Cerrar"
   },
   "app": {
     "description": "Sistema administrativo de la verdulería Tierra Andina (Caracas)",
     "tagline": "Sistema administrativo"
+  },
+  "nav": {
+    "main": "Menú principal",
+    "home": "Inicio",
+    "purchases": "Compras",
+    "rates": "Tasas del día",
+    "products": "Productos",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "collapse": "Contraer menú",
+    "expand": "Expandir menú"
   },
   "apiErrors": {
     "NETWORK_ERROR": "No se pudo conectar con la API",
@@ -77,7 +89,9 @@
     "products": {
       "title": "Productos",
       "description": "Catálogo, unidades, merma y margen"
-    }
+    },
+    "title": "Inicio",
+    "subtitle": "Accesos rápidos y estado del sistema"
   },
   "units": {
     "purchase": {

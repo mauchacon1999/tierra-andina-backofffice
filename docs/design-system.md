@@ -6,7 +6,9 @@ screen and component; if something is missing here, add it here first.
 - Tokens: `apps/web/src/app/globals.css`
 - Primitives: `apps/web/src/components/ui/` — `Button`, `ButtonLink` (a link that looks like a
   button), `TextField`, `SelectField`, `SegmentedControl` (few exclusive options, real radios),
-  `Checkbox`, `Alert`, `Card` (tones), `Badge`, `Spinner`, `ConfirmButton` (two-step action)
+  `Checkbox`, `Alert`, `Card` (tones), `Badge`, `Spinner`, `ConfirmButton` (two-step action),
+  `Dialog` (native modal / drawer), `IconButton` (icon only, label required), `Tooltip`
+- Icons: `lucide-react`, `size-5` (`size-6` in the top bar), always `aria-hidden`
 - Guard: `apps/web/src/design-system.test.ts` fails if a component uses a raw palette color
 - Texts: every label, hint, button and message comes from `apps/web/src/i18n/messages/es-VE.json`
   (next-intl, CLAUDE.md §10 "Text and i18n"); `src/i18n/no-hardcoded-text.test.ts` fails on
@@ -93,9 +95,25 @@ Success uses the brand green: in this app "done/ok" and "brand" are the same col
 
 ## 3. Layout, type and shape
 
+### 3.1 Backoffice shell
+
+Every signed-in screen is rendered inside `AppShell` (`features/navigation`):
+
+- **Desktop (`md` and up):** sidebar on the left — app name, menu, and at the bottom the user,
+  store, role and "Salir". It collapses to a 64 px column of icons (button at the top, choice
+  remembered per device); collapsed entries keep their name as accessible name and tooltip. The
+  current section is `bg-primary-soft text-primary-text` with `aria-current="page"`.
+- **Phones:** sticky top bar with ☰ and the app name; ☰ opens the same menu as a drawer
+  (`Dialog variant="drawer"`), which closes on Esc, on the backdrop and on navigation.
+- **Content:** `main` is `max-w-6xl` centered, `px-4 py-6` (`md:px-8 md:py-8`). Pages do not add
+  their own container: they start with the page title (`h1`) and blocks.
+- The menu shows only the sections the active role can open (the API enforces it anyway).
+
+### 3.2 Type and shape
+
 | Element         | Rule                                                                               |
 | --------------- | ---------------------------------------------------------------------------------- |
-| Page container  | `mx-auto w-full max-w-md px-4 py-8 sm:max-w-2xl` (forms: `max-w-sm`)               |
+| Page content    | Inside the shell's `main`; narrow forms may cap themselves (`max-w-2xl`)           |
 | Vertical rhythm | `space-y-4` inside a block, `space-y-6` between blocks                             |
 | Page title      | `h1`: `text-3xl font-bold tracking-tight text-primary-text`, subtitle `text-muted` |
 | Section title   | `h2`: `text-lg font-semibold`                                                      |
@@ -277,7 +295,8 @@ A status is a dot + a label (never color alone). Mapping for the app's states:
 
 ## 11. Building a new screen — checklist
 
-1. Page container and title from §3; content in `Card`s.
+1. Page under `app/(app)/` (shell from §3.1), title from §3.2; content in `Card`s. New
+   section? Add its menu entry in `features/navigation/helpers/nav-items.ts`.
 2. One primary action; the rest secondary/ghost (§4).
 3. Form fields with `TextField`, schema from `@ta/validators`, timing from §5.
 4. Server errors in an `Alert` at the top; loading and empty states (§6).

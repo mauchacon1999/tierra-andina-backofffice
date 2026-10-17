@@ -283,9 +283,11 @@ API tests need PostgreSQL running; their preload resets and seeds `DATABASE_URL_
 ```
 apps/web/src/
 ├── app/                         # routes only — thin pages that compose features
-│   ├── (owner)/                 # owner screens
-│   ├── (manager)/               # shop manager screens
-│   └── (receiver)/              # truck receiver screens
+│   ├── login/                   # outside the shell
+│   └── (app)/                   # signed-in screens: SessionGate + AppShell (sidebar)
+│       ├── (owner)/             # owner screens (RoleGate)
+│       ├── (manager)/           # shop manager screens
+│       └── (receiver)/          # truck receiver screens
 ├── components/
 │   ├── ui/                      # primitives (button, input, dialog) — no business logic
 │   └── shared/                  # reusable composites (money-input, rate-badge, page-header)
@@ -308,8 +310,14 @@ apps/web/src/
   `app/globals.css` (`bg-primary`, `text-muted`, `text-danger-text`…; no palette classes and no
   `dark:` color classes — `src/design-system.test.ts` fails otherwise), primitives from
   `components/ui/` (`Button`, `ButtonLink`, `TextField`, `SelectField`, `SegmentedControl`,
-  `Checkbox`, `Alert`, `Card`, `Badge`, `Spinner`, `ConfirmButton`). Owner-only screens live under
-  `app/(owner)/` (its layout wraps them in `RoleGate`).
+  `Checkbox`, `Alert`, `Card`, `Badge`, `Spinner`, `ConfirmButton`, `Dialog`, `IconButton`,
+  `Tooltip`). Icons: `lucide-react`, always `aria-hidden` next to a text or an accessible name.
+- **Backoffice shell**: every signed-in page lives under `app/(app)/`, whose layout renders
+  `SessionGate` + `AppShell` (`features/navigation`): sidebar on desktop (collapsible to icons,
+  preference in `stores/use-ui-store.ts`), top bar + drawer on phones. Pages render only their
+  content (title, cards); no `<main>` or page container of their own. A new section gets its
+  menu entry in `features/navigation/helpers/nav-items.ts` (with the roles that see it).
+  Owner-only screens live under `app/(app)/(owner)/` (its layout wraps them in `RoleGate`).
 - The web never imports `@ta/db`, `drizzle-orm` or `postgres`: ESLint (`no-restricted-imports`
   in `apps/web/eslint.config.mjs`) fails the lint if it does.
 - All HTTP goes through `lib/api.ts` (`api.get/post/...`). It throws a typed `ApiError`

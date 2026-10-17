@@ -3,6 +3,17 @@
 import { cleanup } from "@testing-library/react";
 import { afterEach } from "vitest";
 
+// jsdom has <dialog> but not its modal API; enough for components that open and close it.
+if (typeof HTMLDialogElement !== "undefined" && !HTMLDialogElement.prototype.showModal) {
+  HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
+    this.open = true;
+  };
+  HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+    this.open = false;
+    this.dispatchEvent(new Event("close"));
+  };
+}
+
 afterEach(() => {
   cleanup();
   localStorage.clear();
