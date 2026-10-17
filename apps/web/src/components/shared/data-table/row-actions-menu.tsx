@@ -24,9 +24,11 @@ export function RowActionsMenu({
   rowName,
   actions,
   onSelect,
-}: RowActionsMenuProps): React.JSX.Element {
+}: RowActionsMenuProps): React.JSX.Element | null {
   const t = useTranslations("dataTable");
   const { rootRef, isOpen, toggle, close, onButtonKeyDown, onMenuKeyDown } = useMenu();
+  // A row without actions (e.g. the owner in the users list) shows no "⋯" at all.
+  if (actions.length === 0) return null;
 
   return (
     <div ref={rootRef} className="relative inline-block">

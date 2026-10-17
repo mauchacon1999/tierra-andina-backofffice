@@ -17,7 +17,8 @@ const SHORTCUTS: readonly {
     | "receipt"
     | "prices"
     | "rates"
-    | "products";
+    | "products"
+    | "users";
   roles: readonly MembershipRole[];
 }[] = [
   { href: "/close", key: "dailyClose", roles: ["owner", "manager"] },
@@ -28,6 +29,7 @@ const SHORTCUTS: readonly {
   { href: "/prices", key: "prices", roles: ["owner", "manager"] },
   { href: "/rates", key: "rates", roles: ["owner"] },
   { href: "/products", key: "products", roles: ["owner"] },
+  { href: "/users", key: "users", roles: ["owner"] },
 ];
 
 /** Home entries to the screens of the active role (same rule as the sidebar). */

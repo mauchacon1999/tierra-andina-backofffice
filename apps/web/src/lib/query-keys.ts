@@ -17,6 +17,7 @@ export const queryKeys = {
   },
   suppliers: ["suppliers"] as const,
   receipts: ["receipts"] as const,
+  users: ["users"] as const,
   paymentMethods: ["payment-methods"] as const,
   customers: (search: string) => ["customers", search] as const,
   dailyCloses: {

@@ -49,7 +49,8 @@
     "receipt": "Recepción",
     "dailyClose": "Cierre del día",
     "closes": "Cierres",
-    "pendingBadge": "{count} por revisar"
+    "pendingBadge": "{count} por revisar",
+    "users": "Usuarios"
   },
   "apiErrors": {
     "NETWORK_ERROR": "No se pudo conectar con la API",
@@ -129,6 +130,10 @@
     "closes": {
       "title": "Cierres",
       "description": "Revisa y aprueba los cierres de cada día"
+    },
+    "users": {
+      "title": "Usuarios",
+      "description": "Encargados y receptores de la tienda"
     }
   },
   "units": {
@@ -549,5 +554,53 @@
     "cancelFix": "Cancelar corrección",
     "fixed": "Corrección guardada.",
     "notFound": "No hay cierre para ese día."
+  },
+  "users": {
+    "pageTitle": "Usuarios",
+    "title": "Usuarios",
+    "subtitle": "Quién entra a la app y qué puede hacer. Tú manejas las contraseñas.",
+    "new": "Nuevo usuario",
+    "label": "Usuarios de la tienda",
+    "empty": "Aún no hay usuarios.",
+    "loadFailed": "No se pudieron cargar los usuarios",
+    "columns": {
+      "name": "Nombre",
+      "email": "Correo",
+      "role": "Rol",
+      "status": "Estado"
+    },
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "you": "Tú",
+    "name": "Nombre",
+    "email": "Correo",
+    "emailHint": "Con este correo entra a la app.",
+    "password": "Contraseña",
+    "passwordHint": "Al menos 8 caracteres. Dásela tú a la persona.",
+    "newPassword": "Nueva contraseña",
+    "newPasswordHint": "Se cierra su sesión en todos sus teléfonos.",
+    "role": "Rol",
+    "roleHints": {
+      "manager": "Cierre del día, faltantes y precios.",
+      "receiver": "Recepción en la camioneta."
+    },
+    "create": "Crear usuario",
+    "creating": "Creando…",
+    "createFailed": "No se pudo crear el usuario",
+    "created": "Usuario creado. Ya puede entrar con su correo y la contraseña que le diste.",
+    "edit": "Editar",
+    "editTitle": "Editar a {name}",
+    "save": "Guardar cambios",
+    "saving": "Guardando…",
+    "saveFailed": "No se pudieron guardar los cambios",
+    "changePassword": "Cambiar contraseña",
+    "passwordTitle": "Nueva contraseña para {name}",
+    "setPassword": "Guardar contraseña",
+    "passwordSaved": "Contraseña cambiada. Dásela a {name}.",
+    "passwordFailed": "No se pudo cambiar la contraseña",
+    "deactivate": "Desactivar",
+    "activate": "Activar",
+    "deactivateQuestion": "¿Desactivar a {name}? No podrá entrar a la app.",
+    "actionFailed": "No se pudo cambiar el acceso"
   }
 }

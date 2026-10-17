@@ -23,7 +23,9 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > **Daily close** (phase 2): `/close` (manager/owner: amounts only, each in its currency; lote,
 > credit sales, expenses) and `/closes` (owner: list like the Excel, correct, approve; pending
 > counter in the menu) — `/api/v1/daily-closes`, `/payment-methods`, `/customers`.
-> Next (docs/plan.md): phase 1 leftovers (push, share the price list, rate-change alert,
+> **Users**: `/users` (owner: create managers/receivers, edit, deactivate, set passwords;
+> users never change their own) — `/api/v1/users`.
+> Next (docs/plan.md): phase 1 leftovers (rate-change alert, push,
 > offline) and phase 3 (debts, expenses, payroll).
 > Business rules and DB design: `docs/domain-model.md`; working with the DB: `docs/database.md`;
 > per-module specs: `docs/modules/`.

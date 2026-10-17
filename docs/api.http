@@ -242,3 +242,27 @@ Content-Type: application/json
 ### Approve (owner) — 409 CLOSE_ALREADY_APPROVED the second time
 POST {{baseUrl}}/api/v1/daily-closes/<close id>/approve
 Origin: http://localhost:3000
+
+### Users of the active store (owner only), owners first; `isSelf` marks the caller
+GET {{baseUrl}}/api/v1/users
+
+### Create a manager or receiver with the password the owner gives — 201; 409 EMAIL_TAKEN
+POST {{baseUrl}}/api/v1/users
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "name": "María", "email": "maria@tierra-andina.local", "password": "clave-inicial-1", "role": "manager" }
+
+### Name, role or access — deactivating signs them out; 422 CANNOT_CHANGE_OWNER for an owner
+PATCH {{baseUrl}}/api/v1/users/<user id>
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "isActive": false }
+
+### New password set by the owner — 204; the user is signed out everywhere
+POST {{baseUrl}}/api/v1/users/<user id>/password
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "password": "clave-nueva-2" }

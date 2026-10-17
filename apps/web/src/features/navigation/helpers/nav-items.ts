@@ -9,6 +9,7 @@ import {
   ShoppingCart,
   Tag,
   Truck,
+  UserCog,
   type LucideIcon,
 } from "lucide-react";
 
@@ -24,7 +25,8 @@ export type NavItem = {
     | "receipt"
     | "prices"
     | "rates"
-    | "products";
+    | "products"
+    | "users";
   icon: LucideIcon;
   /** Roles that see it; the API enforces the same rule on every request. */
   roles: readonly MembershipRole[];
@@ -56,6 +58,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/prices", labelKey: "prices", icon: Tag, roles: ["owner", "manager"] },
   { href: "/rates", labelKey: "rates", icon: Coins, roles: ["owner"] },
   { href: "/products", labelKey: "products", icon: Package, roles: ["owner"] },
+  { href: "/users", labelKey: "users", icon: UserCog, roles: ["owner"] },
 ];
 
 /** "/" is active only on the home page; other items also for their sub-pages (/purchases/123). */

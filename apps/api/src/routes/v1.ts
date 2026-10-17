@@ -14,6 +14,7 @@ import { receiptsRoutes } from "@/modules/receipts/receipts.routes";
 import { settingsRoutes } from "@/modules/settings/settings.routes";
 import { shoppingListRoutes } from "@/modules/shopping-list/shopping-list.routes";
 import { suppliersRoutes } from "@/modules/suppliers/suppliers.routes";
+import { usersRoutes } from "@/modules/users/users.routes";
 
 /** /api/v1 router: every request gets `user`/`session`; modules decide what they require. */
 export function v1Routes(): Hono<AppEnv> {
@@ -31,5 +32,6 @@ export function v1Routes(): Hono<AppEnv> {
     .route("/price-lists", priceListsRoutes())
     .route("/payment-methods", paymentMethodsRoutes())
     .route("/customers", customersRoutes())
-    .route("/daily-closes", dailyClosesRoutes());
+    .route("/daily-closes", dailyClosesRoutes())
+    .route("/users", usersRoutes());
 }

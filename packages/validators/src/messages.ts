@@ -76,6 +76,11 @@ export const VALIDATION_MESSAGES_ES_VE = {
     productRequired: "Elige un producto",
     shrinkageBelowGross: "La merma debe ser menor que la cantidad bruta",
   },
+  user: {
+    roleRequired: "Elige el rol",
+    passwordTooShort: "La contraseña debe tener al menos {min} caracteres",
+    passwordTooLong: "La contraseña admite como máximo {max} caracteres",
+  },
   dailyClose: {
     customerRequired: "Elige un cliente o escribe su nombre",
     conceptRequired: "Escribe en qué se gastó",
