@@ -150,6 +150,7 @@ export {
   customerSchema,
   customerSearchQuerySchema,
   DAILY_CLOSE_STATUSES,
+  dailyCloseFormSchema,
   dailyCloseListSchema,
   dailyCloseRangeQuerySchema,
   dailyCloseSchema,
@@ -164,6 +165,7 @@ export {
 export type {
   Customer,
   DailyClose,
+  DailyCloseFormValues,
   DailyCloseSummary,
   PaymentMethod,
   SubmitDailyClose,

@@ -1,5 +1,7 @@
 import type { MembershipRole } from "@ta/validators";
 import {
+  Calculator,
+  ClipboardCheck,
   ClipboardList,
   Coins,
   House,
@@ -13,10 +15,21 @@ import {
 export type NavItem = {
   href: string;
   /** Key under the `nav` messages. */
-  labelKey: "home" | "shoppingList" | "purchases" | "receipt" | "prices" | "rates" | "products";
+  labelKey:
+    | "home"
+    | "dailyClose"
+    | "closes"
+    | "shoppingList"
+    | "purchases"
+    | "receipt"
+    | "prices"
+    | "rates"
+    | "products";
   icon: LucideIcon;
   /** Roles that see it; the API enforces the same rule on every request. */
   roles: readonly MembershipRole[];
+  /** Live counter shown next to the entry ("3 por recibir"…). */
+  counter?: "pendingCloses";
 };
 
 const EVERYONE = ["owner", "manager", "receiver"] as const;
@@ -24,6 +37,14 @@ const EVERYONE = ["owner", "manager", "receiver"] as const;
 /** Backoffice menu, in order. Add a screen here to give it a sidebar entry. */
 export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/", labelKey: "home", icon: House, roles: EVERYONE },
+  { href: "/close", labelKey: "dailyClose", icon: Calculator, roles: ["owner", "manager"] },
+  {
+    href: "/closes",
+    labelKey: "closes",
+    icon: ClipboardCheck,
+    roles: ["owner"],
+    counter: "pendingCloses",
+  },
   {
     href: "/shopping-list",
     labelKey: "shoppingList",

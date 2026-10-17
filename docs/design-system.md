@@ -108,6 +108,9 @@ Every signed-in screen is rendered inside `AppShell` (`features/navigation`):
 - **Content:** `main` is `max-w-6xl` centered, `px-4 py-6` (`md:px-8 md:py-8`). Pages do not add
   their own container: they start with the page title (`h1`) and blocks.
 - The menu shows only the sections the active role can open (the API enforces it anyway).
+- An entry can carry a live counter (`counter` in `nav-items.ts`, e.g. closes to review): a
+  warning-tone pill with the number when expanded, a dot on the icon when collapsed; the
+  accessible name says it in words ("Cierres, 2 por revisar").
 
 ### 3.2 Type and shape
 

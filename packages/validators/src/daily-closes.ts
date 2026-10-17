@@ -169,7 +169,7 @@ export const dailyCloseSchema = z.object({
 
 export type DailyClose = z.infer<typeof dailyCloseSchema>;
 
-/** One row of the owner's list: the day and its totals. */
+/** One row of the owner's list: the day, what came in per method (like the Excel), totals. */
 export const dailyCloseSummarySchema = dailyCloseSchema.pick({
   id: true,
   businessDate: true,
@@ -177,6 +177,7 @@ export const dailyCloseSummarySchema = dailyCloseSchema.pick({
   cardBatch: true,
   submittedBy: true,
   submittedAt: true,
+  payments: true,
   totals: true,
 });
 
@@ -184,3 +185,48 @@ export type DailyCloseSummary = z.infer<typeof dailyCloseSummarySchema>;
 export const dailyCloseListSchema = z.object({ data: z.array(dailyCloseSummarySchema) });
 
 export const pendingClosesSchema = z.object({ count: z.number().int().min(0) });
+
+// Web form ------------------------------------------------------------------------------------------
+
+/**
+ * "Cierre del día" form: text inputs; an empty payment amount is 0 (nothing collected that
+ * way). Credit sales always send the customer's name (the API reuses an existing customer with
+ * that name). Outputs the contents of a close (the day is chosen outside the form).
+ */
+export const dailyCloseFormSchema = z
+  .object({
+    cardBatch: z.string(),
+    cashDestination: z.enum(CASH_DESTINATIONS),
+    note: z.string(),
+    payments: z.array(z.object({ paymentMethodId: z.string(), amount: z.string() })),
+    credits: z.array(
+      z.object({ customerName: z.string(), amount: z.string(), currency: currencySchema }),
+    ),
+    expenses: z.array(
+      z.object({ concept: z.string(), amount: z.string(), currency: currencySchema }),
+    ),
+  })
+  .transform((value, ctx) => {
+    const parsed = updateDailyCloseSchema.safeParse({
+      cardBatch: value.cardBatch.trim() || undefined,
+      cashDestination: value.cashDestination,
+      note: value.note.trim() || undefined,
+      payments: value.payments.map((p) => ({
+        paymentMethodId: p.paymentMethodId,
+        amount: p.amount.trim() || "0",
+      })),
+      credits: value.credits.map((c) => ({
+        customerName: c.customerName,
+        amount: c.amount.trim(),
+        currency: c.currency,
+      })),
+      expenses: value.expenses.map((e) => ({ ...e, amount: e.amount.trim() })),
+    });
+    if (parsed.success) return parsed.data;
+    for (const issue of parsed.error.issues) {
+      ctx.addIssue({ code: "custom", path: issue.path, message: issue.message });
+    }
+    return z.NEVER;
+  });
+
+export type DailyCloseFormValues = z.input<typeof dailyCloseFormSchema>;

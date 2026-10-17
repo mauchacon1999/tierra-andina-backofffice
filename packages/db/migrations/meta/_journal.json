@@ -57,6 +57,13 @@
       "when": 1792236542451,
       "tag": "0007_daily_close_drop_rates",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792237343818,
+      "tag": "0008_payment_methods_excel_order",
+      "breakpoints": true
     }
   ]
 }

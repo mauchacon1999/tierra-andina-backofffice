@@ -17,6 +17,14 @@ export const queryKeys = {
   },
   suppliers: ["suppliers"] as const,
   receipts: ["receipts"] as const,
+  paymentMethods: ["payment-methods"] as const,
+  customers: (search: string) => ["customers", search] as const,
+  dailyCloses: {
+    all: ["daily-closes"] as const,
+    day: (date: string) => ["daily-closes", "day", date] as const,
+    range: (from: string, to: string) => ["daily-closes", "range", from, to] as const,
+    pending: ["daily-closes", "pending"] as const,
+  },
   shoppingList: ["shopping-list"] as const,
   priceLists: {
     current: ["price-lists", "current"] as const,
@@ -36,3 +44,4 @@ function startsWith(prefix: readonly string[]) {
 export const isProductsKey = startsWith(queryKeys.products.all);
 export const isExchangeRatesKey = startsWith(queryKeys.exchangeRates.all);
 export const isTripsKey = startsWith(queryKeys.trips.all);
+export const isDailyClosesKey = startsWith(queryKeys.dailyCloses.all);

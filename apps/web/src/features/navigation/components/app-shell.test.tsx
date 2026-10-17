@@ -19,6 +19,10 @@ vi.mock("@/features/auth/hooks/use-require-session", () => ({
     activeMembership: { storeId: "s1", storeName: "Tierra Andina", role: session.role },
   }),
 }));
+const pending = vi.hoisted(() => ({ count: 0 }));
+vi.mock("@/features/daily-closes/api/use-daily-closes", () => ({
+  usePendingCloses: (isEnabled: boolean) => (isEnabled ? pending.count : 0),
+}));
 vi.mock("@/features/auth/api/use-sign-out", () => ({
   useSignOut: () => ({ signOut: vi.fn(), isSigningOut: false }),
 }));
@@ -39,6 +43,7 @@ describe("AppShell", () => {
     session.role = "owner";
     session.pathname = "/purchases/t1";
     useUiStore.setState({ isSidebarCollapsed: false });
+    pending.count = 0;
   });
 
   it("shows the owner's menu with the current section marked, and the content", () => {
@@ -50,6 +55,8 @@ describe("AppShell", () => {
     expect(links).toEqual([
       "Tierra Andina",
       "Inicio",
+      "Cierre del día",
+      "Cierres",
       "Faltantes",
       "Compras",
       "Recepción",
@@ -82,7 +89,17 @@ describe("AppShell", () => {
     const links = sidebar()
       .getAllByRole("link")
       .map((a) => a.textContent);
-    expect(links).toEqual(["Tierra Andina", "Inicio", "Faltantes", "Precios"]);
+    expect(links).toEqual(["Tierra Andina", "Inicio", "Cierre del día", "Faltantes", "Precios"]);
+  });
+
+  it("the owner sees how many closes wait for review, also with the menu collapsed", () => {
+    pending.count = 2;
+    renderShell();
+
+    expect(sidebar().getByRole("link", { name: /Cierres/ }).textContent).toContain("2 por revisar");
+
+    fireEvent.click(sidebar().getByRole("button", { name: "Contraer menú" }));
+    expect(sidebar().getByRole("link", { name: "Cierres, 2 por revisar" })).toBeDefined();
   });
 
   it("collapses to icons with accessible names, and remembers it", () => {

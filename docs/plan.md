@@ -84,14 +84,14 @@ the list from the system.
 
 ### Phase 2 — Daily close
 
-- [ ] Manager form: amount per payment method, customer credit (customer + amount).
-      API done (amounts only, per currency; card batch "lote"; expenses of the day);
-      screens next.
-- [ ] Cash destination: kept or deposited.
-- [ ] Notification to the owner when a close is submitted (API: pending count; in-app
-      counter next, push later).
-- [ ] Owner view: closes per day with the totals per currency (no USD conversion in the close);
-      review, correct, approve. API done; screens next.
+- [x] Manager form ("Cierre del día"): amount per payment method in its own currency (no rate:
+      Bs and $ are never added), card terminal batch ("lote"), credit sales (customer + amount)
+      and the day's expenses.
+- [x] Cash destination: kept or deposited.
+- [x] Notification to the owner when a close is submitted: live counter in the menu ("Cierres");
+      push notifications come with the push task.
+- [x] Owner view ("Cierres"): one row per day like the Excel (a column per method, totals per
+      currency, batch, status); detail to correct and approve.
 - [~] ~~Import history from the current Excel~~ — not needed: data starts from zero in the
   system (owner, 2026-10-17).
 

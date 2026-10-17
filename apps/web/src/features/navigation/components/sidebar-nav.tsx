@@ -23,13 +23,14 @@ export function SidebarNav({ items, isCollapsed }: SidebarNavProps): React.JSX.E
         {items.map((item) => {
           const label = t(item.labelKey);
           const Icon = item.icon;
+          const counter = item.count > 0 ? t("pendingBadge", { count: item.count }) : null;
           return (
             <li key={item.href}>
               <Tooltip label={label} isDisabled={!isCollapsed}>
                 <Link
                   href={item.href}
                   aria-current={item.isActive ? "page" : undefined}
-                  aria-label={isCollapsed ? label : undefined}
+                  aria-label={isCollapsed ? [label, counter].filter(Boolean).join(", ") : undefined}
                   className={cn(
                     "flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
                     "focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none",
@@ -39,8 +40,22 @@ export function SidebarNav({ items, isCollapsed }: SidebarNavProps): React.JSX.E
                       : "text-muted hover:bg-surface-muted hover:text-foreground",
                   )}
                 >
-                  <Icon aria-hidden className="size-5 shrink-0" />
-                  {!isCollapsed && <span className="truncate">{label}</span>}
+                  <span className="relative">
+                    <Icon aria-hidden className="size-5 shrink-0" />
+                    {isCollapsed && counter && (
+                      <span
+                        aria-hidden
+                        className="absolute -top-1 -right-1 size-2.5 rounded-full bg-warning-border"
+                      />
+                    )}
+                  </span>
+                  {!isCollapsed && <span className="flex-1 truncate">{label}</span>}
+                  {!isCollapsed && counter && (
+                    <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning-text">
+                      <span aria-hidden>{item.count}</span>
+                      <span className="sr-only">{counter}</span>
+                    </span>
+                  )}
                 </Link>
               </Tooltip>
             </li>

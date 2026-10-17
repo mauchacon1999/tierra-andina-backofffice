@@ -51,9 +51,9 @@ describe("GET /api/v1/payment-methods", () => {
     const res = await call(s.app, "GET", "/payment-methods", s.owner);
     expect(paymentMethodListSchema.parse(res.body).data.map((m) => [m.code, m.currency])).toEqual([
       ["card_terminal", "VES"],
-      ["mobile_payment", "VES"],
       ["cash_bs", "VES"],
       ["cash_usd", "USD"],
+      ["mobile_payment", "VES"],
     ]);
     expect((await call(s.app, "GET", "/payment-methods", s.receiver)).status).toBe(403);
   });
@@ -182,6 +182,12 @@ describe("reading closes", () => {
     const list = dailyCloseListSchema.parse(res.body).data;
     expect(list.map((c) => c.businessDate)).toEqual([second, first]);
     expect(list[0]?.totals.collected).toEqual({ VES: "252413.0000", USD: "18000.0000" });
+    expect(list[0]?.payments.map((p) => [p.code, p.amount])).toEqual([
+      ["card_terminal", "163344.0000"],
+      ["cash_bs", "5500.0000"],
+      ["cash_usd", "18000.0000"],
+      ["mobile_payment", "83569.0000"],
+    ]);
   });
 });
 

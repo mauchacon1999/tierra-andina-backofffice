@@ -118,9 +118,9 @@ describe("seed", () => {
 
     expect(methods).toEqual([
       { code: "card_terminal", currency: "VES" },
-      { code: "mobile_payment", currency: "VES" },
       { code: "cash_bs", currency: "VES" },
       { code: "cash_usd", currency: "USD" },
+      { code: "mobile_payment", currency: "VES" },
     ]);
     expect(productCodes.map((r) => r.code)).toEqual([
       "fruit",

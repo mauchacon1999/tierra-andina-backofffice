@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import { submitDailyCloseSchema, updateDailyCloseSchema } from "./daily-closes";
+import {
+  dailyCloseFormSchema,
+  submitDailyCloseSchema,
+  updateDailyCloseSchema,
+} from "./daily-closes";
 import { formatValidationMessage as text } from "./messages";
 
 const CARD = "01a14314-2825-7000-a1d1-bdf734d05981";
@@ -92,5 +96,43 @@ describe("updateDailyCloseSchema", () => {
   test("same contents without the date (the day of a close does not change)", () => {
     const { businessDate: _date, ...body } = TUESDAY;
     expect(updateDailyCloseSchema.parse(body)).toMatchObject({ cardBatch: "16" });
+  });
+});
+
+describe("dailyCloseFormSchema (web)", () => {
+  const FORM = {
+    cardBatch: " 16 ",
+    cashDestination: "kept" as const,
+    note: "",
+    payments: [
+      { paymentMethodId: CARD, amount: "163344" },
+      { paymentMethodId: USD, amount: "" },
+    ],
+    credits: [],
+    expenses: [],
+  };
+
+  test("an empty payment is 0; empty batch and note are left out", () => {
+    expect(dailyCloseFormSchema.parse({ ...FORM, cardBatch: " " })).toEqual({
+      cashDestination: "kept",
+      payments: [
+        { paymentMethodId: CARD, amount: "163344" },
+        { paymentMethodId: USD, amount: "0" },
+      ],
+      credits: [],
+      expenses: [],
+    });
+  });
+
+  test("errors land on the row and field that has them", () => {
+    const parsed = dailyCloseFormSchema.safeParse({
+      ...FORM,
+      payments: [{ paymentMethodId: CARD, amount: "163.344,00" }],
+      credits: [{ customerName: "", amount: "", currency: "VES" }],
+    });
+    expect(errors(parsed)).toMatchObject({
+      "payments.0.amount": "El monto debe ser un número con punto decimal (p. ej. 15.50)",
+      "credits.0.customerName": "El nombre debe tener al menos 2 caracteres",
+    });
   });
 });

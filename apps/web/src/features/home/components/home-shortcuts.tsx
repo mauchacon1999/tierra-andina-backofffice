@@ -9,9 +9,19 @@ import { useRequireSession } from "@/features/auth/hooks/use-require-session";
 
 const SHORTCUTS: readonly {
   href: string;
-  key: "shoppingList" | "purchases" | "receipt" | "prices" | "rates" | "products";
+  key:
+    | "dailyClose"
+    | "closes"
+    | "shoppingList"
+    | "purchases"
+    | "receipt"
+    | "prices"
+    | "rates"
+    | "products";
   roles: readonly MembershipRole[];
 }[] = [
+  { href: "/close", key: "dailyClose", roles: ["owner", "manager"] },
+  { href: "/closes", key: "closes", roles: ["owner"] },
   { href: "/shopping-list", key: "shoppingList", roles: ["owner", "manager"] },
   { href: "/purchases", key: "purchases", roles: ["owner"] },
   { href: "/receipt", key: "receipt", roles: ["owner", "receiver"] },

@@ -19,10 +19,11 @@ export const SEED_SETTINGS: Record<string, unknown> = {
 };
 
 export const SEED_PAYMENT_METHODS = [
+  // Same order as the columns of the shop's Excel close: Punto, Efectivo, Dólares, Pago móvil.
   { code: "card_terminal", name: "Punto de venta", currency: "VES", sortOrder: 1 },
-  { code: "mobile_payment", name: "Pago móvil", currency: "VES", sortOrder: 2 },
-  { code: "cash_bs", name: "Efectivo Bs", currency: "VES", sortOrder: 3 },
-  { code: "cash_usd", name: "Efectivo USD", currency: "USD", sortOrder: 4 },
+  { code: "cash_bs", name: "Efectivo Bs", currency: "VES", sortOrder: 2 },
+  { code: "cash_usd", name: "Efectivo USD", currency: "USD", sortOrder: 3 },
+  { code: "mobile_payment", name: "Pago móvil", currency: "VES", sortOrder: 4 },
 ] as const;
 
 export const SEED_PRODUCT_CATEGORIES = [

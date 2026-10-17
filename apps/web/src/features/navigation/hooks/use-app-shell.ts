@@ -4,10 +4,11 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { useRequireSession } from "@/features/auth/hooks/use-require-session";
+import { usePendingCloses } from "@/features/daily-closes/api/use-daily-closes";
 import { isNavItemActive, NAV_ITEMS, type NavItem } from "@/features/navigation/helpers/nav-items";
 import { useUiStore } from "@/stores/use-ui-store";
 
-export type ShellNavItem = NavItem & { isActive: boolean };
+export type ShellNavItem = NavItem & { isActive: boolean; count: number };
 
 export type UseAppShellResult = {
   items: ShellNavItem[];
@@ -31,9 +32,16 @@ export function useAppShell(): UseAppShellResult {
   const [drawerPath, setDrawerPath] = useState<string | null>(null);
 
   const role = activeMembership?.role;
+  // Only the owner reviews closes: other roles never ask for the counter.
+  const pendingCloses = usePendingCloses(role === "owner");
+  const counters = { pendingCloses } as const;
   return {
     items: NAV_ITEMS.filter((item) => role !== undefined && item.roles.includes(role)).map(
-      (item) => ({ ...item, isActive: isNavItemActive(item.href, pathname) }),
+      (item) => ({
+        ...item,
+        isActive: isNavItemActive(item.href, pathname),
+        count: item.counter ? counters[item.counter] : 0,
+      }),
     ),
     isCollapsed,
     toggleCollapsed,

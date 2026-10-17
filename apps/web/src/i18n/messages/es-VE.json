@@ -46,7 +46,10 @@
     "closeMenu": "Cerrar menú",
     "collapse": "Contraer menú",
     "expand": "Expandir menú",
-    "receipt": "Recepción"
+    "receipt": "Recepción",
+    "dailyClose": "Cierre del día",
+    "closes": "Cierres",
+    "pendingBadge": "{count} por revisar"
   },
   "apiErrors": {
     "NETWORK_ERROR": "No se pudo conectar con la API",
@@ -118,6 +121,14 @@
     "receipt": {
       "title": "Recepción",
       "description": "Marca lo que llega a la camioneta"
+    },
+    "dailyClose": {
+      "title": "Cierre del día",
+      "description": "Lo cobrado hoy por forma de pago"
+    },
+    "closes": {
+      "title": "Cierres",
+      "description": "Revisa y aprueba los cierres de cada día"
     }
   },
   "units": {
@@ -456,5 +467,87 @@
       "priceUsd": "Dólares",
       "priceBs": "Bolívares"
     }
+  },
+  "dailyClose": {
+    "pageTitle": "Cierre del día",
+    "title": "Cierre del día",
+    "subtitle": "Lo cobrado en el día por forma de pago. Cada monto en su moneda.",
+    "date": "Fecha",
+    "payments": "Cobros",
+    "cardBatch": "Lote del punto",
+    "cardBatchHint": "Número del cierre del punto de venta.",
+    "credits": "Fiados",
+    "addCredit": "+ Agregar fiado",
+    "noCredits": "Sin fiados.",
+    "customer": "Cliente",
+    "customerHint": "Si no está en la lista, se crea.",
+    "amount": "Monto",
+    "currency": "Moneda",
+    "currencies": {
+      "VES": "Bs",
+      "USD": "$"
+    },
+    "remove": "Quitar",
+    "removeRow": "Quitar {what}",
+    "expenses": "Gastos",
+    "addExpense": "+ Agregar gasto",
+    "noExpenses": "Sin gastos.",
+    "concept": "Concepto",
+    "conceptPlaceholder": "Bolsas, pan, transporte…",
+    "cashDestination": "Efectivo del día",
+    "destinations": {
+      "kept": "Guardado",
+      "deposited": "Depositado"
+    },
+    "note": "Nota",
+    "totals": "Totales del día",
+    "collected": "Cobrado",
+    "creditSold": "Fiado",
+    "expensesTotal": "Gastos",
+    "amountBs": "{amount} Bs",
+    "amountUsd": "{amount} $",
+    "submit": "Enviar cierre",
+    "submitting": "Enviando…",
+    "submitFailed": "No se pudo enviar el cierre. Intenta de nuevo",
+    "saveFix": "Guardar corrección",
+    "saveFixFailed": "No se pudo guardar la corrección",
+    "alreadySent": "El cierre de este día ya fue enviado.",
+    "onlyOwnerFixes": "Si hay que corregirlo, lo hace el dueño.",
+    "sent": "Cierre enviado. El dueño lo revisa.",
+    "loadFailed": "No se pudo cargar el cierre",
+    "status": {
+      "submitted": "Por revisar",
+      "approved": "Aprobado"
+    },
+    "sentBy": "Enviado por {name}",
+    "approvedBy": "Aprobado por {name}",
+    "batchValue": "Lote {batch}"
+  },
+  "closes": {
+    "pageTitle": "Cierres",
+    "title": "Cierres",
+    "subtitle": "El cierre de cada día: revisa, corrige y aprueba.",
+    "label": "Cierres",
+    "range": "Últimos {days} días",
+    "empty": "Aún no hay cierres en estos días.",
+    "loadFailed": "No se pudieron cargar los cierres",
+    "columns": {
+      "date": "Fecha",
+      "totalBs": "Total Bs",
+      "totalUsd": "Total $",
+      "batch": "Lote",
+      "status": "Estado"
+    },
+    "view": "Ver",
+    "detailTitle": "Cierre del {date}",
+    "back": "Cierres",
+    "approve": "Aprobar",
+    "approveQuestion": "¿Aprobar el cierre del {date}?",
+    "approving": "Aprobando…",
+    "approveFailed": "No se pudo aprobar el cierre",
+    "fix": "Corregir",
+    "cancelFix": "Cancelar corrección",
+    "fixed": "Corrección guardada.",
+    "notFound": "No hay cierre para ese día."
   }
 }

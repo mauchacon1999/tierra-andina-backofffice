@@ -55,6 +55,7 @@ export function toDailyCloseSummaryDto(close: CloseWithParts): DailyCloseSummary
     cardBatch: dto.cardBatch,
     submittedBy: dto.submittedBy,
     submittedAt: dto.submittedAt,
+    payments: dto.payments,
     totals: dto.totals,
   };
 }

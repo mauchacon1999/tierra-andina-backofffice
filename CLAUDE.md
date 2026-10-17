@@ -5,7 +5,7 @@ It replaces the notebook, WhatsApp and Excel workflow: purchases at the wholesal
 cost and price calculation, daily cash closings, expenses, debts and weekly reports.
 Business context and phases live in `docs/plan.md`. Read it before starting a new feature.
 
-> **Current state (2026-10-16):** monorepo, full database schema in `@ta/db` (32 tables,
+> **Current state (2026-10-17):** monorepo, full database schema in `@ta/db` (32 tables,
 > migrations, idempotent seed, integration tests), Hono API with `/health`, Better Auth
 > (`/api/auth/*`), `requireRole`, audit helper and `GET /api/v1/me`; Next.js status page.
 > Web: login (`/login`), session-protected home with the system status.
@@ -20,7 +20,11 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > (`/api/v1/receipts`, `PATCH …/lines/:lineId/receipt`), live pending count on the trip.
 > **Shopping list**: `/shopping-list` — what to buy before Coche; a purchase line checks it off.
 > **Price list**: closing a trip publishes `/prices` (`GET /api/v1/price-lists/current`).
-> Next (docs/plan.md phase 1): push notifications, share the price list, rate-change alert, offline.
+> **Daily close** (phase 2): `/close` (manager/owner: amounts only, each in its currency; lote,
+> credit sales, expenses) and `/closes` (owner: list like the Excel, correct, approve; pending
+> counter in the menu) — `/api/v1/daily-closes`, `/payment-methods`, `/customers`.
+> Next (docs/plan.md): phase 1 leftovers (push, share the price list, rate-change alert,
+> offline) and phase 3 (debts, expenses, payroll).
 > Business rules and DB design: `docs/domain-model.md`; working with the DB: `docs/database.md`;
 > per-module specs: `docs/modules/`.
 
