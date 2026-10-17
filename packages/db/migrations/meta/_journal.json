@@ -43,6 +43,20 @@
       "when": 1792207054012,
       "tag": "0005_received_costs",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792236533958,
+      "tag": "0006_daily_close_amounts_only",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792236542451,
+      "tag": "0007_daily_close_drop_rates",
+      "breakpoints": true
     }
   ]
 }

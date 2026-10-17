@@ -102,8 +102,6 @@ export async function createBase(tx: Tx) {
         storeId: store.id,
         businessDate: "2026-10-12",
         submittedBy: user.id,
-        rate: "210",
-        totalUsd: "100",
         cashDestination: "kept",
       })
       .returning(),
@@ -269,8 +267,7 @@ export const valid = {
       storeId: b.store.id,
       businessDate: "2026-10-13",
       submittedBy: b.user.id,
-      rate: "210",
-      totalUsd: "100",
+      cardBatch: "16",
       cashDestination: "deposited",
       ...o,
     }) satisfies Insert<typeof dailyCloses>,
@@ -278,8 +275,7 @@ export const valid = {
     ({
       dailyCloseId: b.dailyClose.id,
       paymentMethodId: b.paymentMethod.id,
-      amount: "2100",
-      amountUsd: "10",
+      amount: "163344",
       ...o,
     }) satisfies Insert<typeof dailyClosePayments>,
   creditEntry: (b: Base, o: Partial<Insert<typeof customerCreditEntries>> = {}) =>
@@ -287,9 +283,8 @@ export const valid = {
       customerId: b.customer.id,
       kind: "credit",
       businessDate: "2026-10-12",
-      amountBs: "210",
-      amountUsd: "1",
-      rate: "210",
+      amount: "210",
+      currency: "VES",
       ...o,
     }) satisfies Insert<typeof customerCreditEntries>,
   payable: (b: Base, o: Partial<Insert<typeof payables>> = {}) =>
@@ -322,10 +317,10 @@ export const valid = {
     ({
       storeId: b.store.id,
       categoryId: b.expenseCategory.id,
+      concept: "Bolsas",
       businessDate: "2026-10-12",
-      amountUsd: "1",
-      amountBs: "200",
-      rate: "200",
+      amount: "379",
+      currency: "USD",
       ...o,
     }) satisfies Insert<typeof expenses>,
   employee: (b: Base, o: Partial<Insert<typeof employees>> = {}) =>

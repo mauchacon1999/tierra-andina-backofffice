@@ -1,7 +1,13 @@
 import { relations, sql } from "drizzle-orm";
 import { boolean, check, date, index, pgTable, text, unique, uuid } from "drizzle-orm/pg-core";
 
-import { creditEntryKind, expenseKind, payableStatus, recurrenceFrequency } from "./_enums";
+import {
+  creditEntryKind,
+  currency,
+  expenseKind,
+  payableStatus,
+  recurrenceFrequency,
+} from "./_enums";
 import { auditColumns, id, money, rate, timestamps } from "./_shared";
 import { suppliers } from "./catalog";
 import { dailyCloses, paymentMethods } from "./daily-close";
@@ -26,7 +32,10 @@ export const customers = pgTable(
   (t) => [index("customers_store_id_idx").on(t.storeId)],
 );
 
-/** Sold on credit (`credit`) or paid back (`payment`). Balance = Σ credits − Σ payments. */
+/**
+ * Sold on credit (`credit`) or paid back (`payment`), in the currency it happened in (no rate,
+ * like the daily close). Balance per currency = Σ credits − Σ payments.
+ */
 export const customerCreditEntries = pgTable(
   "customer_credit_entries",
   {
@@ -36,9 +45,8 @@ export const customerCreditEntries = pgTable(
       .references(() => customers.id),
     kind: creditEntryKind("kind").notNull(),
     businessDate: date("business_date", { mode: "string" }).notNull(),
-    amountBs: money("amount_bs").notNull(),
-    amountUsd: money("amount_usd").notNull(),
-    rate: rate("rate").notNull(),
+    amount: money("amount").notNull(),
+    currency: currency("currency").notNull(),
     dailyCloseId: uuid("daily_close_id").references(() => dailyCloses.id),
     ...timestamps,
     ...auditColumns,
@@ -47,8 +55,7 @@ export const customerCreditEntries = pgTable(
     index("customer_credit_entries_customer_id_idx").on(t.customerId),
     index("customer_credit_entries_business_date_idx").on(t.businessDate),
     index("customer_credit_entries_daily_close_id_idx").on(t.dailyCloseId),
-    check("customer_credit_entries_amounts_check", sql`${t.amountBs} >= 0 AND ${t.amountUsd} >= 0`),
-    check("customer_credit_entries_rate_check", sql`${t.rate} > 0`),
+    check("customer_credit_entries_amount_check", sql`${t.amount} > 0`),
   ],
 );
 
@@ -160,13 +167,15 @@ export const expenses = pgTable(
     storeId: uuid("store_id")
       .notNull()
       .references(() => stores.id),
-    categoryId: uuid("category_id")
-      .notNull()
-      .references(() => expenseCategories.id),
+    /** Optional: expenses written in a daily close only have a concept. */
+    categoryId: uuid("category_id").references(() => expenseCategories.id),
+    concept: text("concept").notNull(),
     businessDate: date("business_date", { mode: "string" }).notNull(),
-    amountUsd: money("amount_usd").notNull(),
-    amountBs: money("amount_bs").notNull(),
-    rate: rate("rate").notNull(),
+    /** In the currency it was paid in (no rate, like the daily close). */
+    amount: money("amount").notNull(),
+    currency: currency("currency").notNull(),
+    /** Set when the manager wrote it in that day's close. */
+    dailyCloseId: uuid("daily_close_id").references(() => dailyCloses.id),
     recurringExpenseId: uuid("recurring_expense_id").references(() => recurringExpenses.id),
     note: text("note"),
     ...timestamps,
@@ -176,9 +185,10 @@ export const expenses = pgTable(
     index("expenses_store_id_idx").on(t.storeId),
     index("expenses_category_id_idx").on(t.categoryId),
     index("expenses_business_date_idx").on(t.businessDate),
+    index("expenses_daily_close_id_idx").on(t.dailyCloseId),
     index("expenses_recurring_expense_id_idx").on(t.recurringExpenseId),
-    check("expenses_amounts_check", sql`${t.amountUsd} >= 0 AND ${t.amountBs} >= 0`),
-    check("expenses_rate_check", sql`${t.rate} > 0`),
+    check("expenses_amount_check", sql`${t.amount} > 0`),
+    check("expenses_concept_check", sql`length(trim(${t.concept})) > 0`),
   ],
 );
 

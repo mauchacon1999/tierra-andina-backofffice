@@ -76,6 +76,11 @@ export const VALIDATION_MESSAGES_ES_VE = {
     productRequired: "Elige un producto",
     shrinkageBelowGross: "La merma debe ser menor que la cantidad bruta",
   },
+  dailyClose: {
+    customerRequired: "Elige un cliente o escribe su nombre",
+    conceptRequired: "Escribe en qué se gastó",
+    duplicatePayment: "Cada forma de pago va una sola vez",
+  },
   receipt: {
     receivedPacksRange: "Debe ser más de 0 y menos de lo comprado",
     receivedQuantityRange: "Debe ser más de 0 y no más de lo comprado",

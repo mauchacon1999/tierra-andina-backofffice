@@ -198,7 +198,9 @@ If a new domain term appears, add it here before using it.
   **Never** `float`, `real` or `double precision`.
 - In TypeScript they travel as `string` and every calculation uses `decimal.js`.
   Never use `Number()`, `parseFloat()` or `+` on these values.
-- Every stored amount keeps its USD value, its Bs value and the rate used.
+- Every stored amount keeps its USD value, its Bs value and the rate used — **except the daily
+  close** (and the credit sales and expenses written in it): amounts only, each in its own
+  currency, no rate (owner decision; domain-model §5). Never add Bs and USD together.
 - All calculation rules live in `@ta/core` (§8). The API and the web never reimplement them.
 - Input amounts are validated with `@ta/validators` (`amountSchema`: string, `.` as decimal
   separator, ≥ 0, max 4 decimals, max 10 integer digits so it fits `numeric(14,4)`).

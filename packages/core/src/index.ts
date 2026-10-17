@@ -30,4 +30,12 @@ export type {
 export { amountInBs, sumDecimals } from "./rates";
 export { BUSINESS_TIME_ZONE, isBusinessDate, toBusinessDate } from "./business-date";
 export { InvalidReceiptError, pricePartialReceipt } from "./receipt";
+export { CURRENCIES, dailyCloseTotals, totalsByCurrency } from "./daily-close";
+export type {
+  CurrencyAmount,
+  CurrencyTotals,
+  Currency,
+  DailyCloseTotals,
+  DailyCloseTotalsInput,
+} from "./daily-close";
 export type { PartialReceiptInput, PartialReceiptPricing } from "./receipt";

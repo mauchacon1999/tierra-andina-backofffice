@@ -158,13 +158,22 @@ where a **receiver** checks what arrives.
 
 ## 5. Daily close
 
-- The manager submits one close per business day from the phone.
+- The manager submits one close per business day from the phone (the owner can too).
+- **Amounts only, each in its own currency — no rate and no conversion** (owner, 2026-10-17).
+  Bolívares and dollars are never added together: totals are per currency
+  (`dailyCloseTotals` in @ta/core). A USD view of the week (phase 4) converts at report time
+  with the day's rates from "Tasas del día", without touching the closes.
 - Payment methods are records, not columns, so new methods can be added without migrations.
-  Initial methods: card terminal (Bs), mobile payment (Bs), cash Bs, cash USD.
-- Customer credit sold that day is recorded with the customer's name and amount.
-- `total_usd` = sum of every payment converted at the close's rate + credit sold.
+  Initial methods: card terminal (Bs), mobile payment (Bs), cash Bs, cash USD — the columns
+  "Punto de venta", "Pago móvil", "Efectivo" and "Dólares" of the shop's Excel.
+- **Lote**: the card terminal's batch number of that day is recorded (to match the bank).
+- **Credit sold** that day: customer (an existing one, or a new name created with the close —
+  the same name in another case is the same customer) + amount + currency.
+- **Expenses paid** that day: concept + amount + currency (the Excel's "Gastos"); they are
+  stored in `expenses` linked to the close.
 - Cash destination: `kept` or `deposited`.
-- Once submitted, only the owner can edit a close.
+- Once submitted, only the owner can change a close; the owner reviews and approves it. A
+  counter of closes waiting for review shows in the app (push notifications come later).
 
 ---
 
@@ -293,26 +302,26 @@ have no store, sale rows always have one.
 
 ### 9.6 Daily close
 
-| Table                  | Key columns                                                                                                                                                                             |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `payment_methods`      | code (unique), name, currency (`USD`/`VES`), sort_order, is_active                                                                                                                      |
-| `daily_closes`         | store_id, business_date, submitted_by, rate, total_usd, credit_sold_bs, cash_destination (`kept`/`deposited`), status (`submitted`/`approved`), note · unique (store_id, business_date) |
-| `daily_close_payments` | daily_close_id, payment_method_id, amount (in the method's currency), amount_usd · unique (daily_close_id, payment_method_id)                                                           |
+| Table                  | Key columns                                                                                                                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `payment_methods`      | code (unique), name, currency (`USD`/`VES`), sort_order, is_active                                                                                                                                     |
+| `daily_closes`         | store_id, business_date, submitted_by, card_batch, cash_destination (`kept`/`deposited`), status (`submitted`/`approved`), approved_by, approved_at, note · unique (store_id, business_date) · no rate |
+| `daily_close_payments` | daily_close_id, payment_method_id, amount (in the method's currency) · unique (daily_close_id, payment_method_id)                                                                                      |
 
 ### 9.7 Receivables, payables, expenses, payroll
 
-| Table                     | Key columns                                                                                                                           |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `customers`               | store_id, name, phone, is_active                                                                                                      |
-| `customer_credit_entries` | customer_id, kind (`credit`/`payment`), business_date, amount_bs, amount_usd, rate, daily_close_id (nullable)                         |
-| `payables`                | store_id, supplier_id (nullable), concept, amount_usd, issued_on, due_on, purchase_line_id (nullable, unique), status (`open`/`paid`) |
-| `payable_payments`        | payable_id, paid_on, amount_usd, amount_bs, rate, payment_method_id                                                                   |
-| `expense_categories`      | code (unique), name, kind (`fixed`/`variable`), is_active                                                                             |
-| `recurring_expenses`      | store_id, category_id, amount_usd, frequency (`weekly`/`monthly`), is_active                                                          |
-| `expenses`                | store_id, category_id, business_date, amount_usd, amount_bs, rate, recurring_expense_id (nullable), note                              |
-| `employees`               | store_id, name, job_title, weekly_salary_usd, user_id (nullable), is_active                                                           |
-| `payroll_payments`        | employee_id, week_start, salary_usd, advances_usd, paid_usd, paid_on, note · unique (employee_id, week_start)                         |
-| `salary_advances`         | employee_id, paid_on, amount_usd, amount_bs, rate, payroll_payment_id (nullable)                                                      |
+| Table                     | Key columns                                                                                                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `customers`               | store_id, name, phone, is_active                                                                                                             |
+| `customer_credit_entries` | customer_id, kind (`credit`/`payment`), business_date, amount, currency, daily_close_id (nullable)                                           |
+| `payables`                | store_id, supplier_id (nullable), concept, amount_usd, issued_on, due_on, purchase_line_id (nullable, unique), status (`open`/`paid`)        |
+| `payable_payments`        | payable_id, paid_on, amount_usd, amount_bs, rate, payment_method_id                                                                          |
+| `expense_categories`      | code (unique), name, kind (`fixed`/`variable`), is_active                                                                                    |
+| `recurring_expenses`      | store_id, category_id, amount_usd, frequency (`weekly`/`monthly`), is_active                                                                 |
+| `expenses`                | store_id, category_id (nullable), concept, business_date, amount, currency, daily_close_id (nullable), recurring_expense_id (nullable), note |
+| `employees`               | store_id, name, job_title, weekly_salary_usd, user_id (nullable), is_active                                                                  |
+| `payroll_payments`        | employee_id, week_start, salary_usd, advances_usd, paid_usd, paid_on, note · unique (employee_id, week_start)                                |
+| `salary_advances`         | employee_id, paid_on, amount_usd, amount_bs, rate, payroll_payment_id (nullable)                                                             |
 
 Obligations and templates denominated in USD (`payables`, `recurring_expenses`,
 `supplier_claims`, `payroll_payments`, `employees.weekly_salary_usd`) store USD only; the Bs

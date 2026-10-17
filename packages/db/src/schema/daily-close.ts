@@ -7,12 +7,13 @@ import {
   integer,
   pgTable,
   text,
+  timestamp,
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
 
 import { cashDestination, currency, dailyCloseStatus } from "./_enums";
-import { auditColumns, id, money, rate, timestamps } from "./_shared";
+import { auditColumns, id, money, timestamps } from "./_shared";
 import { users } from "./auth";
 import { stores } from "./organization";
 
@@ -36,8 +37,9 @@ export const paymentMethods = pgTable(
 );
 
 /**
- * One close per store and business day, submitted by the manager.
- * total_usd = Σ payments converted at `rate` + credit sold (computed in @ta/core).
+ * One close per store and business day, submitted by the manager. Amounts only, each in its own
+ * currency (owner decision 2026-10-17): no rate and no conversion; totals per currency are
+ * computed from the payments (@ta/core daily-close). The owner reviews and approves it.
  */
 export const dailyCloses = pgTable(
   "daily_closes",
@@ -50,11 +52,12 @@ export const dailyCloses = pgTable(
     submittedBy: uuid("submitted_by")
       .notNull()
       .references(() => users.id),
-    rate: rate("rate").notNull(),
-    totalUsd: money("total_usd").notNull(),
-    creditSoldBs: money("credit_sold_bs").notNull().default("0"),
+    /** Batch ("lote") number of the card terminal's close that day, to match the bank. */
+    cardBatch: text("card_batch"),
     cashDestination: cashDestination("cash_destination").notNull(),
     status: dailyCloseStatus("status").notNull().default("submitted"),
+    approvedBy: uuid("approved_by").references(() => users.id),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
     note: text("note"),
     ...timestamps,
     ...auditColumns,
@@ -64,8 +67,11 @@ export const dailyCloses = pgTable(
     unique("daily_closes_store_id_business_date_key").on(t.storeId, t.businessDate),
     index("daily_closes_business_date_idx").on(t.businessDate),
     index("daily_closes_submitted_by_idx").on(t.submittedBy),
-    check("daily_closes_rate_check", sql`${t.rate} > 0`),
-    check("daily_closes_amounts_check", sql`${t.totalUsd} >= 0 AND ${t.creditSoldBs} >= 0`),
+    index("daily_closes_approved_by_idx").on(t.approvedBy),
+    check(
+      "daily_closes_approval_check",
+      sql`(${t.status} = 'approved') = (${t.approvedBy} IS NOT NULL AND ${t.approvedAt} IS NOT NULL)`,
+    ),
   ],
 );
 
@@ -81,7 +87,6 @@ export const dailyClosePayments = pgTable(
       .notNull()
       .references(() => paymentMethods.id),
     amount: money("amount").notNull(),
-    amountUsd: money("amount_usd").notNull(),
     ...timestamps,
     ...auditColumns,
   },
@@ -92,7 +97,7 @@ export const dailyClosePayments = pgTable(
       t.paymentMethodId,
     ),
     index("daily_close_payments_payment_method_id_idx").on(t.paymentMethodId),
-    check("daily_close_payments_amounts_check", sql`${t.amount} >= 0 AND ${t.amountUsd} >= 0`),
+    check("daily_close_payments_amount_check", sql`${t.amount} >= 0`),
   ],
 );
 

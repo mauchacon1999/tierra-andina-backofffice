@@ -327,46 +327,42 @@ const CASES: CheckCase[] = [
   },
   // daily close
   {
-    constraint: "daily_closes_rate_check",
-    valid: (tx, b) => tx.insert(dailyCloses).values(valid.dailyClose(b)),
-    invalid: { zero: (tx, b) => tx.insert(dailyCloses).values(valid.dailyClose(b, { rate: "0" })) },
-  },
-  {
-    constraint: "daily_closes_amounts_check",
-    valid: (tx, b) => tx.insert(dailyCloses).values(valid.dailyClose(b, { totalUsd: "0" })),
+    constraint: "daily_closes_approval_check",
+    valid: (tx, b) =>
+      tx.insert(dailyCloses).values(
+        valid.dailyClose(b, {
+          status: "approved",
+          approvedBy: b.user.id,
+          approvedAt: new Date(),
+        }),
+      ),
     invalid: {
-      "total_usd < 0": (tx, b) =>
-        tx.insert(dailyCloses).values(valid.dailyClose(b, { totalUsd: "-1" })),
-      "credit_sold_bs < 0": (tx, b) =>
-        tx.insert(dailyCloses).values(valid.dailyClose(b, { creditSoldBs: "-1" })),
+      "approved without who/when": (tx, b) =>
+        tx.insert(dailyCloses).values(valid.dailyClose(b, { status: "approved" })),
+      "submitted with an approval": (tx, b) =>
+        tx
+          .insert(dailyCloses)
+          .values(valid.dailyClose(b, { approvedBy: b.user.id, approvedAt: new Date() })),
     },
   },
   {
-    constraint: "daily_close_payments_amounts_check",
-    valid: (tx, b) => tx.insert(dailyClosePayments).values(valid.dailyClosePayment(b)),
+    constraint: "daily_close_payments_amount_check",
+    valid: (tx, b) =>
+      tx.insert(dailyClosePayments).values(valid.dailyClosePayment(b, { amount: "0" })),
     invalid: {
       "amount < 0": (tx, b) =>
         tx.insert(dailyClosePayments).values(valid.dailyClosePayment(b, { amount: "-1" })),
-      "amount_usd < 0": (tx, b) =>
-        tx.insert(dailyClosePayments).values(valid.dailyClosePayment(b, { amountUsd: "-1" })),
     },
   },
   // receivables
   {
-    constraint: "customer_credit_entries_amounts_check",
+    constraint: "customer_credit_entries_amount_check",
     valid: (tx, b) => tx.insert(customerCreditEntries).values(valid.creditEntry(b)),
     invalid: {
-      "amount_bs < 0": (tx, b) =>
-        tx.insert(customerCreditEntries).values(valid.creditEntry(b, { amountBs: "-1" })),
-      "amount_usd < 0": (tx, b) =>
-        tx.insert(customerCreditEntries).values(valid.creditEntry(b, { amountUsd: "-1" })),
-    },
-  },
-  {
-    constraint: "customer_credit_entries_rate_check",
-    valid: (tx, b) => tx.insert(customerCreditEntries).values(valid.creditEntry(b)),
-    invalid: {
-      zero: (tx, b) => tx.insert(customerCreditEntries).values(valid.creditEntry(b, { rate: "0" })),
+      zero: (tx, b) =>
+        tx.insert(customerCreditEntries).values(valid.creditEntry(b, { amount: "0" })),
+      negative: (tx, b) =>
+        tx.insert(customerCreditEntries).values(valid.creditEntry(b, { amount: "-1" })),
     },
   },
   // payables
@@ -412,18 +408,19 @@ const CASES: CheckCase[] = [
     },
   },
   {
-    constraint: "expenses_amounts_check",
-    valid: (tx, b) => tx.insert(expenses).values(valid.expense(b)),
+    constraint: "expenses_amount_check",
+    valid: (tx, b) => tx.insert(expenses).values(valid.expense(b, { categoryId: null })),
     invalid: {
-      "amount_usd < 0": (tx, b) =>
-        tx.insert(expenses).values(valid.expense(b, { amountUsd: "-1" })),
-      "amount_bs < 0": (tx, b) => tx.insert(expenses).values(valid.expense(b, { amountBs: "-1" })),
+      zero: (tx, b) => tx.insert(expenses).values(valid.expense(b, { amount: "0" })),
+      negative: (tx, b) => tx.insert(expenses).values(valid.expense(b, { amount: "-1" })),
     },
   },
   {
-    constraint: "expenses_rate_check",
+    constraint: "expenses_concept_check",
     valid: (tx, b) => tx.insert(expenses).values(valid.expense(b)),
-    invalid: { zero: (tx, b) => tx.insert(expenses).values(valid.expense(b, { rate: "0" })) },
+    invalid: {
+      blank: (tx, b) => tx.insert(expenses).values(valid.expense(b, { concept: "  " })),
+    },
   },
   // payroll
   {

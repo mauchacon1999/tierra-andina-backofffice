@@ -85,9 +85,13 @@ the list from the system.
 ### Phase 2 — Daily close
 
 - [ ] Manager form: amount per payment method, customer credit (customer + amount).
+      API done (amounts only, per currency; card batch "lote"; expenses of the day);
+      screens next.
 - [ ] Cash destination: kept or deposited.
-- [ ] Notification to the owner when a close is submitted.
-- [ ] Owner view: closes per day with USD total.
+- [ ] Notification to the owner when a close is submitted (API: pending count; in-app
+      counter next, push later).
+- [ ] Owner view: closes per day with the totals per currency (no USD conversion in the close);
+      review, correct, approve. API done; screens next.
 - [ ] Import history from the current Excel.
 
 Done when: closes no longer arrive by WhatsApp and are no longer typed into Excel.

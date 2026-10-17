@@ -196,3 +196,49 @@ Origin: http://localhost:3000
 
 ### Sale prices in force (owner or manager) — 200, or 404 PRICE_LIST_NOT_FOUND
 GET {{baseUrl}}/api/v1/price-lists/current
+
+### Daily close ----------------------------------------------------------------------------------
+### Amounts only, each in its own currency (no rate). Payment methods: GET /payment-methods
+GET {{baseUrl}}/api/v1/payment-methods
+
+### Customers for credit sales (search by name)
+GET {{baseUrl}}/api/v1/customers?search=mar
+
+### Submit a close (manager or owner) — 201; 409 CLOSE_EXISTS if that day already has one
+POST {{baseUrl}}/api/v1/daily-closes
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{
+  "businessDate": "2026-10-13",
+  "cardBatch": "16",
+  "cashDestination": "kept",
+  "payments": [
+    { "paymentMethodId": "<card_terminal id>", "amount": "163344" },
+    { "paymentMethodId": "<cash_bs id>", "amount": "5500" },
+    { "paymentMethodId": "<cash_usd id>", "amount": "18000" },
+    { "paymentMethodId": "<mobile_payment id>", "amount": "83569" }
+  ],
+  "credits": [{ "customerName": "Sra. María", "amount": "1200", "currency": "VES" }],
+  "expenses": [{ "concept": "Bolsas", "amount": "379", "currency": "USD" }]
+}
+
+### Closes of a range (newest first) with totals per currency
+GET {{baseUrl}}/api/v1/daily-closes?from=2026-10-12&to=2026-10-18
+
+### One day
+GET {{baseUrl}}/api/v1/daily-closes/2026-10-13
+
+### Waiting for the owner's review — 200 { count }
+GET {{baseUrl}}/api/v1/daily-closes/pending-count
+
+### Correct (owner) — replaces payments, credit sales and expenses
+PATCH {{baseUrl}}/api/v1/daily-closes/<close id>
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "cardBatch": "16", "cashDestination": "deposited", "payments": [], "credits": [], "expenses": [] }
+
+### Approve (owner) — 409 CLOSE_ALREADY_APPROVED the second time
+POST {{baseUrl}}/api/v1/daily-closes/<close id>/approve
+Origin: http://localhost:3000
