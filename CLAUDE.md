@@ -590,6 +590,9 @@ Things that are not obvious from the code and have already cost time:
   (CSRF) check unless `advanced.disableOriginCheck` is set. `createAuth` sets it to `false`
   explicitly so tests exercise production behavior. Check other Better Auth defaults the same
   way before trusting a green test.
+- **Turborepo cache and shared packages:** `typecheck` and `lint` depend on `^typecheck` /
+  `^lint`, so a change in `@ta/core` or `@ta/validators` invalidates the apps' cached results.
+  Without it, an API type error caused by a schema change was reported green from cache.
 - **Test order:** `turbo.json` runs `test` with `dependsOn: ["^test"]`, so `@ta/db` tests finish
   before `@ta/api` tests start; both reset the same test database in their preload.
 - **SWR keeps the last error in the cache.** After a mutation that changes what a key returns
