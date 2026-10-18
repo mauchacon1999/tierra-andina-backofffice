@@ -115,6 +115,16 @@ describe("AppShell", () => {
     expect(sidebar().getByRole("link", { name: "Cierres, 2 por revisar" })).toBeDefined();
   });
 
+  it("shows only the isotype when the menu is collapsed", () => {
+    renderShell();
+
+    fireEvent.click(sidebar().getByRole("button", { name: "Contraer menú" }));
+
+    const brand = sidebar().getByRole("link", { name: "Tierra Andina" });
+    expect(brand.textContent).toBe("");
+    expect(brand.querySelector("img")?.getAttribute("src")).toBe("/brand/isotype.png");
+  });
+
   it("collapses to icons with accessible names, and remembers it", () => {
     renderShell();
 

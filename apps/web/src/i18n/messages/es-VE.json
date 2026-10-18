@@ -802,7 +802,7 @@
       "editTitle": "Editar cuenta",
       "edit": "Editar",
       "bank": "Banco",
-      "bankPlaceholder": "Elige el banco",
+      "bankPlaceholder": "Busca por nombre o código",
       "phone": "Teléfono",
       "phoneHint": "Celular de 11 dígitos, p. ej. 0414-1234567",
       "idDocument": "Cédula o RIF",
@@ -813,7 +813,9 @@
       "deactivate": "Quitar",
       "deactivateQuestion": "¿Quitar esta cuenta? Los abonos ya hechos la conservan.",
       "deactivateFailed": "No se pudo quitar la cuenta",
-      "inactive": "Quitada"
+      "inactive": "Quitada",
+      "bankEmpty": "Ningún banco coincide",
+      "bankOpen": "Ver bancos"
     }
   },
   "payables": {

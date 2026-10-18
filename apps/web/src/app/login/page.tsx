@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
+import { BrandMark } from "@/components/shared/brand-mark";
 import { SignInForm } from "@/features/auth/components/sign-in-form";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -13,6 +14,7 @@ export default async function LoginPage(): Promise<React.JSX.Element> {
   return (
     <main className="mx-auto w-full max-w-sm flex-1 px-4 py-12">
       <header className="mb-8 text-center">
+        <BrandMark className="mx-auto mb-4 size-16" />
         <h1 className="text-3xl font-bold tracking-tight text-primary-text">
           {t("common.appName")}
         </h1>

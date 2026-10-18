@@ -63,7 +63,12 @@ describe("SupplierDetailScreen", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Agregar cuenta" }));
     const dialog = within(screen.getByRole("dialog"));
-    fireEvent.change(dialog.getByLabelText(/^Banco/), { target: { value: "0134" } });
+    // The bank list is searchable by name (accents and case ignored) or code.
+    fireEvent.change(dialog.getByRole("combobox", { name: /^Banco/ }), {
+      target: { value: "banes" },
+    });
+    expect(dialog.queryByRole("option", { name: "0102 · Banco de Venezuela" })).toBeNull();
+    fireEvent.click(await dialog.findByRole("option", { name: "0134 · Banesco" }));
     fireEvent.change(dialog.getByLabelText(/^Teléfono/), {
       target: { value: "0212-5551234" },
     });

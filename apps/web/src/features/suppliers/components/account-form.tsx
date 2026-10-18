@@ -3,10 +3,11 @@
 import { VE_BANKS } from "@ta/core";
 import type { SupplierPaymentAccount } from "@ta/validators";
 import { useTranslations } from "next-intl";
+import { useWatch } from "react-hook-form";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { SelectField } from "@/components/ui/select-field";
+import { ComboboxField } from "@/components/ui/combobox-field";
 import { TextField } from "@/components/ui/text-field";
 import { useAccountForm } from "@/features/suppliers/hooks/use-supplier-forms";
 
@@ -27,6 +28,7 @@ export function AccountForm({ supplierId, account, onDone }: AccountFormProps): 
   const t = useTranslations("suppliers.accounts");
   const f = useAccountForm(supplierId, account, onDone);
   const { errors } = f.form.formState;
+  const bankCode = useWatch({ control: f.form.control, name: "bankCode" });
 
   return (
     <form
@@ -38,13 +40,21 @@ export function AccountForm({ supplierId, account, onDone }: AccountFormProps): 
       }}
     >
       {f.formError && <Alert tone="error">{f.formError}</Alert>}
-      <SelectField
+      <ComboboxField
         label={t("bank")}
         required
         placeholder={t("bankPlaceholder")}
         options={BANK_OPTIONS}
-        error={errors.bankCode?.message}
-        {...f.form.register("bankCode")}
+        value={bankCode ?? ""}
+        onValueChange={(code) =>
+          f.form.setValue("bankCode", code, {
+            shouldDirty: true,
+            shouldValidate: f.form.formState.isSubmitted,
+          })
+        }
+        emptyText={t("bankEmpty")}
+        openLabel={t("bankOpen")}
+        {...(errors.bankCode?.message ? { error: errors.bankCode.message } : {})}
       />
       <TextField
         label={t("phone")}

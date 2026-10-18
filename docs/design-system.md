@@ -102,11 +102,16 @@ Success uses the brand green: in this app "done/ok" and "brand" are the same col
 
 Every signed-in screen is rendered inside `AppShell` (`features/navigation`):
 
-- **Desktop (`md` and up):** sidebar on the left — app name, menu, and at the bottom the user,
-  store, role and "Salir". It collapses to a 64 px column of icons (button at the top, choice
-  remembered per device); collapsed entries keep their name as accessible name and tooltip. The
-  current section is `bg-primary-soft text-primary-text` with `aria-current="page"`.
-- **Phones:** sticky top bar with ☰ and the app name; ☰ opens the same menu as a drawer
+- **Desktop (`md` and up):** sidebar on the left — the isotype with the app name, menu, and at
+  the bottom the user, store, role and "Salir". It collapses to a 64 px column of icons (button
+  at the top, choice remembered per device); collapsed, the brand is only the isotype and every
+  entry keeps its name as accessible name and tooltip. The current section is
+  `bg-primary-soft text-primary-text` with `aria-current="page"`.
+- **Loading:** while the session or a role check is still resolving, `LoadingOverlay` covers the
+  page (`fixed inset-0`) with the isotype and "Cargando…". A list waiting for its own data keeps
+  a line of status text; it does not cover the shell. The mark is `public/brand/isotype.png`
+  (the same picture is `app/icon.png` for the browser tab).
+- **Phones:** sticky top bar with ☰, the isotype and the app name; ☰ opens the same menu as a drawer
   (`Dialog variant="drawer"`), which closes on Esc, on the backdrop and on navigation.
 - **Content:** `main` is `max-w-6xl` centered, `px-4 py-6` (`md:px-8 md:py-8`). Pages do not add
   their own container: they start with the page title (`h1`) and blocks.
