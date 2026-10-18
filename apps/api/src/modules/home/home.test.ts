@@ -62,32 +62,30 @@ describe("getHomeBriefing", () => {
     expect(deposited.status).toBe(201);
 
     const db = testConnection().db;
-    const [open] = await db
-      .insert(schema.payables)
-      .values({ storeId: store.id, concept: "Bolsas", amountUsd: "10", issuedOn: "2027-06-01" })
+    const [supplier] = await db
+      .insert(schema.suppliers)
+      .values({ name: "Panadería", kind: "local" })
       .returning();
-    const [settled] = await db
+    if (!supplier) throw new Error("could not insert the supplier");
+    const invoice = { storeId: store.id, supplierId: supplier.id, issuedOn: "2027-06-01" };
+    const [open, settled] = await db
       .insert(schema.payables)
-      .values({ storeId: store.id, concept: "Pan", amountUsd: "3", issuedOn: "2027-06-01" })
+      .values([
+        { ...invoice, number: 1, total: "10" },
+        { ...invoice, number: 2, total: "3" },
+        { ...invoice, number: 3, total: "50", voidedAt: new Date() },
+      ])
       .returning();
     if (!open || !settled) throw new Error("could not insert payables");
+    const cashUsd = {
+      paidOn: "2027-06-02",
+      method: "cash_usd",
+      currency: "USD",
+      rate: "200",
+    } as const;
     await db.insert(schema.payablePayments).values([
-      {
-        payableId: open.id,
-        paidOn: "2027-06-02",
-        amountUsd: "4",
-        amountBs: "800",
-        rate: "200",
-        paymentMethodId: methods.cash_usd!.id,
-      },
-      {
-        payableId: settled.id,
-        paidOn: "2027-06-02",
-        amountUsd: "3",
-        amountBs: "600",
-        rate: "200",
-        paymentMethodId: methods.cash_usd!.id,
-      },
+      { ...cashUsd, payableId: open.id, amountUsd: "4", amountBs: "800", applied: "4" },
+      { ...cashUsd, payableId: settled.id, amountUsd: "3", amountBs: "600", applied: "3" },
     ]);
 
     const briefing = homeBriefingSchema.parse(await getHomeBriefing(db, store.id, "2027-06-03"));

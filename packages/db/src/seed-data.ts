@@ -41,4 +41,8 @@ export const SEED_EXPENSE_CATEGORIES = [
   { code: "coffee", name: "Café", kind: "variable" },
   { code: "sugar", name: "Azúcar", kind: "variable" },
   { code: "bleach", name: "Cloro", kind: "variable" },
+  // Supplies bought on credit (docs/modules/payables.md).
+  { code: "packaging", name: "Empaque", kind: "variable" },
+  { code: "food", name: "Alimentación", kind: "variable" },
+  { code: "cleaning", name: "Limpieza", kind: "variable" },
 ] as const;

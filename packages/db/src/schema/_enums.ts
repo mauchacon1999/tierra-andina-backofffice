@@ -21,6 +21,8 @@ export const exchangeRateKind = pgEnum("exchange_rate_kind", ["bcv", "sale", "ma
 
 // Purchasing
 export const purchaseTripStatus = pgEnum("purchase_trip_status", ["open", "closed"]);
+// market: the Coche trip · local: goods a supplier delivers to the shop (bananas, panela)
+export const purchaseTripKind = pgEnum("purchase_trip_kind", ["market", "local"]);
 export const paymentStatus = pgEnum("payment_status", ["paid", "credit"]);
 export const receiptStatus = pgEnum("receipt_status", [
   "pending",
@@ -50,6 +52,13 @@ export const dailyCloseStatus = pgEnum("daily_close_status", ["submitted", "appr
 
 // Finance
 export const creditEntryKind = pgEnum("credit_entry_kind", ["credit", "payment"]);
-export const payableStatus = pgEnum("payable_status", ["open", "paid"]);
+// Payable status is derived (@ta/core payableStatus), never stored.
+export const payableUnit = pgEnum("payable_unit", ["kg", "unit", "sack", "pack"]);
+export const payablePaymentMethod = pgEnum("payable_payment_method", [
+  "mobile_payment",
+  "bank_transfer",
+  "cash_bs",
+  "cash_usd",
+]);
 export const expenseKind = pgEnum("expense_kind", ["fixed", "variable"]);
 export const recurrenceFrequency = pgEnum("recurrence_frequency", ["weekly", "monthly"]);

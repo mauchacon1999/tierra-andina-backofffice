@@ -78,10 +78,46 @@ export const suppliers = pgTable("suppliers", {
   kind: supplierKind("kind").notNull(),
   phone: text("phone"),
   stallReference: text("stall_reference"),
+  notes: text("notes"),
   isActive: boolean("is_active").notNull().default(true),
   ...timestamps,
   ...auditColumns,
 });
+
+/**
+ * A supplier's pago móvil account (docs/modules/payables.md). Stored the way the banks' "Pegar
+ * datos" wants it: bank code of @ta/core VE_BANKS, 11-digit mobile phone, cédula/RIF with its
+ * letter and no dots. The bank name is not stored: it comes from the code.
+ */
+export const supplierPaymentAccounts = pgTable(
+  "supplier_payment_accounts",
+  {
+    id: id(),
+    supplierId: uuid("supplier_id")
+      .notNull()
+      .references(() => suppliers.id),
+    bankCode: text("bank_code").notNull(),
+    phone: text("phone").notNull(),
+    idDocument: text("id_document").notNull(),
+    isActive: boolean("is_active").notNull().default(true),
+    ...timestamps,
+    ...auditColumns,
+  },
+  (t) => [
+    index("supplier_payment_accounts_supplier_id_idx").on(t.supplierId),
+    unique("supplier_payment_accounts_supplier_id_bank_code_phone_key").on(
+      t.supplierId,
+      t.bankCode,
+      t.phone,
+    ),
+    check("supplier_payment_accounts_bank_code_check", sql`${t.bankCode} ~ '^[0-9]{4}$'`),
+    check("supplier_payment_accounts_phone_check", sql`${t.phone} ~ '^04[0-9]{9}$'`),
+    check(
+      "supplier_payment_accounts_id_document_check",
+      sql`${t.idDocument} ~ '^[VEJGP][0-9]{5,9}$'`,
+    ),
+  ],
+);
 
 // Relations ------------------------------------------------------------------------------------
 
@@ -93,5 +129,12 @@ export const productsRelations = relations(products, ({ one }) => ({
   category: one(productCategories, {
     fields: [products.categoryId],
     references: [productCategories.id],
+  }),
+}));
+
+export const supplierPaymentAccountsRelations = relations(supplierPaymentAccounts, ({ one }) => ({
+  supplier: one(suppliers, {
+    fields: [supplierPaymentAccounts.supplierId],
+    references: [suppliers.id],
   }),
 }));

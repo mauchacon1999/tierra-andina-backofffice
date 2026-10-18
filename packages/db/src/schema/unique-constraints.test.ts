@@ -24,6 +24,7 @@ import {
   exchangeRates,
   expenseCategories,
   memberships,
+  payableLines,
   payables,
   paymentMethods,
   payrollPayments,
@@ -36,6 +37,7 @@ import {
   settings,
   supplierClaims,
   users,
+  supplierPaymentAccounts,
 } from ".";
 
 type Write = (tx: Tx, b: Base) => Promise<unknown>;
@@ -154,11 +156,36 @@ const CASES: UniqueCase[] = [
       tx.insert(dailyClosePayments).values(valid.dailyClosePayment(b, { amount: "1" })),
   },
   {
-    constraint: "payables_purchase_line_id_key",
-    label: "second payable for a purchase line",
-    first: (tx, b) => tx.insert(payables).values(valid.payable(b, { purchaseLineId: b.line.id })),
+    constraint: "payables_store_id_number_key",
+    label: "invoice number 1 again in the same store",
+    first: async () => undefined, // the base invoice is number 1
+    duplicate: (tx, b) => tx.insert(payables).values(valid.payable(b, { number: 1 })),
+  },
+  {
+    constraint: "payables_trip_id_supplier_id_key",
+    label: "second invoice for the same trip and supplier",
+    first: (tx, b) => tx.insert(payables).values(valid.payable(b, { tripId: b.trip.id })),
     duplicate: (tx, b) =>
-      tx.insert(payables).values(valid.payable(b, { purchaseLineId: b.line.id })),
+      tx.insert(payables).values(valid.payable(b, { number: 3, tripId: b.trip.id })),
+  },
+  {
+    constraint: "payable_lines_purchase_line_id_key",
+    label: "the same purchase line owed twice",
+    first: (tx, b) => tx.insert(payableLines).values(valid.payableProductLine(b)),
+    duplicate: (tx, b) => tx.insert(payableLines).values(valid.payableProductLine(b)),
+  },
+  {
+    constraint: "supplier_payment_accounts_supplier_id_bank_code_phone_key",
+    label: "the same bank and phone twice for a supplier",
+    first: async () => undefined, // the base account is 0102 / 04141234567
+    duplicate: (tx, b) =>
+      tx.insert(supplierPaymentAccounts).values(
+        valid.supplierPaymentAccount(b, {
+          bankCode: "0102",
+          phone: "04141234567",
+          idDocument: "V1111111",
+        }),
+      ),
   },
   {
     constraint: "expense_categories_code_key",
@@ -214,6 +241,21 @@ describe("UNIQUE constraints", () => {
         sp
           .insert(purchaseTrips)
           .values(valid.purchaseTrip(base, { businessDate: "2026-10-16", status: "closed" })),
+      );
+    });
+  });
+
+  test("an open local purchase does not count as the open Coche trip", async () => {
+    await inRollback(async (tx) => {
+      const base = await createBase(tx);
+      await expectOk(tx, (sp) =>
+        sp.insert(purchaseTrips).values(
+          valid.purchaseTrip(base, {
+            businessDate: "2026-10-16",
+            kind: "local",
+            supplierId: base.supplier.id,
+          }),
+        ),
       );
     });
   });

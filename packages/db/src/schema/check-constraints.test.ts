@@ -25,6 +25,7 @@ import {
   employees,
   exchangeRates,
   expenses,
+  payableLines,
   payablePayments,
   payables,
   payrollPayments,
@@ -36,6 +37,7 @@ import {
   recurringExpenses,
   salaryAdvances,
   supplierClaims,
+  supplierPaymentAccounts,
 } from ".";
 
 type Write = (tx: Tx, b: Base) => Promise<unknown>;
@@ -375,12 +377,33 @@ const CASES: CheckCase[] = [
         tx.insert(customerCreditEntries).values(valid.creditEntry(b, { amount: "-1" })),
     },
   },
+  // purchase trips
+  {
+    constraint: "purchase_trips_local_supplier_check",
+    valid: (tx, b) =>
+      tx
+        .insert(purchaseTrips)
+        .values(
+          valid.purchaseTrip(b, { kind: "local", supplierId: b.supplier.id, status: "closed" }),
+        ),
+    invalid: {
+      "local without supplier": (tx, b) =>
+        tx.insert(purchaseTrips).values(valid.purchaseTrip(b, { kind: "local", status: "closed" })),
+    },
+  },
   // payables
   {
-    constraint: "payables_amount_check",
+    constraint: "payables_number_check",
     valid: (tx, b) => tx.insert(payables).values(valid.payable(b)),
     invalid: {
-      negative: (tx, b) => tx.insert(payables).values(valid.payable(b, { amountUsd: "-1" })),
+      zero: (tx, b) => tx.insert(payables).values(valid.payable(b, { number: 0 })),
+    },
+  },
+  {
+    constraint: "payables_amount_check",
+    valid: (tx, b) => tx.insert(payables).values(valid.payable(b, { total: "0" })),
+    invalid: {
+      negative: (tx, b) => tx.insert(payables).values(valid.payable(b, { total: "-1" })),
     },
   },
   {
@@ -389,6 +412,45 @@ const CASES: CheckCase[] = [
     invalid: {
       "due before issued": (tx, b) =>
         tx.insert(payables).values(valid.payable(b, { dueOn: "2026-10-11" })),
+    },
+  },
+  {
+    constraint: "payables_voided_check",
+    valid: (tx, b) =>
+      tx.insert(payables).values(valid.payable(b, { voidedAt: new Date(), voidedBy: b.user.id })),
+    invalid: {
+      "voided by without voided at": (tx, b) =>
+        tx.insert(payables).values(valid.payable(b, { voidedBy: b.user.id })),
+    },
+  },
+  {
+    constraint: "payable_lines_item_check",
+    valid: (tx, b) => tx.insert(payableLines).values(valid.payableLine(b)),
+    invalid: {
+      "neither a purchase line nor a description": (tx, b) =>
+        tx.insert(payableLines).values(valid.payableLine(b, { description: null })),
+      "a blank description": (tx, b) =>
+        tx.insert(payableLines).values(valid.payableLine(b, { description: "  " })),
+      "a supply without category": (tx, b) =>
+        tx.insert(payableLines).values(valid.payableLine(b, { expenseCategoryId: null })),
+      "a supply without unit price": (tx, b) =>
+        tx.insert(payableLines).values(valid.payableLine(b, { unitPrice: null })),
+      "a purchase line with a description": (tx, b) =>
+        tx.insert(payableLines).values(valid.payableProductLine(b, { description: "Cambur" })),
+      "a purchase line with a quantity": (tx, b) =>
+        tx.insert(payableLines).values(valid.payableProductLine(b, { quantity: "1" })),
+    },
+  },
+  {
+    constraint: "payable_lines_amounts_check",
+    valid: (tx, b) => tx.insert(payableLines).values(valid.payableProductLine(b)),
+    invalid: {
+      "subtotal < 0": (tx, b) =>
+        tx.insert(payableLines).values(valid.payableLine(b, { subtotal: "-1" })),
+      "quantity 0": (tx, b) =>
+        tx.insert(payableLines).values(valid.payableLine(b, { quantity: "0" })),
+      "unit price < 0": (tx, b) =>
+        tx.insert(payableLines).values(valid.payableLine(b, { unitPrice: "-1" })),
     },
   },
   {
@@ -406,6 +468,59 @@ const CASES: CheckCase[] = [
     valid: (tx, b) => tx.insert(payablePayments).values(valid.payablePayment(b)),
     invalid: {
       zero: (tx, b) => tx.insert(payablePayments).values(valid.payablePayment(b, { rate: "0" })),
+    },
+  },
+  {
+    constraint: "payable_payments_applied_check",
+    valid: (tx, b) =>
+      tx
+        .insert(payablePayments)
+        .values(valid.payablePayment(b, { accountId: b.paymentAccount.id })),
+    invalid: {
+      zero: (tx, b) => tx.insert(payablePayments).values(valid.payablePayment(b, { applied: "0" })),
+    },
+  },
+  // supplier pago móvil accounts
+  {
+    constraint: "supplier_payment_accounts_bank_code_check",
+    valid: (tx, b) => tx.insert(supplierPaymentAccounts).values(valid.supplierPaymentAccount(b)),
+    invalid: {
+      "3 digits": (tx, b) =>
+        tx
+          .insert(supplierPaymentAccounts)
+          .values(valid.supplierPaymentAccount(b, { bankCode: "102" })),
+      letters: (tx, b) =>
+        tx
+          .insert(supplierPaymentAccounts)
+          .values(valid.supplierPaymentAccount(b, { bankCode: "BDV1" })),
+    },
+  },
+  {
+    constraint: "supplier_payment_accounts_phone_check",
+    valid: (tx, b) => tx.insert(supplierPaymentAccounts).values(valid.supplierPaymentAccount(b)),
+    invalid: {
+      "with dashes": (tx, b) =>
+        tx
+          .insert(supplierPaymentAccounts)
+          .values(valid.supplierPaymentAccount(b, { phone: "0424-5551234" })),
+      landline: (tx, b) =>
+        tx
+          .insert(supplierPaymentAccounts)
+          .values(valid.supplierPaymentAccount(b, { phone: "02125551234" })),
+    },
+  },
+  {
+    constraint: "supplier_payment_accounts_id_document_check",
+    valid: (tx, b) => tx.insert(supplierPaymentAccounts).values(valid.supplierPaymentAccount(b)),
+    invalid: {
+      "with dots": (tx, b) =>
+        tx
+          .insert(supplierPaymentAccounts)
+          .values(valid.supplierPaymentAccount(b, { idDocument: "V8.765.432" })),
+      "no letter": (tx, b) =>
+        tx
+          .insert(supplierPaymentAccounts)
+          .values(valid.supplierPaymentAccount(b, { idDocument: "8765432" })),
     },
   },
   // expenses

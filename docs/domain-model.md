@@ -300,7 +300,7 @@ Initial settings: `usd_rounding_step = "0.05"`, `bs_rounding_step = "1"`,
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `product_categories` | code (unique: fruit, vegetable, greens, tubers, other), name, sort_order                                                                                                   |
 | `products`           | name, normalized_name (unique), category_id, purchase_unit (`crate`/`bundle`/`kg`), sale_unit (`kg`/`unit`), default_pack_quantity, last_shrinkage, last_margin, is_active |
-| `suppliers`          | name, kind (`wholesale_stall`/`local`), phone, stall_reference, is_active                                                                                                  |
+| `suppliers`          | name, kind (`wholesale_stall`/`local`), phone, stall_reference, notes, is_active                                                                                           |
 
 `normalized_name` (lowercase, no accents, single spaces) makes "Cebollín" and "cebollin" the same
 product (`docs/modules/products.md` §1.4).
@@ -319,7 +319,7 @@ have no store, sale rows always have one.
 
 | Table                 | Key columns                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `purchase_trips`      | store_id, business_date, bcv_rate, market_rate, status (`open`/`closed`), total_usd, total_bs, note                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `purchase_trips`      | store_id, kind (`market`/`local`), supplier_id (local only), business_date, bcv_rate, market_rate, status (`open`/`closed`), total_usd, total_bs, note                                                                                                                                                                                                                                                                                                                                                 |
 | `purchase_lines`      | trip_id, supplier_id (nullable), stall_reference, product_id, purchase_unit, packs, gross_quantity, shrinkage, usable_quantity, quoted_price_usd, amount_bs, supplier_rate, real_cost_usd, unit_cost_usd, margin, sale_price_usd, payment_status (`paid`/`credit`), receipt_status (`pending`/`received`/`partial`/`missing`), received_packs, received_quantity, received_by, received_at, receipt_note, received_usable_quantity, received_unit_cost_usd, received_sale_price_usd (partial receipts) |
 | `supplier_claims`     | purchase_line_id (unique), supplier_id (nullable), missing_packs, amount_usd, status (`open`/`resolved`/`written_off`), resolution_note                                                                                                                                                                                                                                                                                                                                                                |
 | `shopping_list_items` | store_id, product_id, requested_by, note, status (`open`/`bought`/`dropped`), purchase_line_id (nullable)                                                                                                                                                                                                                                                                                                                                                                                              |
@@ -348,21 +348,24 @@ have no store, sale rows always have one.
 
 ### 9.7 Receivables, payables, expenses, payroll
 
-| Table                     | Key columns                                                                                                                                  |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `customers`               | store_id, name, phone, is_active                                                                                                             |
-| `customer_credit_entries` | customer_id, kind (`credit`/`payment`), business_date, amount, currency, daily_close_id (nullable)                                           |
-| `payables`                | store_id, supplier_id (nullable), concept, amount_usd, issued_on, due_on, purchase_line_id (nullable, unique), status (`open`/`paid`)        |
-| `payable_payments`        | payable_id, paid_on, amount_usd, amount_bs, rate, payment_method_id                                                                          |
-| `expense_categories`      | code (unique), name, kind (`fixed`/`variable`), is_active                                                                                    |
-| `recurring_expenses`      | store_id, category_id, amount_usd, frequency (`weekly`/`monthly`), is_active                                                                 |
-| `expenses`                | store_id, category_id (nullable), concept, business_date, amount, currency, daily_close_id (nullable), recurring_expense_id (nullable), note |
-| `employees`               | store_id, name, job_title, weekly_salary_usd, user_id (nullable), is_active                                                                  |
-| `payroll_payments`        | employee_id, week_start, salary_usd, advances_usd, paid_usd, paid_on, note · unique (employee_id, week_start)                                |
-| `salary_advances`         | employee_id, paid_on, amount_usd, amount_bs, rate, payroll_payment_id (nullable)                                                             |
+| Table                       | Key columns                                                                                                                                                                                                                         |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `customers`                 | store_id, name, phone, is_active                                                                                                                                                                                                    |
+| `customer_credit_entries`   | customer_id, kind (`credit`/`payment`), business_date, amount, currency, daily_close_id (nullable)                                                                                                                                  |
+| `supplier_payment_accounts` | supplier_id, bank_code, phone, id_document, is_active · unique (supplier_id, bank_code, phone)                                                                                                                                      |
+| `payables`                  | store_id, number (unique per store, shown as CXP-000123), supplier_id, currency (`USD`/`VES`), total, issued_on, due_on (nullable), trip_id (nullable), note, voided_at, voided_by · unique (trip_id, supplier_id) · status derived |
+| `payable_lines`             | payable_id, purchase_line_id (merchandise, unique) **or** description + expense_category_id + quantity + unit (`kg`/`unit`/`sack`/`pack`) + unit_price (supply); subtotal                                                           |
+| `payable_payments`          | payable_id, paid_on, method (`mobile_payment`/`bank_transfer`/`cash_bs`/`cash_usd`), currency, amount_usd, amount_bs, rate, applied (in the invoice's currency), reference, account_id, note                                        |
+| `expense_categories`        | code (unique), name, kind (`fixed`/`variable`), is_active                                                                                                                                                                           |
+| `recurring_expenses`        | store_id, category_id, amount_usd, frequency (`weekly`/`monthly`), is_active                                                                                                                                                        |
+| `expenses`                  | store_id, category_id (nullable), concept, business_date, amount, currency, daily_close_id (nullable), recurring_expense_id (nullable), note                                                                                        |
+| `employees`                 | store_id, name, job_title, weekly_salary_usd, user_id (nullable), is_active                                                                                                                                                         |
+| `payroll_payments`          | employee_id, week_start, salary_usd, advances_usd, paid_usd, paid_on, note · unique (employee_id, week_start)                                                                                                                       |
+| `salary_advances`           | employee_id, paid_on, amount_usd, amount_bs, rate, payroll_payment_id (nullable)                                                                                                                                                    |
 
-Obligations and templates denominated in USD (`payables`, `recurring_expenses`,
-`supplier_claims`, `payroll_payments`, `employees.weekly_salary_usd`) store USD only; the Bs
+Obligations and templates denominated in USD (`recurring_expenses`,
+`supplier_claims`, `payroll_payments`, `employees.weekly_salary_usd`) store USD only, and a
+`payables` total is in its own currency (USD or Bs, as agreed with the supplier); the Bs
 amount and rate are stored when money changes hands (payments, expenses, advances, credit
 entries) — see §2.
 
@@ -377,7 +380,7 @@ erDiagram
   suppliers ||--o{ purchase_lines : sells
   products ||--o{ purchase_lines : bought
   purchase_lines ||--o| supplier_claims : may_create
-  purchase_lines ||--o| payables : may_create
+  purchase_lines ||--o| payable_lines : may_create
   stores ||--o{ price_lists : publishes
   price_lists ||--o{ price_list_lines : contains
   products ||--o{ price_list_lines : priced
@@ -387,7 +390,9 @@ erDiagram
   customers ||--o{ customer_credit_entries : owes
   daily_closes ||--o{ customer_credit_entries : includes
   suppliers ||--o{ payables : owed
+  payables ||--o{ payable_lines : contains
   payables ||--o{ payable_payments : settled_by
+  suppliers ||--o{ supplier_payment_accounts : paid_to
   expense_categories ||--o{ expenses : groups
   employees ||--o{ payroll_payments : paid
   employees ||--o{ salary_advances : advanced
@@ -397,7 +402,7 @@ erDiagram
 
 - Every foreign key is the leading column of an index, except `created_by` / `updated_by`
   (never used to filter; `audit_logs` answers "who did what"). Every `business_date` is indexed.
-- Named `CHECK` constraints (`<table>_<rule>_check`), 38 in total:
+- Named `CHECK` constraints (`<table>_<rule>_check`), 47 in total:
   - amounts ≥ 0 and rates > 0 on every money/rate column;
   - `purchase_lines`: packs is null or > 0, gross_quantity > 0, 0 ≤ shrinkage < gross_quantity,
     usable_quantity = gross_quantity − shrinkage, received_packs is null, or
@@ -408,10 +413,15 @@ erDiagram
     null for kg; 0 ≤ last_shrinkage < pack quantity;
   - `exchange_rates`: BCV rows have no store, sale rows have one;
   - `price_lists`: a published list has `published_at`;
-  - `payables`: due_on ≥ issued_on.
-- Uniques listed in the tables above (16). A purchase line has at most one supplier claim and
-  at most one payable (§9.8). Partial unique index `purchase_trips_one_open_idx`: one open
-  trip per store.
+  - `payables`: due_on ≥ issued_on, number > 0, voided_by only with voided_at;
+  - `payable_lines`: a purchase line xor a complete supply (description, category, quantity,
+    unit, unit price); quantity > 0;
+  - `payable_payments`: applied > 0;
+  - `supplier_payment_accounts`: 4-digit bank code, 11-digit 04… phone, V/E/J/G/P + digits;
+  - `purchase_trips`: a local purchase has its supplier.
+- Uniques listed in the tables above (19). A purchase line has at most one supplier claim and
+  is owed by at most one payable line (§9.8). Partial unique index `purchase_trips_one_open_idx`:
+  one open Coche trip per store (local purchases do not count).
 - Every CHECK and UNIQUE constraint has an integration test; a meta-test fails if one is added
   without a test.
 

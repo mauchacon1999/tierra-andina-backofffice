@@ -3,6 +3,7 @@ import type {
   dailyClosePayments,
   exchangeRates,
   expenses,
+  payableLines,
   payablePayments,
   priceListLines,
   salaryAdvances,
@@ -23,6 +24,7 @@ import {
   purchaseTrips,
   recurringExpenses,
   stores,
+  supplierPaymentAccounts,
   suppliers,
   users,
 } from "../schema";
@@ -109,16 +111,33 @@ export async function createBase(tx: Tx) {
   const customer = await one(
     tx.insert(customers).values({ storeId: store.id, name: "Sra. Carmen" }).returning(),
   );
-  const payable = await one(
-    tx
-      .insert(payables)
-      .values({ storeId: store.id, concept: "Pan", amountUsd: "10", issuedOn: "2026-10-12" })
-      .returning(),
-  );
   const expenseCategory = await one(
     tx
       .insert(expenseCategories)
       .values({ code: uniq("exp"), name: "Bolsas", kind: "variable" })
+      .returning(),
+  );
+  const payable = await one(
+    tx
+      .insert(payables)
+      .values({
+        storeId: store.id,
+        number: 1,
+        supplierId: supplier.id,
+        total: "10",
+        issuedOn: "2026-10-12",
+      })
+      .returning(),
+  );
+  const paymentAccount = await one(
+    tx
+      .insert(supplierPaymentAccounts)
+      .values({
+        supplierId: supplier.id,
+        bankCode: "0102",
+        phone: "04141234567",
+        idDocument: "V12345678",
+      })
       .returning(),
   );
   const recurringExpense = await one(
@@ -155,6 +174,7 @@ export async function createBase(tx: Tx) {
     dailyClose,
     customer,
     payable,
+    paymentAccount,
     expenseCategory,
     recurringExpense,
     employee,
@@ -287,24 +307,57 @@ export const valid = {
       currency: "VES",
       ...o,
     }) satisfies Insert<typeof customerCreditEntries>,
+  /** Number 2: the base invoice already took number 1. */
   payable: (b: Base, o: Partial<Insert<typeof payables>> = {}) =>
     ({
       storeId: b.store.id,
-      concept: "Bolsas",
-      amountUsd: "10",
+      number: 2,
+      supplierId: b.supplier.id,
+      total: "10",
       issuedOn: "2026-10-12",
       ...o,
     }) satisfies Insert<typeof payables>,
+  /** A supply: 10 packs of bags at 1.50 = 15. */
+  payableLine: (b: Base, o: Partial<Insert<typeof payableLines>> = {}) =>
+    ({
+      payableId: b.payable.id,
+      description: "Bolsas medianas",
+      expenseCategoryId: b.expenseCategory.id,
+      quantity: "10",
+      unit: "pack",
+      unitPrice: "1.5",
+      subtotal: "15",
+      ...o,
+    }) satisfies Insert<typeof payableLines>,
+  /** Merchandise: the base purchase line (20 USD). */
+  payableProductLine: (b: Base, o: Partial<Insert<typeof payableLines>> = {}) =>
+    ({
+      payableId: b.payable.id,
+      purchaseLineId: b.line.id,
+      subtotal: "20",
+      ...o,
+    }) satisfies Insert<typeof payableLines>,
+  /** 1000 Bs by pago móvil at 200 = 5 USD off a USD invoice. */
   payablePayment: (b: Base, o: Partial<Insert<typeof payablePayments>> = {}) =>
     ({
       payableId: b.payable.id,
       paidOn: "2026-10-13",
+      method: "mobile_payment",
+      currency: "VES",
       amountUsd: "5",
       amountBs: "1000",
       rate: "200",
-      paymentMethodId: b.paymentMethod.id,
+      applied: "5",
       ...o,
     }) satisfies Insert<typeof payablePayments>,
+  supplierPaymentAccount: (b: Base, o: Partial<Insert<typeof supplierPaymentAccounts>> = {}) =>
+    ({
+      supplierId: b.supplier.id,
+      bankCode: "0134",
+      phone: "04245551234",
+      idDocument: "V8765432",
+      ...o,
+    }) satisfies Insert<typeof supplierPaymentAccounts>,
   recurringExpense: (b: Base, o: Partial<Insert<typeof recurringExpenses>> = {}) =>
     ({
       storeId: b.store.id,

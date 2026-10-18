@@ -42,7 +42,11 @@ Fresh local database: `bun run db:up && bun run db:reset && bun run db:seed`.
 
 1. Change the schema in `packages/db/src/schema/<area>.ts`.
 2. `bun run db:generate -- --name short_description` → new file in `packages/db/migrations/`.
-3. Read the generated SQL. Rename/drop operations may prompt: answer carefully.
+3. Read the generated SQL. Rename/drop operations may prompt: answer carefully. drizzle-kit
+   asks whenever one change both adds and removes columns of a table (or enums), and the
+   prompt needs a TTY: from a non-interactive shell, split it into an additive migration
+   (keep the old columns for a moment) and a second one that only drops
+   (`0013_payables` + `0014_payables_drop_old`).
 4. `bun run db:migrate` (main database). The test database is reset and migrated automatically
    on every `bun --cwd=packages/db test`.
 5. Add or update tests (`src/schema/*.test.ts`) and update `domain-model.md` §9.
@@ -100,22 +104,21 @@ with the tested ones: adding a CHECK or UNIQUE without a test fails the suite.
 
 ## Tables per area
 
-| Area               | File                     | Tables                                                                                                                         |
-| ------------------ | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| Auth (Better Auth) | `schema/auth.ts`         | `users`, `sessions`, `accounts`, `verifications`                                                                               |
-| Organization       | `schema/organization.ts` | `stores`, `memberships`, `settings`, `push_subscriptions`, `audit_logs`                                                        |
-| Catalog            | `schema/catalog.ts`      | `product_categories`, `products`, `suppliers`                                                                                  |
-| Exchange rates     | `schema/rates.ts`        | `exchange_rates`                                                                                                               |
-| Purchasing         | `schema/purchasing.ts`   | `purchase_trips`, `purchase_lines`, `supplier_claims`, `shopping_list_items`                                                   |
-| Tasks              | `schema/tasks.ts`        | `tasks`                                                                                                                        |
-| Pricing            | `schema/pricing.ts`      | `price_lists`, `price_list_lines`                                                                                              |
-| Daily close        | `schema/daily-close.ts`  | `payment_methods`, `daily_closes`, `daily_close_payments`                                                                      |
-| Finance            | `schema/finance.ts`      | `customers`, `customer_credit_entries`, `payables`, `payable_payments`, `expense_categories`, `recurring_expenses`, `expenses` |
-| Payroll            | `schema/payroll.ts`      | `employees`, `payroll_payments`, `salary_advances`                                                                             |
+| Area               | File                     | Tables                                                                                                                                          |
+| ------------------ | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth (Better Auth) | `schema/auth.ts`         | `users`, `sessions`, `accounts`, `verifications`                                                                                                |
+| Organization       | `schema/organization.ts` | `stores`, `memberships`, `settings`, `push_subscriptions`, `audit_logs`                                                                         |
+| Catalog            | `schema/catalog.ts`      | `product_categories`, `products`, `suppliers`, `supplier_payment_accounts`                                                                      |
+| Exchange rates     | `schema/rates.ts`        | `exchange_rates`                                                                                                                                |
+| Purchasing         | `schema/purchasing.ts`   | `purchase_trips`, `purchase_lines`, `supplier_claims`, `shopping_list_items`                                                                    |
+| Tasks              | `schema/tasks.ts`        | `tasks`                                                                                                                                         |
+| Pricing            | `schema/pricing.ts`      | `price_lists`, `price_list_lines`                                                                                                               |
+| Daily close        | `schema/daily-close.ts`  | `payment_methods`, `daily_closes`, `daily_close_payments`                                                                                       |
+| Finance            | `schema/finance.ts`      | `customers`, `customer_credit_entries`, `payables`, `payable_lines`, `payable_payments`, `expense_categories`, `recurring_expenses`, `expenses` |
+| Payroll            | `schema/payroll.ts`      | `employees`, `payroll_payments`, `salary_advances`                                                                                              |
 
-33 tables in total. Migrations: `0000_organization_and_auth`,
-`0001_catalog_rates_purchasing_pricing`, `0002_daily_close_finance_payroll`,
-`0003_fix_products_pack_quantity_check`.
+35 tables in total. Migrations live in `packages/db/migrations/` (`bun run db:migrate`
+applies the pending ones; the journal is `migrations/meta/_journal.json`).
 
 ## Better Auth
 

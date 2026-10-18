@@ -1,4 +1,4 @@
-import { and, count, eq, inArray } from "drizzle-orm";
+import { and, count, eq, inArray, isNull } from "drizzle-orm";
 
 import { type Executor, schema } from "@ta/db";
 
@@ -31,17 +31,18 @@ export async function findCreditEntries(db: Executor, storeId: string): Promise<
     .where(eq(customers.storeId, storeId));
 }
 
-export type OpenPayableRow = { id: string; amountUsd: string };
+export type OpenPayableRow = { id: string; total: string; currency: "USD" | "VES" };
 
-/** Debts still marked open. Payments are loaded separately and subtracted. */
+/** Invoices not voided. Payments are loaded separately; a paid one has no balance left. */
 export async function findOpenPayables(db: Executor, storeId: string): Promise<OpenPayableRow[]> {
   return db
-    .select({ id: payables.id, amountUsd: payables.amountUsd })
+    .select({ id: payables.id, total: payables.total, currency: payables.currency })
     .from(payables)
-    .where(and(eq(payables.storeId, storeId), eq(payables.status, "open")));
+    .where(and(eq(payables.storeId, storeId), isNull(payables.voidedAt)));
 }
 
-export type PayablePaymentRow = { payableId: string; amountUsd: string };
+/** `applied` is in the invoice's currency. */
+export type PayablePaymentRow = { payableId: string; applied: string };
 
 export async function findPayablePaymentAmounts(
   db: Executor,
@@ -51,7 +52,7 @@ export async function findPayablePaymentAmounts(
   return db
     .select({
       payableId: payablePayments.payableId,
-      amountUsd: payablePayments.amountUsd,
+      applied: payablePayments.applied,
     })
     .from(payablePayments)
     .where(inArray(payablePayments.payableId, [...payableIds]));

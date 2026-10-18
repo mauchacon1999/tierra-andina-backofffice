@@ -5,7 +5,7 @@ It replaces the notebook, WhatsApp and Excel workflow: purchases at the wholesal
 cost and price calculation, daily cash closings, expenses, debts and weekly reports.
 Business context and phases live in `docs/plan.md`. Read it before starting a new feature.
 
-> **Current state (2026-10-18):** monorepo, full database schema in `@ta/db` (33 tables,
+> **Current state (2026-10-18):** monorepo, full database schema in `@ta/db` (35 tables,
 > migrations, idempotent seed, integration tests), Hono API with `/health`, Better Auth
 > (`/api/auth/*`), `requireRole`, audit helper and `GET /api/v1/me`; Next.js status page.
 > Web: login (`/login`), session-protected home. The owner sees this week's
@@ -185,6 +185,7 @@ Tests of one package: `bun --cwd=packages/core test`, `bun --cwd=apps/web run te
 | Bulto / paquete (unidad de factura)           | `sack` / `pack`                            |
 | Cuenta de pago móvil del proveedor            | `supplier_payment_account`                 |
 | Divisa (efectivo en dólares)                  | `cash_usd`                                 |
+| Compra local (proveedor que trae a la tienda) | `purchase_trips.kind = 'local'`            |
 | Transferencia                                 | `bank_transfer`                            |
 | Gasto fijo / variable                         | `fixed_expense` / `variable_expense`       |
 | Recepción en camioneta                        | `truck_receipt`                            |

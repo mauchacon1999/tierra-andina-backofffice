@@ -13,6 +13,7 @@ import {
 
 import {
   paymentStatus,
+  purchaseTripKind,
   purchaseTripStatus,
   purchaseUnit,
   receiptStatus,
@@ -24,7 +25,11 @@ import { users } from "./auth";
 import { products, suppliers } from "./catalog";
 import { stores } from "./organization";
 
-/** One visit to the wholesale market (Monday / Thursday). */
+/**
+ * One visit to the wholesale market (Monday / Thursday), or a local purchase: goods a supplier
+ * delivers to the shop (bananas, panela), priced with the same form at the BCV rate (market
+ * rate = BCV, no Coche premium) and closed when saved (docs/modules/payables.md).
+ */
 export const purchaseTrips = pgTable(
   "purchase_trips",
   {
@@ -32,6 +37,9 @@ export const purchaseTrips = pgTable(
     storeId: uuid("store_id")
       .notNull()
       .references(() => stores.id),
+    kind: purchaseTripKind("kind").notNull().default("market"),
+    /** Local purchases only: who delivered the goods. */
+    supplierId: uuid("supplier_id").references(() => suppliers.id),
     businessDate: date("business_date", { mode: "string" }).notNull(),
     bcvRate: rate("bcv_rate").notNull(),
     /** Coche market rate of the day; default supplier rate of the lines (copied at opening). */
@@ -46,10 +54,18 @@ export const purchaseTrips = pgTable(
   (t) => [
     index("purchase_trips_store_id_idx").on(t.storeId),
     index("purchase_trips_business_date_idx").on(t.businessDate),
-    /** One open trip per store: close it before opening the next (owner, 2026-10-17). */
+    index("purchase_trips_supplier_id_idx").on(t.supplierId),
+    /**
+     * One open Coche trip per store: close it before opening the next (owner, 2026-10-17).
+     * Local purchases do not count.
+     */
     uniqueIndex("purchase_trips_one_open_idx")
       .on(t.storeId)
-      .where(sql`${t.status} = 'open'`),
+      .where(sql`${t.status} = 'open' AND ${t.kind} = 'market'`),
+    check(
+      "purchase_trips_local_supplier_check",
+      sql`${t.kind} = 'market' OR ${t.supplierId} IS NOT NULL`,
+    ),
     check("purchase_trips_bcv_rate_check", sql`${t.bcvRate} > 0`),
     check("purchase_trips_market_rate_check", sql`${t.marketRate} > 0`),
     check("purchase_trips_amounts_check", sql`${t.totalUsd} >= 0 AND ${t.totalBs} >= 0`),
@@ -207,6 +223,7 @@ export const shoppingListItems = pgTable(
 
 export const purchaseTripsRelations = relations(purchaseTrips, ({ one, many }) => ({
   store: one(stores, { fields: [purchaseTrips.storeId], references: [stores.id] }),
+  supplier: one(suppliers, { fields: [purchaseTrips.supplierId], references: [suppliers.id] }),
   lines: many(purchaseLines),
 }));
 

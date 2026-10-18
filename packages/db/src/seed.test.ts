@@ -48,7 +48,7 @@ const EXPECTED = {
   settings: 6,
   paymentMethods: 4,
   productCategories: 5,
-  expenseCategories: 6,
+  expenseCategories: 9,
 };
 
 describe("seed", () => {
@@ -132,8 +132,11 @@ describe("seed", () => {
     expect(expenseRows.map((r) => r.code).sort()).toEqual([
       "bags",
       "bleach",
+      "cleaning",
       "coffee",
       "drinking_water",
+      "food",
+      "packaging",
       "sugar",
       "unloading_labor",
     ]);

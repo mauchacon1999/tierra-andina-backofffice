@@ -1,5 +1,6 @@
 import {
   compareDecimals,
+  payableBalance,
   subtractTotals,
   totalsByCurrency,
   weekContaining,
@@ -83,30 +84,21 @@ export async function getHomeBriefing(
       .map((row) => ({ amount: row.amount, currency: row.currency })),
   );
 
-  const paidByDebt = new Map<string, string>();
+  const appliedByDebt = new Map<string, string[]>();
   for (const payment of await findPayablePaymentAmounts(
     db,
     debts.map((debt) => debt.id),
   )) {
-    const soFar = paidByDebt.get(payment.payableId) ?? "0";
-    paidByDebt.set(
-      payment.payableId,
-      totalsByCurrency([
-        { amount: soFar, currency: "USD" },
-        { amount: payment.amountUsd, currency: "USD" },
-      ]).USD,
-    );
+    appliedByDebt.set(payment.payableId, [
+      ...(appliedByDebt.get(payment.payableId) ?? []),
+      payment.applied,
+    ]);
   }
   const openDebts = debts.flatMap((debt) => {
-    const paidUsd = paidByDebt.get(debt.id) ?? "0.0000";
-    return compareDecimals(debt.amountUsd, paidUsd) > 0
-      ? [{ amountUsd: debt.amountUsd, paidUsd }]
-      : [];
+    const balance = payableBalance(debt.total, appliedByDebt.get(debt.id) ?? []);
+    return compareDecimals(balance, "0") > 0 ? [{ amount: balance, currency: debt.currency }] : [];
   });
-  const remaining = subtractTotals(
-    totalsByCurrency(openDebts.map((row) => ({ amount: row.amountUsd, currency: "USD" }))),
-    totalsByCurrency(openDebts.map((row) => ({ amount: row.paidUsd, currency: "USD" }))),
-  );
+  const remaining = totalsByCurrency(openDebts);
 
   const missingRates = (["bcv", "market", "sale"] as const).filter((kind) => rates[kind] === null);
   const alerts: HomeBriefing["alerts"] = [];
