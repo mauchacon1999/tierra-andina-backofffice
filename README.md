@@ -93,6 +93,21 @@ the **test** database on every run.
 Running `bun test` from the root is intentionally blocked; use `bun run test`
 (or `bun --cwd=<package> test` for a single package).
 
+## 5. Deploy (Vercel)
+
+Two Vercel projects from this repo, one per app:
+
+| Project | Root Directory | Framework Preset | Environment variables                                                 |
+| ------- | -------------- | ---------------- | --------------------------------------------------------------------- |
+| API     | `apps/api`     | Bun              | `DATABASE_URL`, `WEB_ORIGIN`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET` |
+| Web     | `apps/web`     | Next.js          | `NEXT_PUBLIC_API_URL`                                                 |
+
+The API's `vercel.json` selects the Bun runtime and runs `bun run build`, which bundles
+`src/index.ts` into `dist/index.js`; `apps/api/server.ts` loads that bundle. With Supabase,
+`DATABASE_URL` must be the **session** pooler (port 5432): postgres.js uses prepared
+statements, which the transaction pooler (6543) does not support. Apply migrations and the
+seed from your machine with `DATABASE_URL` pointing at the production database.
+
 ## Structure
 
 ```
