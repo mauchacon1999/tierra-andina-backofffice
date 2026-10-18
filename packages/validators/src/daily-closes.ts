@@ -20,7 +20,7 @@ const shortText = (max: number) =>
     .transform((v) => v.trim())
     .pipe(z.string().max(max, message("text.tooLong", { max })));
 
-const positiveAmount = decimalSchema("amount").refine((v) => compareDecimals(v, "0") > 0, {
+export const positiveAmount = decimalSchema("amount").refine((v) => compareDecimals(v, "0") > 0, {
   message: message("decimal.positive", { subject: "amount" }),
 });
 
@@ -51,7 +51,7 @@ export const customerSearchQuerySchema = z.object({
 });
 
 /** As typed, without extra spaces ("  Sra.   María " → "Sra. María"). */
-const customerNameSchema = z
+export const customerNameSchema = z
   .string()
   .transform((v) => v.trim().replace(/\s+/g, " "))
   .pipe(

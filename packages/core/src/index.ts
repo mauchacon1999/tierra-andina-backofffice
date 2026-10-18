@@ -28,6 +28,8 @@ export type {
   SaleUnit,
 } from "./products";
 export { amountInBs, amountInUsd, sumDecimals } from "./rates";
+export { parseBcvHomePage } from "./official-bcv";
+export type { OfficialBcvRate } from "./official-bcv";
 export {
   BUSINESS_TIME_ZONE,
   isBusinessDate,
@@ -83,3 +85,5 @@ export type {
   SettledPayment,
   SettlePaymentInput,
 } from "./payables";
+export { CREDIT_ENTRY_KINDS, customerCreditBalance } from "./customer-credit";
+export type { CreditEntry, CreditEntryKind } from "./customer-credit";

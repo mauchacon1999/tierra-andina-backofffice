@@ -17,6 +17,7 @@ export const queryKeys = {
   productCategories: ["product-categories"] as const,
   exchangeRates: {
     all: ["exchange-rates"] as const,
+    official: ["exchange-rates", "official"] as const,
     day: (date: string) => ["exchange-rates", "day", date] as const,
     range: (from: string, to: string) => ["exchange-rates", "range", from, to] as const,
   },

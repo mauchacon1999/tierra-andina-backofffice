@@ -26,6 +26,8 @@ export type UseDailyRatesFormResult = {
   formError: string | undefined;
   /** The save just finished and the values were not changed since. */
   isSaved: boolean;
+  /** Writes the consulted official rate into the BCV field. Nothing is stored until save. */
+  applyOfficialBcv: (usd: string) => void;
 };
 
 const EMPTY: DailyRatesFormValues = { bcv: "", market: "", sale: "" };
@@ -79,5 +81,9 @@ export function useDailyRatesForm(initialDate?: string): UseDailyRatesFormResult
     isSaving: isSaving || form.formState.isSubmitting,
     formError: form.formState.errors.root?.message,
     isSaved: savedAt === date && !form.formState.isDirty,
+    applyOfficialBcv: (usd) => {
+      form.setValue("bcv", normalizeDecimal(usd), { shouldDirty: true, shouldValidate: true });
+      setSavedAt(null);
+    },
   };
 }

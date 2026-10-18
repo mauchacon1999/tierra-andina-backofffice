@@ -1,3 +1,4 @@
+import type { OfficialBcvRate } from "@ta/core";
 import type { Database } from "@ta/db";
 import type { MembershipRole } from "@ta/validators";
 import type { RequestIdVariables } from "hono/request-id";
@@ -26,5 +27,7 @@ export type AppEnv = {
     session: AuthSession["session"] | null;
     /** Set by `requireRole`; read it with `getMembership(c)` / `getActor(c)`. */
     membership: Membership | undefined;
+    /** Consults the official BCV publication. Tests replace it so they never call the network. */
+    officialBcvRate: () => Promise<OfficialBcvRate>;
   };
 };

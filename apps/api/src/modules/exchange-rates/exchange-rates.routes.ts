@@ -1,6 +1,7 @@
 import {
   businessDateSchema,
   dailyRatesRangeQuerySchema,
+  officialBcvRateSchema,
   setDailyRatesSchema,
 } from "@ta/validators";
 import { Hono } from "hono";
@@ -17,6 +18,9 @@ const dateParamSchema = z.object({ date: businessDateSchema });
 /** /api/v1/exchange-rates — the day's BCV, Coche (market) and sale rates, entered by the owner. */
 export function exchangeRatesRoutes(): Hono<AppEnv> {
   return new Hono<AppEnv>()
+    .get("/official", requireRole("owner", "manager"), async (c) =>
+      c.json(officialBcvRateSchema.parse(await c.get("officialBcvRate")())),
+    )
     .get(
       "/",
       requireRole("owner", "manager"),

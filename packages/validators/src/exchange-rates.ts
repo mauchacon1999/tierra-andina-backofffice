@@ -26,6 +26,14 @@ export const dailyRatesSchema = z.object({
 
 export type DailyRates = z.infer<typeof dailyRatesSchema>;
 
+/** GET /api/v1/exchange-rates/official — consulted rate, not yet stored. */
+export const officialBcvRateSchema = z.object({
+  usd: rateValueSchema,
+  effectiveDate: businessDateSchema,
+});
+
+export type OfficialBcvRateResponse = z.infer<typeof officialBcvRateSchema>;
+
 export const dailyRatesListSchema = z.object({ data: z.array(dailyRatesSchema) });
 
 /** PUT /api/v1/exchange-rates/:date — rates to set; omitted ones are kept. */

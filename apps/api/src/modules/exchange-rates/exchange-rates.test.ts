@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 
 import { schema } from "@ta/db";
 import { testConnection } from "@ta/db/testing";
-import { dailyRatesListSchema, dailyRatesSchema } from "@ta/validators";
+import { dailyRatesListSchema, dailyRatesSchema, officialBcvRateSchema } from "@ta/validators";
 import { and, eq, isNull } from "drizzle-orm";
 
 import { call, errorOf, signInRoles, type RoleSession } from "@/testing/http";
@@ -98,6 +98,22 @@ describe("PUT /api/v1/exchange-rates/:date", () => {
     expect(
       (await call(s.app, "PUT", "/exchange-rates/2026-09-06", null, { bcv: "1" })).status,
     ).toBe(401);
+  });
+});
+
+describe("GET /api/v1/exchange-rates/official", () => {
+  test("the owner and the manager see the consulted BCV rate; it is not stored", async () => {
+    const owner = await call(s.app, "GET", "/exchange-rates/official", s.owner);
+    const manager = await call(s.app, "GET", "/exchange-rates/official", s.manager);
+
+    expect(owner.status).toBe(200);
+    expect(officialBcvRateSchema.parse(owner.body)).toEqual({
+      usd: "880.1159",
+      effectiveDate: "2026-10-16",
+    });
+    expect(manager.status).toBe(200);
+    expect((await call(s.app, "GET", "/exchange-rates/official", s.receiver)).status).toBe(403);
+    expect((await call(s.app, "GET", "/exchange-rates/official", null)).status).toBe(401);
   });
 });
 

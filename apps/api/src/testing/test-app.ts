@@ -19,7 +19,12 @@ const TEST_SECRET = "test-only-secret-that-is-at-least-32-characters-long";
 export type TestApp = Hono<AppEnv>;
 
 /** The app wired to the test database. `pingDb` can be replaced to simulate an outage. */
-export function createTestApp(overrides: { pingDb?: () => Promise<void> } = {}): TestApp {
+export function createTestApp(
+  overrides: {
+    pingDb?: () => Promise<void>;
+    officialBcvRate?: () => Promise<{ usd: string; effectiveDate: string }>;
+  } = {},
+): TestApp {
   const { db, ping } = testConnection();
   const auth = createAuth({
     db,
@@ -33,6 +38,8 @@ export function createTestApp(overrides: { pingDb?: () => Promise<void> } = {}):
     db,
     auth,
     logRequests: false,
+    officialBcvRate:
+      overrides.officialBcvRate ?? (async () => ({ usd: "880.1159", effectiveDate: "2026-10-16" })),
   });
 }
 

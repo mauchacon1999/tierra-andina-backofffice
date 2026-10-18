@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { HomeOfficialRate } from "@/features/exchange-rates/components/home-official-rate";
 import { HomeBriefing } from "@/features/home/components/home-briefing";
 import { HomeOpenTrip } from "@/features/home/components/home-open-trip";
 import { HomeShortcuts } from "@/features/home/components/home-shortcuts";
@@ -10,6 +11,7 @@ export default async function Home(): Promise<React.JSX.Element> {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold tracking-tight text-primary-text">{t("title")}</h1>
+      <HomeOfficialRate />
       <HomeBriefing />
       <HomeOpenTrip />
       <HomeShortcuts />

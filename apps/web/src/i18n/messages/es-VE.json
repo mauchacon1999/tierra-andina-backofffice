@@ -296,6 +296,16 @@
     "marketHint": "La que cobran los puestos.",
     "sale": "Tasa de venta",
     "saleHint": "Opcional, para la lista de precios.",
+    "official": {
+      "title": "Tasa oficial BCV",
+      "loading": "Consultando la tasa BCV…",
+      "value": "{rate} Bs por dólar",
+      "effective": "Fecha valor {date}",
+      "source": "Consultada en el Banco Central de Venezuela. No cambia la tasa guardada hasta que la uses.",
+      "use": "Usar esta tasa",
+      "open": "Ir a tasas del día",
+      "unavailable": "No se pudo consultar la tasa oficial del BCV."
+    },
     "submit": "Guardar tasas",
     "saved": "Tasas guardadas.",
     "saveFailed": "No se pudieron guardar las tasas",

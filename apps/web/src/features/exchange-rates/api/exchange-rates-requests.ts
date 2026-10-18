@@ -1,11 +1,18 @@
 import {
   dailyRatesListSchema,
   dailyRatesSchema,
+  officialBcvRateSchema,
   type DailyRates,
+  type OfficialBcvRateResponse,
   type SetDailyRates,
 } from "@ta/validators";
 
 import { api } from "@/lib/api";
+
+/** Official BCV USD rate as published. It is not the rate stored for the shop. */
+export function getOfficialBcvRate(): Promise<OfficialBcvRateResponse> {
+  return api.get("/api/v1/exchange-rates/official", { schema: officialBcvRateSchema });
+}
 
 export function getDailyRates(date: string): Promise<DailyRates> {
   return api.get(`/api/v1/exchange-rates/${date}`, { schema: dailyRatesSchema });

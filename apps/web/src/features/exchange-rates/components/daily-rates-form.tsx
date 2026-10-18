@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
+import { OfficialRateCard } from "@/features/exchange-rates/components/official-rate-card";
 import { useDailyRatesForm } from "@/features/exchange-rates/hooks/use-daily-rates-form";
 import { formatBusinessDateLong } from "@/utils/format-date";
 
@@ -31,6 +32,7 @@ export function DailyRatesForm({ initialDate }: DailyRatesFormProps): React.JSX.
     >
       {r.formError && <Alert tone="error">{r.formError}</Alert>}
       {r.isSaved && <Alert tone="success">{t("saved")}</Alert>}
+      <OfficialRateCard onUse={r.applyOfficialBcv} />
 
       <TextField
         label={t("date")}

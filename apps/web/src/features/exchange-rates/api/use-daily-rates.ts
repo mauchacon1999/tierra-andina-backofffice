@@ -1,11 +1,12 @@
 "use client";
 
-import type { DailyRates, SetDailyRates } from "@ta/validators";
+import type { DailyRates, OfficialBcvRateResponse, SetDailyRates } from "@ta/validators";
 import useSWR, { useSWRConfig } from "swr";
 import useSWRMutation from "swr/mutation";
 
 import {
   getDailyRates,
+  getOfficialBcvRate,
   listDailyRates,
   setDailyRates,
 } from "@/features/exchange-rates/api/exchange-rates-requests";
@@ -17,6 +18,22 @@ export type UseDailyRatesResult = {
   isLoading: boolean;
   error: ApiError | undefined;
 };
+
+export type UseOfficialBcvRateResult = {
+  rate: OfficialBcvRateResponse | undefined;
+  isLoading: boolean;
+  error: ApiError | undefined;
+  retry: () => void;
+};
+
+/** The official BCV USD rate, consulted live. It does not read or write the stored day. */
+export function useOfficialBcvRate(): UseOfficialBcvRateResult {
+  const { data, error, isLoading, mutate } = useSWR<OfficialBcvRateResponse, ApiError>(
+    queryKeys.exchangeRates.official,
+    getOfficialBcvRate,
+  );
+  return { rate: data, isLoading, error, retry: () => void mutate() };
+}
 
 /** The BCV, Coche and sale rates of one business day (nulls when not set). */
 export function useDailyRates(date: string): UseDailyRatesResult {

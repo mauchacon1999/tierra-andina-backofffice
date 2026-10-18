@@ -127,6 +127,10 @@ GET {{baseUrl}}/api/v1/exchange-rates/2026-10-19
 ### Days with rates in a range (≤ 62 days), newest first
 GET {{baseUrl}}/api/v1/exchange-rates?from=2026-10-01&to=2026-10-31
 
+### Official BCV USD rate, consulted live (owner, manager) — 200 { usd, effectiveDate }
+# Source: https://www.bcv.org.ve/ (dollar block and fecha valor). Not stored. 503 OFFICIAL_RATE_UNAVAILABLE.
+GET {{baseUrl}}/api/v1/exchange-rates/official
+
 # --- Suppliers and purchases (owner). Errors: 404 TRIP_NOT_FOUND · 409 TRIP_CLOSED ·
 #     422 DAY_RATES_MISSING · 404 LINE_NOT_FOUND · 422 LINE_PRODUCT_INVALID ·
 #     422 SUPPLIER_NOT_FOUND · 422 INVALID_PURCHASE_LINE
@@ -419,3 +423,31 @@ Origin: http://localhost:3000
 ### What to pay today by pago móvil: balance in Bs (USD at today's BCV) and the "Pegar datos"
 ### text per active account. 422 BCV_RATE_MISSING · 409 PAYABLE_SETTLED · 409 PAYABLE_VOIDED
 GET {{baseUrl}}/api/v1/payables/<payable id>/mobile-payment
+
+### Customer credit, "fiado" (owner and manager) -----------------------------------------------
+### Balances per currency (no rate; negative = in the customer's favor) and the net total.
+### owing=true leaves out who owes nothing
+GET {{baseUrl}}/api/v1/customers/credit?search=carmen&owing=true
+
+### A customer's balance and history (credit sales come from the daily close), newest first
+GET {{baseUrl}}/api/v1/customers/<customer id>/credit
+
+### A payment in the currency it was paid in — 201. The manager writes today's only
+### (422 PAYMENT_DATE_LOCKED); 404 NOT_FOUND
+POST {{baseUrl}}/api/v1/customers/<customer id>/payments
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "businessDate": "2026-10-18", "amount": "500", "currency": "VES" }
+
+### Take back a mistaken payment (owner) — 409 CREDIT_ENTRY_FROM_CLOSE for credit sales or
+### anything written in a close; 404 CREDIT_ENTRY_NOT_FOUND
+DELETE {{baseUrl}}/api/v1/customers/<customer id>/payments/<entry id>
+Origin: http://localhost:3000
+
+### Name and phone (owner); "" clears the phone
+PATCH {{baseUrl}}/api/v1/customers/<customer id>
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "phone": "0414-1112233" }

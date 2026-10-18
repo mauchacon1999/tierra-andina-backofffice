@@ -13,7 +13,8 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > (`GET /api/v1/home`); there is no bank balance.
 > Modules done: **products** (core rules + pricing, validators, `/api/v1/products`, owner screens
 > `/products`, `/products/new`, `/products/[id]`); **store settings** (`/api/v1/settings`);
-> **daily rates** (BCV, Coche, sale: `/api/v1/exchange-rates`, owner screen `/rates`);
+> **daily rates** (BCV, Coche, sale: `/api/v1/exchange-rates`, owner screen `/rates`; the home
+> and that screen show the official BCV rate from `GET /exchange-rates/official`, and the owner still saves it);
 > **purchase trips** (`/api/v1/purchase-trips`, `/api/v1/suppliers`, owner screens `/purchases`,
 > `/purchases/[id]`: one open trip at a time (close it first; the home screen links to it),
 > the shopping list on the trip (Comprar opens that product's line), add products one after another — optional
@@ -49,6 +50,8 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > `/suppliers`, `/suppliers/[id]` (data and pago móvil accounts), `/local-purchases` (start one;
 > its lines and "Guardar compra" with the invoice's currency and due date live on
 > `/purchases/[id]`), and a supplier on Coche credit lines.
+> **Fiados** (phase 3, in progress): API `/api/v1/customers/credit`, `/customers/:id/credit`,
+> payments (owner and manager, the manager today's only; balances per currency, no rate).
 > Next (docs/plan.md): phase 1 leftovers (push,
 > offline) and phase 3 (debts, expenses, payroll).
 > Business rules and DB design: `docs/domain-model.md`; working with the DB: `docs/database.md`;

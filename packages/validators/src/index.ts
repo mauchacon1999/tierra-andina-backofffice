@@ -73,6 +73,7 @@ export {
   dailyRatesRangeQuerySchema,
   dailyRatesSchema,
   MAX_RATE_RANGE_DAYS,
+  officialBcvRateSchema,
   rateValueSchema,
   setDailyRatesSchema,
 } from "./exchange-rates";
@@ -80,6 +81,7 @@ export type {
   DailyRates,
   DailyRatesFormValues,
   DailyRatesRangeQuery,
+  OfficialBcvRateResponse,
   SetDailyRates,
 } from "./exchange-rates";
 export {
@@ -278,3 +280,24 @@ export type {
   SupplierPaymentAccountFields,
   SupplierPaymentAccountInput,
 } from "./payables";
+export {
+  creditEntrySchema,
+  customerBalanceListSchema,
+  customerBalanceSchema,
+  customerCreditDetailSchema,
+  customerCreditQuerySchema,
+  customerPaymentInputSchema,
+  updateCustomerSchema,
+} from "./customer-credit";
+export type {
+  CreditEntry,
+  CustomerBalance,
+  CustomerBalanceList,
+  CustomerCreditDetail,
+  CustomerCreditQuery,
+  CustomerCreditQueryInput,
+  CustomerPayment,
+  CustomerPaymentInput,
+  UpdateCustomer,
+  UpdateCustomerInput,
+} from "./customer-credit";

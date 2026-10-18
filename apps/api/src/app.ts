@@ -1,9 +1,11 @@
+import type { OfficialBcvRate } from "@ta/core";
 import type { Database } from "@ta/db";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { requestId } from "hono/request-id";
 
 import { toUnifiedAuthResponse, type Auth } from "@/lib/auth";
+import { readOfficialBcvRate } from "@/modules/exchange-rates/official-bcv";
 import type { AppEnv } from "@/lib/types";
 import { errorHandler, notFoundHandler } from "@/middleware/errors";
 import { requestLogger } from "@/middleware/logger";
@@ -21,6 +23,8 @@ export type AppDeps = {
   auth: Auth;
   /** Disables per-request logging (tests). */
   logRequests?: boolean;
+  /** Official BCV consultation. Tests pass a fake so the suite never calls the network. */
+  officialBcvRate?: () => Promise<OfficialBcvRate>;
 };
 
 /** Builds the app without side effects: it reads no env; connections are passed in. */
@@ -30,6 +34,7 @@ export function createApp({
   db,
   auth,
   logRequests = true,
+  officialBcvRate = readOfficialBcvRate,
 }: AppDeps): Hono<AppEnv> {
   const app = new Hono<AppEnv>();
 
@@ -45,6 +50,7 @@ export function createApp({
   app.use(async (c, next) => {
     c.set("db", db);
     c.set("auth", auth);
+    c.set("officialBcvRate", officialBcvRate);
     await next();
   });
 

@@ -38,7 +38,9 @@ month (paydays). Cash starts at zero every day; the previous day's cash is kept 
 - Sale prices are defined in **USD** and converted to Bs with a **sale rate** chosen by the
   owner, always above the BCV rate to protect against devaluation.
 - Four rates exist and must never be confused. The owner enters the BCV, Coche and sale rates
-  of each day by hand (screen "Tasas del día"):
+  of each day by hand (screen "Tasas del día"). The home screen and that form also show the
+  official BCV USD rate read from the Banco Central de Venezuela homepage (`GET /exchange-rates/official`).
+  It does not replace the stored rate until the owner presses "Usar esta tasa" and saves:
 
 | Rate            | Set by                  | Scope                                                      |
 | --------------- | ----------------------- | ---------------------------------------------------------- |
