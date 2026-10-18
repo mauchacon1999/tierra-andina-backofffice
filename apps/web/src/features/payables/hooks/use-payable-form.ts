@@ -133,7 +133,7 @@ export function usePayableForm(
       form.setValue("supplierId", supplier.id, { shouldDirty: true, shouldValidate: true });
     },
     onSubmit: () => onSubmit(),
-    isSubmitting: create.isRunning || replace.isRunning,
+    isSubmitting: create.isRunning || replace.isRunning || form.formState.isSubmitting,
     formError: form.formState.errors.root?.message,
   };
 }

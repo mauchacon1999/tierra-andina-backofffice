@@ -88,7 +88,7 @@ export function PriceProposalScreen(): React.JSX.Element {
           {publishError != null && (
             <Alert tone="error">{errorMessage(publishError, t("loadFailed"))}</Alert>
           )}
-          <Button onClick={onPublish} disabled={publish.isRunning}>
+          <Button onClick={onPublish} isLoading={publish.isRunning}>
             {publish.isRunning ? t("publishing") : t("publishProposal")}
           </Button>
         </>

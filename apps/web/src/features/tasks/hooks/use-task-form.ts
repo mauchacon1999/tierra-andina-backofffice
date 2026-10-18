@@ -51,5 +51,10 @@ export function useTaskForm(onCreated?: () => void): UseTaskFormResult {
     }
   });
 
-  return { form, assigneeOptions, onSubmit, isSubmitting: create.isRunning };
+  return {
+    form,
+    assigneeOptions,
+    onSubmit,
+    isSubmitting: create.isRunning || form.formState.isSubmitting,
+  };
 }

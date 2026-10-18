@@ -54,5 +54,10 @@ export function useShoppingListForm(): UseShoppingListFormResult {
     }
   });
 
-  return { form, productOptions, onSubmit, isSubmitting: add.isRunning };
+  return {
+    form,
+    productOptions,
+    onSubmit,
+    isSubmitting: add.isRunning || form.formState.isSubmitting,
+  };
 }

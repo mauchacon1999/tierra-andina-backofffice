@@ -76,7 +76,7 @@ export function useDailyRatesForm(initialDate?: string): UseDailyRatesFormResult
     form,
     isLoadingDay: isLoading,
     onSubmit: () => onSubmit(),
-    isSaving,
+    isSaving: isSaving || form.formState.isSubmitting,
     formError: form.formState.errors.root?.message,
     isSaved: savedAt === date && !form.formState.isDirty,
   };

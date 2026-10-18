@@ -37,6 +37,9 @@ export function ConfirmButton({
   className,
 }: ConfirmButtonProps): React.JSX.Element {
   const [isAsking, setIsAsking] = useState(false);
+  // Busy for the whole action (the request and what follows), not only while `isLoading`.
+  const [isRunning, setIsRunning] = useState(false);
+  const isBusy = isLoading || isRunning;
   const t = useTranslations("common");
 
   if (!isAsking) {
@@ -60,22 +63,22 @@ export function ConfirmButton({
     >
       <p className="text-sm font-medium">{question}</p>
       <div className="flex gap-2">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => setIsAsking(false)}
-          disabled={isLoading}
-        >
+        <Button variant="secondary" size="sm" onClick={() => setIsAsking(false)} disabled={isBusy}>
           {t("cancel")}
         </Button>
         <Button
           variant={variant}
           size="sm"
-          isLoading={isLoading}
+          isLoading={isBusy}
           {...(loadingText ? { loadingText } : {})}
           onClick={async () => {
-            await onConfirm();
-            setIsAsking(false);
+            setIsRunning(true);
+            try {
+              await onConfirm();
+              setIsAsking(false);
+            } finally {
+              setIsRunning(false);
+            }
           }}
         >
           {confirmLabel ?? t("confirm")}

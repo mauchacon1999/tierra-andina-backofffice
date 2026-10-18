@@ -23,6 +23,38 @@ describe("ConfirmButton", () => {
     expect(await screen.findByRole("button", { name: "Eliminar" })).toBeDefined();
   });
 
+  it("stays busy until the action finishes, without a second tap", async () => {
+    let finish: () => void = () => undefined;
+    const onConfirm = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    render(
+      <ConfirmButton question="¿Anular la factura?" confirmLabel="Anular" onConfirm={onConfirm}>
+        Anular
+      </ConfirmButton>,
+      { wrapper: IntlTestWrapper },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Anular" }));
+    const confirm = screen.getByRole("button", { name: "Anular" });
+    fireEvent.click(confirm);
+
+    await waitFor(() => expect(confirm.getAttribute("aria-busy")).toBe("true"));
+    expect((confirm as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: "Cancelar" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+    fireEvent.click(confirm);
+    expect(onConfirm).toHaveBeenCalledOnce();
+
+    finish();
+    expect(await screen.findByRole("button", { name: "Anular" })).toBeDefined();
+    expect(screen.queryByRole("group")).toBeNull();
+  });
+
   it("cancel goes back without acting", () => {
     const onConfirm = vi.fn();
     render(

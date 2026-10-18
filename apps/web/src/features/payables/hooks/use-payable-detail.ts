@@ -12,7 +12,7 @@ import {
 } from "@/features/payables/api/use-payables";
 import { useErrorMessage } from "@/i18n/use-error-message";
 
-export type PayableDialog = "payment" | "terms" | null;
+export type PayableDialog = "payment" | "settle" | "terms" | null;
 
 export type UsePayableDetailResult = UsePayableResult & {
   dialog: PayableDialog;

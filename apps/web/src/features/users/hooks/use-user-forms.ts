@@ -69,7 +69,7 @@ export function useCreateUserForm(
   return {
     form,
     onSubmit: () => onSubmit(),
-    isSubmitting: create.isRunning,
+    isSubmitting: create.isRunning || form.formState.isSubmitting,
     formError: form.formState.errors.root?.message,
   };
 }
@@ -97,7 +97,7 @@ export function useEditUserForm(
   return {
     form,
     onSubmit: () => onSubmit(),
-    isSubmitting: update.isRunning,
+    isSubmitting: update.isRunning || form.formState.isSubmitting,
     formError: form.formState.errors.root?.message,
   };
 }
@@ -125,7 +125,7 @@ export function usePasswordForm(
   return {
     form,
     onSubmit: () => onSubmit(),
-    isSubmitting: setPassword.isRunning,
+    isSubmitting: setPassword.isRunning || form.formState.isSubmitting,
     formError: form.formState.errors.root?.message,
   };
 }

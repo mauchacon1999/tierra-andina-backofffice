@@ -61,7 +61,7 @@ export function useOpenLocalPurchase(today: string): UseOpenLocalPurchaseResult 
     suppliers,
     isBcvMissing: rates !== undefined && rates.bcv === null,
     onSubmit: () => onSubmit(),
-    isSubmitting: open.isRunning,
+    isSubmitting: open.isRunning || form.formState.isSubmitting,
     formError: form.formState.errors.root?.message,
   };
 }

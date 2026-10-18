@@ -185,7 +185,10 @@ Rules:
 - **Labels are verbs in Spanish**, specific when possible: "Guardar compra", "Publicar lista",
   not "OK" / "Aceptar" / "Enviar".
 - **Loading:** pass `isLoading` and a gerund `loadingText` ("Guardando…", "Publicando…"). The
-  button disables itself and is announced as busy; never let users submit twice.
+  button disables itself and is announced as busy; never let users submit twice. A form's
+  `isSubmitting` is `mutation.isRunning || form.formState.isSubmitting`: the SWR mutation alone
+  turns false as soon as the API answers, while the form still refreshes data or navigates.
+  `ConfirmButton` stays busy on its own until its `onConfirm` promise settles.
 - **Do not disable a submit button because the form is invalid**: let them press it and show
   the errors (users must learn what is missing).
 - **Destructive actions** use `danger` and ask for confirmation with what will happen

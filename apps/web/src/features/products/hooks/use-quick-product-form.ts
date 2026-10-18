@@ -102,7 +102,7 @@ export function useQuickProductForm(
     packQuantityLabel: labels.packQuantity(purchaseUnit, saleUnit),
     saleUnitSuffix: labels.suffix(saleUnit),
     onSubmit: () => onSubmit(),
-    isSubmitting: quickCreate.isRunning,
+    isSubmitting: quickCreate.isRunning || form.formState.isSubmitting,
     formError: form.formState.errors.root?.message,
   };
 }

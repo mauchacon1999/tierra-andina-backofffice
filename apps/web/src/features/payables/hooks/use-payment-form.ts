@@ -43,8 +43,14 @@ export type UsePaymentFormResult = {
 /**
  * "Registrar abono": date, method (it sets the currency), amount, the day's BCV rate (suggested,
  * editable), reference and destination account, with what it takes off the balance.
+ * `settle` ("Marcar como pagada") pays the whole balance: the amount follows the method and the
+ * rate instead of being typed.
  */
-export function usePaymentForm(payable: PayableDetail, onDone: () => void): UsePaymentFormResult {
+export function usePaymentForm(
+  payable: PayableDetail,
+  onDone: () => void,
+  { settle = false }: { settle?: boolean } = {},
+): UsePaymentFormResult {
   const t = useTranslations("payables.payment");
   const record = useRecordPayment(payable.id);
   const { supplier } = useSupplier(payable.supplierId);
@@ -79,6 +85,11 @@ export function usePaymentForm(payable: PayableDetail, onDone: () => void): UseP
     rate: rate ?? "",
   };
   const fullAmount = fullPaymentAmount(context);
+
+  // Settling: the amount is always the exact balance in the method's currency.
+  useEffect(() => {
+    if (settle) form.setValue("amount", fullAmount ? normalizeDecimal(fullAmount) : "");
+  }, [settle, fullAmount, form]);
   const showError = useFormError(form, t("failed"));
   const onSubmit = form.handleSubmit(async (input) => {
     try {
@@ -105,7 +116,7 @@ export function usePaymentForm(payable: PayableDetail, onDone: () => void): UseP
       }
     },
     onSubmit: () => onSubmit(),
-    isSubmitting: record.isRunning,
+    isSubmitting: record.isRunning || form.formState.isSubmitting,
     formError: form.formState.errors.root?.message,
   };
 }

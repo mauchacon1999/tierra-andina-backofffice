@@ -40,7 +40,7 @@ export function useTermsForm(payable: PayableDetail, onDone: () => void): UseTer
   return {
     form,
     onSubmit: () => onSubmit(),
-    isSubmitting: save.isRunning,
+    isSubmitting: save.isRunning || form.formState.isSubmitting,
     formError: form.formState.errors.root?.message,
   };
 }

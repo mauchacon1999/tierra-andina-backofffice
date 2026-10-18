@@ -55,6 +55,11 @@ export function PayableDetailScreen(): React.JSX.Element {
       {s.actionError && <Alert tone="error">{s.actionError}</Alert>}
       <div className="flex flex-wrap gap-2">
         {s.canPay && <Button onClick={() => s.openDialog("payment")}>{td("pay")}</Button>}
+        {s.canPay && (
+          <Button variant="secondary" onClick={() => s.openDialog("settle")}>
+            {td("markPaid")}
+          </Button>
+        )}
         {payable.status !== "voided" && (
           <Button variant="secondary" onClick={() => s.openDialog("terms")}>
             {td("terms")}
@@ -89,10 +94,13 @@ export function PayableDetailScreen(): React.JSX.Element {
       <Dialog
         isOpen={s.dialog !== null}
         onClose={s.closeDialog}
-        title={s.dialog === "terms" ? td("terms") : td("pay")}
+        title={
+          s.dialog === "terms" ? td("terms") : s.dialog === "settle" ? td("markPaid") : td("pay")
+        }
         closeLabel={tc("close")}
       >
         {s.dialog === "payment" && <PaymentForm payable={payable} onDone={s.closeDialog} />}
+        {s.dialog === "settle" && <PaymentForm payable={payable} onDone={s.closeDialog} settle />}
         {s.dialog === "terms" && <TermsForm payable={payable} onDone={s.closeDialog} />}
       </Dialog>
     </div>

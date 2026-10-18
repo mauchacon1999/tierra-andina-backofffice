@@ -93,6 +93,8 @@ export function useCloseForm(options: UseCloseFormOptions): UseCloseFormResult {
   const submit = useSubmitDailyClose();
   const update = useUpdateDailyClose(close?.id ?? "");
   const [pending, setPending] = useState<UpdateDailyClose | null>(null);
+  // The confirmation runs outside handleSubmit: busy until the save and its refresh finish.
+  const [isConfirming, setIsConfirming] = useState(false);
 
   // The methods arrive after the first render: give the form one row per method then.
   const rows = useWatch({ control: form.control, name: "payments" });
@@ -111,6 +113,7 @@ export function useCloseForm(options: UseCloseFormOptions): UseCloseFormResult {
 
   const confirm = async (): Promise<void> => {
     if (!pending) return;
+    setIsConfirming(true);
     try {
       const saved =
         options.mode === "submit"
@@ -121,6 +124,8 @@ export function useCloseForm(options: UseCloseFormOptions): UseCloseFormResult {
     } catch (error) {
       const fallback = options.mode === "submit" ? t("submitFailed") : t("saveFixFailed");
       form.setError("root", { message: errorMessage(error, fallback) });
+    } finally {
+      setIsConfirming(false);
     }
   };
 
@@ -135,7 +140,7 @@ export function useCloseForm(options: UseCloseFormOptions): UseCloseFormResult {
     onSubmit: () => onSubmit(),
     confirm,
     backToForm: () => setPending(null),
-    isSubmitting: submit.isRunning || update.isRunning,
+    isSubmitting: submit.isRunning || update.isRunning || isConfirming,
     formError: form.formState.errors.root?.message,
   };
 }

@@ -56,7 +56,7 @@ export function useCreateSupplierForm(
   return {
     form,
     onSubmit: () => onSubmit(),
-    isSubmitting: create.isRunning,
+    isSubmitting: create.isRunning || form.formState.isSubmitting,
     formError: form.formState.errors.root?.message,
   };
 }
@@ -90,7 +90,7 @@ export function useEditSupplierForm(
   return {
     form,
     onSubmit: () => onSubmit(),
-    isSubmitting: update.isRunning,
+    isSubmitting: update.isRunning || form.formState.isSubmitting,
     formError: form.formState.errors.root?.message,
   };
 }
@@ -123,7 +123,7 @@ export function useAccountForm(
   return {
     form,
     onSubmit: () => onSubmit(),
-    isSubmitting: save.isRunning,
+    isSubmitting: save.isRunning || form.formState.isSubmitting,
     formError: form.formState.errors.root?.message,
   };
 }

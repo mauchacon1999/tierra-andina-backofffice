@@ -11,11 +11,20 @@ import { TextField } from "@/components/ui/text-field";
 import { usePaymentForm } from "@/features/payables/hooks/use-payment-form";
 import { formatMoney } from "@/utils/format-number";
 
-export type PaymentFormProps = { payable: PayableDetail; onDone: () => void };
+export type PaymentFormProps = {
+  payable: PayableDetail;
+  onDone: () => void;
+  /** "Marcar como pagada": pays the whole balance; the amount is not typed. */
+  settle?: boolean;
+};
 
 /** A payment to the invoice, converted at the day's BCV rate. */
-export function PaymentForm({ payable, onDone }: PaymentFormProps): React.JSX.Element {
-  const f = usePaymentForm(payable, onDone);
+export function PaymentForm({
+  payable,
+  onDone,
+  settle = false,
+}: PaymentFormProps): React.JSX.Element {
+  const f = usePaymentForm(payable, onDone, { settle });
   const t = useTranslations("payables.payment");
   const { errors } = f.form.formState;
 
@@ -48,22 +57,30 @@ export function PaymentForm({ payable, onDone }: PaymentFormProps): React.JSX.El
           {...f.form.register("method")}
         />
       </div>
-      <div className="space-y-1">
-        <TextField
-          label={t("amount")}
-          required
-          inputMode="decimal"
-          autoComplete="off"
-          suffix={f.currency === "USD" ? "$" : "Bs"}
-          error={errors.amount?.message}
-          {...f.form.register("amount")}
-        />
-        {f.fullAmount && (
-          <Button variant="ghost" size="sm" onClick={f.payAll}>
-            {t("payAll", { amount: formatMoney(f.fullAmount, f.currency) })}
-          </Button>
-        )}
-      </div>
+      {settle ? (
+        <Alert tone="info">
+          {f.fullAmount
+            ? t("settleAmount", { amount: formatMoney(f.fullAmount, f.currency) })
+            : t("settleNeedsRate")}
+        </Alert>
+      ) : (
+        <div className="space-y-1">
+          <TextField
+            label={t("amount")}
+            required
+            inputMode="decimal"
+            autoComplete="off"
+            suffix={f.currency === "USD" ? "$" : "Bs"}
+            error={errors.amount?.message}
+            {...f.form.register("amount")}
+          />
+          {f.fullAmount && (
+            <Button variant="ghost" size="sm" onClick={f.payAll}>
+              {t("payAll", { amount: formatMoney(f.fullAmount, f.currency) })}
+            </Button>
+          )}
+        </div>
+      )}
       <TextField
         label={t("rate")}
         required
@@ -73,7 +90,7 @@ export function PaymentForm({ payable, onDone }: PaymentFormProps): React.JSX.El
         error={errors.rate?.message}
         {...f.form.register("rate")}
       />
-      {f.preview && (
+      {f.preview && !settle && (
         <Alert tone={f.preview.isFullPayment ? "success" : "info"}>
           {f.preview.isFullPayment
             ? t("settles")
@@ -111,7 +128,7 @@ export function PaymentForm({ payable, onDone }: PaymentFormProps): React.JSX.El
         isLoading={f.isSubmitting}
         loadingText={t("submitting")}
       >
-        {t("submit")}
+        {settle ? t("settleSubmit") : t("submit")}
       </Button>
     </form>
   );

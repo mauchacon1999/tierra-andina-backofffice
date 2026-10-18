@@ -85,6 +85,7 @@ describe("PayableDetailScreen", () => {
 
     expect(await screen.findByRole("heading", { name: "CXP-000007" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Registrar abono" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Marcar como pagada" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Editar" })).toBeDefined();
     expect(await screen.findByRole("button", { name: "Copiar para pago móvil" })).toBeDefined();
 
@@ -137,6 +138,7 @@ describe("PayableDetailScreen", () => {
 
     expect(await screen.findByText("Pagada")).toBeDefined();
     expect(screen.queryByRole("button", { name: "Registrar abono" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Marcar como pagada" })).toBeNull();
     expect(getMobilePaymentData).not.toHaveBeenCalled();
   });
 });

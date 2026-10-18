@@ -922,7 +922,8 @@
       "voidQuestion": "¿Anular esta factura? Deja de contar como deuda.",
       "voiding": "Anulando…",
       "actionFailed": "No se pudo completar la acción",
-      "voided": "Anulada el {date}"
+      "voided": "Anulada el {date}",
+      "markPaid": "Marcar como pagada"
     },
     "payment": {
       "title": "Registrar abono",
@@ -947,7 +948,11 @@
       "note": "Nota",
       "submit": "Guardar abono",
       "submitting": "Guardando…",
-      "failed": "No se pudo guardar el abono"
+      "failed": "No se pudo guardar el abono",
+      "settleTitle": "Marcar como pagada",
+      "settleAmount": "Se registra un abono por todo el saldo: {amount}",
+      "settleNeedsRate": "Escribe la tasa para calcular el monto en bolívares",
+      "settleSubmit": "Marcar como pagada"
     },
     "terms": {
       "title": "Vencimiento y nota",

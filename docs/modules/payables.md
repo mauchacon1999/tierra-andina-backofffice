@@ -123,7 +123,8 @@ The home briefing shows the open invoices and what they owe, USD and Bs apart.
   payments): supplier or "Nuevo proveedor" (shown instead of the invoice form), currency,
   issue and due dates, lines with their subtotal and the total while typing.
 - **Factura** `/payables/[id]`: amounts, lines (merchandise says it comes from a purchase),
-  payments (delete one by mistake), **Registrar abono** (method → currency, the day's BCV rate
+  payments (delete one by mistake), **Marcar como pagada** (a payment for the whole balance:
+  choose the method and rate, the exact amount follows), **Registrar abono** (method → currency, the day's BCV rate
   suggested, "Pagar todo" with the exact amount, what it takes off the balance), **Cambiar
   vencimiento**, **Anular**, and **Pagar por pago móvil**: today's amount in Bs with the rate
   used, "Copiar para pago móvil" per account and a copy button per value, with "Copiado".
