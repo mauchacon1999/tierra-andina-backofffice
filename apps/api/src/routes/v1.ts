@@ -5,8 +5,10 @@ import { sessionMiddleware } from "@/middleware/auth";
 import { customersRoutes } from "@/modules/customers/customers.routes";
 import { dailyClosesRoutes } from "@/modules/daily-closes/daily-closes.routes";
 import { exchangeRatesRoutes } from "@/modules/exchange-rates/exchange-rates.routes";
+import { expenseCategoriesRoutes } from "@/modules/expense-categories/expense-categories.routes";
 import { homeRoutes } from "@/modules/home/home.routes";
 import { meRoutes } from "@/modules/me/me.routes";
+import { payablesRoutes } from "@/modules/payables/payables.routes";
 import { paymentMethodsRoutes } from "@/modules/payment-methods/payment-methods.routes";
 import { priceListsRoutes } from "@/modules/price-lists/price-lists.routes";
 import { productCategoriesRoutes, productsRoutes } from "@/modules/products/products.routes";
@@ -37,5 +39,7 @@ export function v1Routes(): Hono<AppEnv> {
     .route("/customers", customersRoutes())
     .route("/daily-closes", dailyClosesRoutes())
     .route("/users", usersRoutes())
-    .route("/tasks", tasksRoutes());
+    .route("/tasks", tasksRoutes())
+    .route("/expense-categories", expenseCategoriesRoutes())
+    .route("/payables", payablesRoutes());
 }

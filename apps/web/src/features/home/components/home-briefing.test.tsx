@@ -40,7 +40,7 @@ const BRIEFING: HomeBriefing = {
     deposited: { usd: "100.0000", bs: "2000.0000" },
     kept: { usd: "18000.0000", bs: "5500.0000" },
   },
-  payables: { count: 1, remainingUsd: "6.0000" },
+  payables: { count: 1, remaining: { usd: "6.0000", bs: "0.0000" } },
   credit: { usd: "0.0000", bs: "1200.0000" },
   alerts: [
     { code: "closes_pending", count: 2 },

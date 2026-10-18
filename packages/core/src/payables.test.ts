@@ -7,6 +7,7 @@ import {
   PAYABLE_PAYMENT_METHODS,
   PaymentExceedsBalanceError,
   payableBalance,
+  payableCode,
   payableLineSubtotal,
   payableStatus,
   settlePayment,
@@ -239,5 +240,19 @@ describe("payment methods", () => {
       "VES",
       "USD",
     ]);
+  });
+});
+
+describe("payableCode", () => {
+  test("CXP- and the number with at least 6 digits", () => {
+    expect(payableCode(123)).toBe("CXP-000123");
+    expect(payableCode(1)).toBe("CXP-000001");
+    expect(payableCode(1234567)).toBe("CXP-1234567");
+  });
+
+  test("rejects 0, negatives and fractions", () => {
+    expect(() => payableCode(0)).toThrow(InvalidValueError);
+    expect(() => payableCode(-1)).toThrow(InvalidValueError);
+    expect(() => payableCode(1.5)).toThrow(InvalidValueError);
   });
 });

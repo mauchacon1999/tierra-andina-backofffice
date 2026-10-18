@@ -4,9 +4,12 @@ import { formatValidationMessage as text } from "./messages";
 import {
   payableInputSchema,
   payableLineInputSchema,
+  payableListQuerySchema,
   payablePaymentInputSchema,
+  payableTermsInputSchema,
   supplierPaymentAccountInputSchema,
 } from "./payables";
+import { updateSupplierSchema } from "./purchases";
 
 const SUPPLIER = "01a14314-2825-7000-a1d1-bdf734d05981";
 const FOOD = "01a14314-2825-7000-a1d1-bdf734d05982";
@@ -157,5 +160,30 @@ describe("payablePaymentInputSchema", () => {
       amount: "El monto debe ser mayor que 0",
       rate: "La tasa debe ser mayor que 0",
     });
+  });
+});
+
+describe("payableTermsInputSchema / payableListQuerySchema / updateSupplierSchema", () => {
+  test("terms need a due date; an empty note is none", () => {
+    expect(payableTermsInputSchema.parse({ dueOn: "2026-10-30", note: "" })).toEqual({
+      dueOn: "2026-10-30",
+    });
+    expect(errors(payableTermsInputSchema.safeParse({}))).toEqual({ dueOn: "Indica la fecha" });
+  });
+
+  test("the list filters by a derived status and pages by default", () => {
+    expect(payableListQuerySchema.parse({ status: "overdue" })).toEqual({
+      status: "overdue",
+      page: 1,
+      pageSize: 20,
+    });
+    expect(payableListQuerySchema.safeParse({ status: "open" }).success).toBe(false);
+  });
+
+  test("a supplier edit needs at least one field; notes are trimmed", () => {
+    expect(updateSupplierSchema.parse({ notes: " Martes " })).toEqual({ notes: "Martes" });
+    expect(text(updateSupplierSchema.safeParse({}).error?.issues[0]?.message ?? "")).toBe(
+      "No hay cambios que guardar",
+    );
   });
 });

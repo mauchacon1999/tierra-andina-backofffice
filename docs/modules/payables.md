@@ -86,6 +86,23 @@ comma, no thousands separator). The format lives only in `formatPagoMovilClipboa
 buttons copy each value alone (banks without "Pegar datos"); a short "Copiado" notice follows
 each copy.
 
+## API (owner; examples in docs/api.http)
+
+| Endpoint                                                  | What                                                           |
+| --------------------------------------------------------- | -------------------------------------------------------------- |
+| `GET/POST /suppliers`, `GET/PATCH /suppliers/:id`         | suppliers with notes; the detail lists the accounts            |
+| `POST /suppliers/:id/accounts`, `PUT/DELETE …/:accountId` | add, replace or deactivate a pago móvil account                |
+| `GET /expense-categories`                                 | categories for supply lines                                    |
+| `GET /payables?status=&supplierId=&page=&pageSize=`       | invoices, newest first, with the filter's balance per currency |
+| `POST /payables`, `PUT /payables/:id`                     | create or replace a supplies invoice (no payments yet)         |
+| `GET /payables/:id`                                       | invoice with lines and payments                                |
+| `PATCH /payables/:id/terms`                               | due date and note (any invoice not voided)                     |
+| `POST /payables/:id/void`                                 | void (no payments)                                             |
+| `POST /payables/:id/payments`, `DELETE …/:paymentId`      | record or take back a payment                                  |
+| `GET /payables/:id/mobile-payment`                        | balance in Bs at today's BCV and the clipboard per account     |
+
+The home briefing shows the open invoices and what they owe, USD and Bs apart.
+
 ## Later (not built)
 
 - QR Suiche 7B: do not invent the format. Either keep the QR image the supplier shares, or

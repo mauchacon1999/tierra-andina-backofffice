@@ -319,3 +319,88 @@ Content-Type: application/json
 ### Delete (owner or manager) — 204. 403 for a receiver. 404 if it is already gone
 DELETE {{baseUrl}}/api/v1/tasks/<task id>
 Origin: http://localhost:3000
+
+### Payables (owner; docs/modules/payables.md) ------------------------------------------------
+### Supplier with its pago móvil accounts — 404 NOT_FOUND
+GET {{baseUrl}}/api/v1/suppliers/<supplier id>
+
+### Edit a supplier — only the fields sent; "" clears a text
+PATCH {{baseUrl}}/api/v1/suppliers/<supplier id>
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "phone": "0414-5551234", "notes": "Trae el cambur los martes" }
+
+### Add a pago móvil account — 201; stored as 04141234567 / V12345678. 400 for an unknown bank,
+### a landline or a cédula without letter; 409 ACCOUNT_EXISTS (same bank and phone)
+POST {{baseUrl}}/api/v1/suppliers/<supplier id>/accounts
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "bankCode": "0102", "phone": "0414-123.45.67", "idDocument": "V-12.345.678" }
+
+### Replace an account's data (PUT) or deactivate it (DELETE) — 404 ACCOUNT_NOT_FOUND
+DELETE {{baseUrl}}/api/v1/suppliers/<supplier id>/accounts/<account id>
+Origin: http://localhost:3000
+
+### Expense categories for supply lines
+GET {{baseUrl}}/api/v1/expense-categories
+
+### Invoices, newest first; status = pending | partial | paid | overdue | voided (derived).
+### `balance` adds up what the filtered invoices owe, per currency
+GET {{baseUrl}}/api/v1/payables?status=overdue&supplierId=<supplier id>&page=1&pageSize=20
+
+### A supplies invoice — 201 with code CXP-000123. Currency USD (default) or VES.
+### 422 SUPPLIER_NOT_FOUND · 422 EXPENSE_CATEGORY_NOT_FOUND (details.fieldErrors)
+POST {{baseUrl}}/api/v1/payables
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{
+  "supplierId": "<supplier id>",
+  "currency": "USD",
+  "issuedOn": "2026-10-18",
+  "dueOn": "2026-10-25",
+  "lines": [
+    { "description": "Bolsas medianas", "expenseCategoryId": "<category id>", "quantity": "10", "unit": "pack", "unitPrice": "1.50" }
+  ]
+}
+
+### One invoice with lines and payments — 404 PAYABLE_NOT_FOUND
+GET {{baseUrl}}/api/v1/payables/<payable id>
+
+### Replace a supplies invoice (same body as POST) — 409 PAYABLE_HAS_PAYMENTS,
+### 409 PAYABLE_FROM_PURCHASE (merchandise: correct the purchase), 409 PAYABLE_VOIDED
+PUT {{baseUrl}}/api/v1/payables/<payable id>
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "supplierId": "<supplier id>", "issuedOn": "2026-10-18", "dueOn": "2026-10-25", "lines": [] }
+
+### Due date and note (any invoice not voided) — 422 INVALID_DUE_DATE before the issue date
+PATCH {{baseUrl}}/api/v1/payables/<payable id>/terms
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "dueOn": "2026-10-30", "note": "Paga el viernes" }
+
+### Void (no payments) — 409 PAYABLE_HAS_PAYMENTS, 409 PAYABLE_VOIDED
+POST {{baseUrl}}/api/v1/payables/<payable id>/void
+Origin: http://localhost:3000
+
+### A payment — 201. method: mobile_payment | bank_transfer | cash_bs (Bs) | cash_usd (divisa).
+### rate = BCV of the payment day. 422 PAYMENT_EXCEEDS_BALANCE (details.balance in the
+### payment's currency) · 422 INVALID_PAYMENT_ACCOUNT · 409 PAYABLE_VOIDED
+POST {{baseUrl}}/api/v1/payables/<payable id>/payments
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "paidOn": "2026-10-18", "method": "mobile_payment", "amount": "5000", "rate": "201.5", "reference": "001234", "accountId": "<account id>" }
+
+### Delete a mistaken payment — 200 the invoice; 404 PAYMENT_NOT_FOUND
+DELETE {{baseUrl}}/api/v1/payables/<payable id>/payments/<payment id>
+Origin: http://localhost:3000
+
+### What to pay today by pago móvil: balance in Bs (USD at today's BCV) and the "Pegar datos"
+### text per active account. 422 BCV_RATE_MISSING · 409 PAYABLE_SETTLED · 409 PAYABLE_VOIDED
+GET {{baseUrl}}/api/v1/payables/<payable id>/mobile-payment

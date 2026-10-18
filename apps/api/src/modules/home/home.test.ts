@@ -74,6 +74,7 @@ describe("getHomeBriefing", () => {
         { ...invoice, number: 1, total: "10" },
         { ...invoice, number: 2, total: "3" },
         { ...invoice, number: 3, total: "50", voidedAt: new Date() },
+        { ...invoice, number: 4, total: "1500", currency: "VES" },
       ])
       .returning();
     if (!open || !settled) throw new Error("could not insert payables");
@@ -97,7 +98,11 @@ describe("getHomeBriefing", () => {
       deposited: { usd: "100.0000", bs: "2000.0000" },
       kept: { usd: "18000.0000", bs: "5500.0000" },
     });
-    expect(briefing.payables).toEqual({ count: 1, remainingUsd: "6.0000" });
+    // Bolsas owes 6 of 10 $; the bread is paid; the voided one does not count; 1500 Bs apart.
+    expect(briefing.payables).toEqual({
+      count: 2,
+      remaining: { usd: "6.0000", bs: "1500.0000" },
+    });
     expect(briefing.credit).toEqual({ usd: "0.0000", bs: "1200.0000" });
     expect(briefing.alerts.map((alert) => alert.code)).toEqual([
       "closes_pending",

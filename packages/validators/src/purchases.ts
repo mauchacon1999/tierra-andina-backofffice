@@ -39,7 +39,25 @@ export const createSupplierSchema = z.object({
   kind: supplierKindSchema.default("wholesale_stall"),
   phone: shortTextSchema(30).optional(),
   stallReference: shortTextSchema(60).optional(),
+  notes: shortTextSchema(300).optional(),
 });
+
+/** PATCH /api/v1/suppliers/:id — only the fields sent change; "" clears a text. */
+export const updateSupplierSchema = z
+  .object({
+    name: supplierNameSchema.optional(),
+    kind: supplierKindSchema.optional(),
+    phone: shortTextSchema(30).optional(),
+    stallReference: shortTextSchema(60).optional(),
+    notes: shortTextSchema(300).optional(),
+    isActive: z.boolean().optional(),
+  })
+  .refine((v) => Object.values(v).some((value) => value !== undefined), {
+    message: message("noChanges"),
+  });
+
+export type UpdateSupplierInput = z.input<typeof updateSupplierSchema>;
+export type UpdateSupplier = z.output<typeof updateSupplierSchema>;
 
 export type CreateSupplierInput = z.input<typeof createSupplierSchema>;
 export type CreateSupplier = z.output<typeof createSupplierSchema>;
@@ -50,6 +68,7 @@ export const supplierSchema = z.object({
   kind: supplierKindSchema,
   phone: z.string().nullable(),
   stallReference: z.string().nullable(),
+  notes: z.string().nullable(),
   isActive: z.boolean(),
 });
 

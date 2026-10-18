@@ -39,6 +39,10 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > **Home** (`GET /api/v1/home`, owner): week result from daily closes (USD and Bs
 > apart), cash marked deposited versus kept, open payables, fiado balances, and
 > alerts only when the row exists.
+> **Payables** (phase 3, in progress; `docs/modules/payables.md`): API for suppliers with pago
+> móvil accounts, supplies invoices (CXP-000123, USD or Bs), payments at the BCV rate, void and
+> the "Pegar datos" text (`/api/v1/suppliers`, `/api/v1/payables`, `/api/v1/expense-categories`).
+> Local purchases, Coche credit invoices and the screens come next.
 > Next (docs/plan.md): phase 1 leftovers (push,
 > offline) and phase 3 (debts, expenses, payroll).
 > Business rules and DB design: `docs/domain-model.md`; working with the DB: `docs/database.md`;

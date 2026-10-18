@@ -15,6 +15,8 @@ import { decimalSchema } from "./amount";
 import { currencySchema } from "./daily-closes";
 import { businessDateSchema, rateValueSchema } from "./exchange-rates";
 import { message } from "./messages";
+import { paginatedSchema, paginationQuerySchema } from "./pagination";
+import { supplierSchema } from "./purchases";
 
 /*
  * Payables: supplier invoices on credit, their lines and payments, and the suppliers' pago móvil
@@ -137,3 +139,150 @@ export const payablePaymentInputSchema = z.object({
 
 export type PayablePaymentInput = z.input<typeof payablePaymentInputSchema>;
 export type PayablePaymentFields = z.output<typeof payablePaymentInputSchema>;
+
+// Queries --------------------------------------------------------------------------------------
+
+export const payableListQuerySchema = paginationQuerySchema.extend({
+  status: payableStatusSchema.optional(),
+  supplierId: z.uuid().optional(),
+});
+
+export type PayableListQueryInput = z.input<typeof payableListQuerySchema>;
+export type PayableListQuery = z.output<typeof payableListQuerySchema>;
+
+/**
+ * PATCH /api/v1/payables/:id/terms — due date and note of any invoice that is not voided (an
+ * invoice created from a Coche trip gets its due date here).
+ */
+export const payableTermsInputSchema = z.object({
+  dueOn: businessDateSchema,
+  note: optionalText(200),
+});
+
+export type PayableTermsInput = z.input<typeof payableTermsInputSchema>;
+export type PayableTerms = z.output<typeof payableTermsInputSchema>;
+
+// Responses ------------------------------------------------------------------------------------
+
+export const supplierPaymentAccountSchema = z.object({
+  id: z.uuid(),
+  bankCode: z.string(),
+  bankName: z.string(),
+  phone: z.string(),
+  idDocument: z.string(),
+  isActive: z.boolean(),
+});
+
+export type SupplierPaymentAccount = z.infer<typeof supplierPaymentAccountSchema>;
+
+export const supplierDetailSchema = supplierSchema.extend({
+  accounts: z.array(supplierPaymentAccountSchema),
+});
+
+export type SupplierDetail = z.infer<typeof supplierDetailSchema>;
+
+const totalsSchema = z.object({ USD: z.string(), VES: z.string() });
+
+export const payableSummarySchema = z.object({
+  id: z.uuid(),
+  /** CXP-000123 */
+  code: z.string(),
+  supplierId: z.uuid(),
+  supplierName: z.string(),
+  currency: currencySchema,
+  total: z.string(),
+  paid: z.string(),
+  balance: z.string(),
+  issuedOn: z.string(),
+  dueOn: z.string().nullable(),
+  status: payableStatusSchema,
+  tripId: z.uuid().nullable(),
+});
+
+export type PayableSummary = z.infer<typeof payableSummarySchema>;
+
+export const payableListSchema = paginatedSchema(payableSummarySchema).extend({
+  /** What is still owed by the invoices of the filter, per currency (all pages). */
+  balance: totalsSchema,
+});
+
+export type PayableList = z.infer<typeof payableListSchema>;
+
+/** A supply typed by the owner, or merchandise bought with the purchase form. */
+export const payableLineSchema = z.object({
+  id: z.uuid(),
+  subtotal: z.string(),
+  description: z.string().nullable(),
+  expenseCategoryId: z.uuid().nullable(),
+  expenseCategoryName: z.string().nullable(),
+  quantity: z.string().nullable(),
+  unit: payableUnitSchema.nullable(),
+  unitPrice: z.string().nullable(),
+  purchaseLine: z
+    .object({
+      id: z.uuid(),
+      productId: z.uuid(),
+      productName: z.string(),
+      purchaseUnit: z.string(),
+      packs: z.string().nullable(),
+      grossQuantity: z.string(),
+    })
+    .nullable(),
+});
+
+export type PayableLine = z.infer<typeof payableLineSchema>;
+
+export const payablePaymentSchema = z.object({
+  id: z.uuid(),
+  paidOn: z.string(),
+  method: payablePaymentMethodSchema,
+  currency: currencySchema,
+  amountUsd: z.string(),
+  amountBs: z.string(),
+  rate: z.string(),
+  applied: z.string(),
+  reference: z.string().nullable(),
+  accountId: z.uuid().nullable(),
+  note: z.string().nullable(),
+  createdAt: z.string(),
+});
+
+export type PayablePayment = z.infer<typeof payablePaymentSchema>;
+
+export const payableDetailSchema = payableSummarySchema.extend({
+  note: z.string().nullable(),
+  voidedAt: z.string().nullable(),
+  lines: z.array(payableLineSchema),
+  payments: z.array(payablePaymentSchema),
+});
+
+export type PayableDetail = z.infer<typeof payableDetailSchema>;
+
+/**
+ * GET /api/v1/payables/:id/mobile-payment — what to pay today by pago móvil: the balance in Bs
+ * (a USD invoice at today's BCV rate) and, per active account, the text for "Pegar datos".
+ */
+export const mobilePaymentDataSchema = z.object({
+  businessDate: z.string(),
+  currency: currencySchema,
+  balance: z.string(),
+  /** Null for a Bs invoice (the amount is fixed). */
+  bcvRate: z.string().nullable(),
+  /** 2 decimals, "." separator. */
+  amountBs: z.string(),
+  /** As the banks read it: "1234,56". */
+  amountText: z.string(),
+  accounts: z.array(supplierPaymentAccountSchema.extend({ clipboard: z.string() })),
+});
+
+export type MobilePaymentData = z.infer<typeof mobilePaymentDataSchema>;
+
+export const expenseCategorySchema = z.object({
+  id: z.uuid(),
+  code: z.string(),
+  name: z.string(),
+  kind: z.enum(["fixed", "variable"]),
+});
+
+export type ExpenseCategory = z.infer<typeof expenseCategorySchema>;
+export const expenseCategoryListSchema = z.object({ data: z.array(expenseCategorySchema) });

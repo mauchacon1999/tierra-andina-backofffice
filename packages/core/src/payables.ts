@@ -191,3 +191,15 @@ export function settlePayment(input: SettlePaymentInput): SettledPayment {
     isFullPayment: isFullPayment || applied.eq(balance),
   };
 }
+
+/**
+ * The invoice code shown to the owner: "CXP-" and the store's sequential number, at least 6
+ * digits. 123 → "CXP-000123", 1234567 → "CXP-1234567".
+ * @throws {InvalidValueError} if the number is not a positive integer.
+ */
+export function payableCode(number: number): string {
+  if (!Number.isInteger(number) || number <= 0) {
+    throw new InvalidValueError("number", "must be a positive integer");
+  }
+  return `CXP-${String(number).padStart(6, "0")}`;
+}

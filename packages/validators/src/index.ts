@@ -84,6 +84,7 @@ export type {
 } from "./exchange-rates";
 export {
   createSupplierSchema,
+  updateSupplierSchema,
   openTripSchema,
   PAYMENT_STATUSES,
   PURCHASE_TRIP_STATUSES,
@@ -111,6 +112,8 @@ export {
 export type {
   CreateSupplier,
   CreateSupplierInput,
+  UpdateSupplier,
+  UpdateSupplierInput,
   OpenTrip,
   PurchaseLine,
   PurchaseLineFields,
@@ -226,6 +229,18 @@ export type {
   UpdateStaffUser,
 } from "./users";
 export {
+  expenseCategoryListSchema,
+  expenseCategorySchema,
+  mobilePaymentDataSchema,
+  payableDetailSchema,
+  payableLineSchema,
+  payableListQuerySchema,
+  payableListSchema,
+  payablePaymentSchema,
+  payableSummarySchema,
+  payableTermsInputSchema,
+  supplierDetailSchema,
+  supplierPaymentAccountSchema,
   payableInputSchema,
   payableLineInputSchema,
   payablePaymentInputSchema,
@@ -235,6 +250,19 @@ export {
   supplierPaymentAccountInputSchema,
 } from "./payables";
 export type {
+  ExpenseCategory,
+  MobilePaymentData,
+  PayableDetail,
+  PayableLine,
+  PayableList,
+  PayableListQuery,
+  PayableListQueryInput,
+  PayablePayment,
+  PayableSummary,
+  PayableTerms,
+  PayableTermsInput,
+  SupplierDetail,
+  SupplierPaymentAccount,
   PayableFields,
   PayableInput,
   PayableLineInput,

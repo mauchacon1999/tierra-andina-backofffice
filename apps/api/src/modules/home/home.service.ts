@@ -122,7 +122,7 @@ export async function getHomeBriefing(
       deposited: pair(cash("deposited")),
       kept: pair(cash("kept")),
     },
-    payables: { count: openDebts.length, remainingUsd: remaining.USD },
+    payables: { count: openDebts.length, remaining: pair(remaining) },
     credit: pair(subtractTotals(given, returned)),
     alerts,
   };

@@ -172,7 +172,8 @@ function BriefingBody({ briefing }: BriefingBodyProps): React.JSX.Element {
         <Metric
           title={t("payables")}
           icon={HandCoins}
-          usd={payables.remainingUsd}
+          usd={payables.remaining.usd}
+          bs={payables.remaining.bs}
           hint={t("payablesHint", { count: payables.count })}
           tone={payables.count > 0 ? "warning" : "default"}
         />

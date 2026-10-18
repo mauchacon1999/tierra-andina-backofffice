@@ -34,9 +34,10 @@ export const homeBriefingSchema = z.object({
     deposited: moneyPairSchema,
     kept: moneyPairSchema,
   }),
+  /** Invoices still owing, and what they owe per currency (USD and Bs invoices apart). */
   payables: z.object({
     count: z.number().int().nonnegative(),
-    remainingUsd: z.string(),
+    remaining: moneyPairSchema,
   }),
   credit: moneyPairSchema,
   alerts: z.array(homeAlertSchema),

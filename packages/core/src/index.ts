@@ -69,6 +69,7 @@ export {
   PAYABLE_UNITS,
   PaymentExceedsBalanceError,
   payableBalance,
+  payableCode,
   payableLineSubtotal,
   payableStatus,
   settlePayment,
