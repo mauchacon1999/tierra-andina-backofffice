@@ -11,7 +11,14 @@ import {
 } from "@ta/validators";
 import { and, desc, eq } from "drizzle-orm";
 
-import { call, errorOf, signInOwnStore, type Json, type RoleSession } from "@/testing/http";
+import {
+  call,
+  closeOpenTrips,
+  errorOf,
+  signInOwnStore,
+  type Json,
+  type RoleSession,
+} from "@/testing/http";
 
 let s: RoleSession;
 let categoryId: string;
@@ -37,6 +44,7 @@ async function tripWithLine(
     market: "201",
     sale: "210",
   });
+  await closeOpenTrips(s.storeId);
   const trip = await call(s.app, "POST", "/purchase-trips", s.owner, { businessDate: date });
   const tripId = tripSchema.parse(trip.body).id;
   const product = await call(s.app, "POST", "/products", s.owner, {
@@ -265,39 +273,39 @@ describe("GET /api/v1/receipts", () => {
     expect(await priceFor(s.receiver)).toBe("60.0000");
   });
 
-  test("closed trips are not listed; managers cannot see it; 401 without a session", async () => {
-    test("the newest open trip lists what is still to buy, and marking a line keeps it", async () => {
-      const { tripId, lineId } = await tripWithLine();
-      const product = await call(s.app, "POST", "/products", s.owner, {
-        name: uniq("Cebolla"),
-        categoryId,
-        purchaseUnit: "kg",
-        saleUnit: "kg",
-      });
-      expect(product.status).toBe(201);
-      const created = await call(s.app, "POST", "/shopping-list", s.owner, {
-        productId: (product.body as { id: string }).id,
-        note: "se acabó",
-      });
-      expect(created.status).toBe(201);
-
-      const listed = receiptTripListSchema
-        .parse((await call(s.app, "GET", "/receipts", s.receiver)).body)
-        .data.find((t) => t.id === tripId);
-      if (!listed) throw new Error("trip missing from receipts");
-      expect(listed.toBuy).toEqual([
-        expect.objectContaining({
-          productName: expect.stringContaining("Cebolla"),
-          note: "se acabó",
-        }),
-      ]);
-
-      const marked = receiptTrip(
-        (await receipt(tripId, lineId, s.receiver, { status: "received" })).body,
-      );
-      expect(marked.toBuy).toEqual(listed.toBuy);
+  test("the newest open trip lists what is still to buy, and marking a line keeps it", async () => {
+    const { tripId, lineId } = await tripWithLine();
+    const product = await call(s.app, "POST", "/products", s.owner, {
+      name: uniq("Cebolla"),
+      categoryId,
+      purchaseUnit: "kg",
+      saleUnit: "kg",
     });
+    expect(product.status).toBe(201);
+    const created = await call(s.app, "POST", "/shopping-list", s.owner, {
+      productId: (product.body as { id: string }).id,
+      note: "se acabó",
+    });
+    expect(created.status).toBe(201);
 
+    const listed = receiptTripListSchema
+      .parse((await call(s.app, "GET", "/receipts", s.receiver)).body)
+      .data.find((t) => t.id === tripId);
+    if (!listed) throw new Error("trip missing from receipts");
+    expect(listed.toBuy).toEqual([
+      expect.objectContaining({
+        productName: expect.stringContaining("Cebolla"),
+        note: "se acabó",
+      }),
+    ]);
+
+    const marked = receiptTrip(
+      (await receipt(tripId, lineId, s.receiver, { status: "received" })).body,
+    );
+    expect(marked.toBuy).toEqual(listed.toBuy);
+  });
+
+  test("closed trips are not listed; managers cannot see it; 401 without a session", async () => {
     const { tripId } = await tripWithLine();
     await call(s.app, "POST", `/purchase-trips/${tripId}/close`, s.owner);
 

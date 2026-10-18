@@ -11,7 +11,14 @@ import {
   pricesFromTrip,
   publishSaleRateProposal,
 } from "@/modules/price-lists/price-lists.service";
-import { call, errorOf, signInOwnStore, type Json, type RoleSession } from "@/testing/http";
+import {
+  call,
+  closeOpenTrips,
+  errorOf,
+  signInOwnStore,
+  type Json,
+  type RoleSession,
+} from "@/testing/http";
 import { createStore, createUser, signIn } from "@/testing/test-app";
 
 let s: RoleSession;
@@ -50,6 +57,7 @@ async function openTrip(withSale: boolean): Promise<string> {
   if (withSale) rates.sale = "210";
   const saved = await call(s.app, "PUT", `/exchange-rates/${date}`, s.owner, rates);
   if (saved.status !== 200) throw new Error(`rates: ${JSON.stringify(saved.body)}`);
+  await closeOpenTrips(s.storeId);
   const trip = await call(s.app, "POST", "/purchase-trips", s.owner, { businessDate: date });
   if (trip.status !== 201) throw new Error(`trip: ${JSON.stringify(trip.body)}`);
   return tripSchema.parse(trip.body).id;
