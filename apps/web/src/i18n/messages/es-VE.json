@@ -55,7 +55,8 @@
     "pendingBadge": "{count} por revisar",
     "users": "Usuarios",
     "payables": "Cuentas por pagar",
-    "suppliers": "Proveedores"
+    "suppliers": "Proveedores",
+    "localPurchases": "Compras locales"
   },
   "apiErrors": {
     "NETWORK_ERROR": "No se pudo conectar con la API",
@@ -382,7 +383,21 @@
       "editTitle": "Editar compra",
       "pendingReceipt": "{count, plural, one {# compra por recibir} other {# compras por recibir}}",
       "allReceived": "Todo recibido en la camioneta",
-      "closeQuestionPending": "{count, plural, one {Queda # compra sin recibir.} other {Quedan # compras sin recibir.}} ¿Cerrar la jornada igual?"
+      "closeQuestionPending": "{count, plural, one {Queda # compra sin recibir.} other {Quedan # compras sin recibir.}} ¿Cerrar la jornada igual?",
+      "localTitle": "Compra local",
+      "supplier": "Proveedor",
+      "paidToSupplier": "Pagado al proveedor",
+      "closeHintCredit": "Lo comprado a crédito pasa a cuentas por pagar: una factura por proveedor.",
+      "localCloseHint": "Al guardar se actualizan los precios de estos productos. Lo que quedó a crédito pasa a cuentas por pagar.",
+      "localClose": "Guardar compra",
+      "localCloseQuestion": "¿Guardar la compra? Ya no se podrá cambiar.",
+      "payableCurrency": "Moneda de la factura",
+      "payableCurrencyHint": "Como se acordó con el proveedor.",
+      "payableDueOn": "Vencimiento de la factura",
+      "payableDueOnRequired": "Indica el vencimiento de la factura",
+      "payablesTitle": "Cuentas por pagar creadas",
+      "payableLink": "{code} · {supplier} · {total}",
+      "viewLocalPurchases": "Ver compras locales"
     },
     "line": {
       "addLabel": "Agregar compra",
@@ -433,7 +448,13 @@
         "salePrice": "Venta",
         "receipt": "Recepción"
       },
-      "receiptPartial": "Llegaron {received}"
+      "receiptPartial": "Llegaron {received}",
+      "creditSupplierRequired": "Indica a qué proveedor se le debe",
+      "creditSupplierHint": "Al cerrar la jornada, lo que se le debe pasa a su factura en cuentas por pagar.",
+      "creditSupplierPlaceholder": "Elige el proveedor",
+      "quotedPriceHintLocal": "En dólares. En bolívares se calcula con la tasa BCV ({rate}).",
+      "quotedPriceBsEmptyLocal": "Los dólares se calculan con la tasa BCV ({rate}).",
+      "quotedPriceBsHintLocal": "Son {usd} a la tasa BCV ({rate})."
     },
     "preview": {
       "label": "Costo de la compra",
@@ -954,5 +975,36 @@
       "idDocument": "Cédula",
       "amountText": "Monto"
     }
+  },
+  "localPurchases": {
+    "pageTitle": "Compras locales",
+    "title": "Compras locales",
+    "subtitle": "Lo que un proveedor trae a la tienda (cambur, aguacate, panela…): se costea igual que en Coche y actualiza los precios.",
+    "open": {
+      "title": "Nueva compra local",
+      "supplier": "Proveedor",
+      "supplierPlaceholder": "Elige el proveedor",
+      "noSuppliers": "Primero agrega el proveedor.",
+      "goToSuppliers": "Ir a Proveedores",
+      "date": "Fecha",
+      "note": "Nota",
+      "submit": "Empezar compra",
+      "submitting": "Empezando…",
+      "failed": "No se pudo empezar la compra",
+      "missingBcv": "Falta la tasa BCV de ese día. La compra se costea con ella.",
+      "goToRates": "Ir a Tasas del día"
+    },
+    "inProgress": "En curso",
+    "saved": "Guardadas",
+    "empty": "Aún no hay compras locales guardadas",
+    "continue": "Continuar",
+    "label": "Compras locales",
+    "columns": {
+      "date": "Fecha",
+      "supplier": "Proveedor",
+      "lines": "Productos",
+      "total": "Costo real"
+    },
+    "view": "Ver"
   }
 }

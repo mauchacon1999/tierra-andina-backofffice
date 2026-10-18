@@ -2,9 +2,10 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { listProducts } from "@/features/products/api/product-requests";
-import { addLine, updateLine } from "@/features/purchases/api/purchase-requests";
+import { addLine, listSuppliers, updateLine } from "@/features/purchases/api/purchase-requests";
 import { PurchaseLineForm } from "@/features/purchases/components/purchase-line-form";
 import { ApiError } from "@/lib/api";
+import { BAKERY } from "@/testing/payable-fixtures";
 import { OPEN_TRIP, TOMATO_LINE, TOMATO_PRODUCT } from "@/testing/purchase-fixtures";
 import { SwrTestWrapper } from "@/testing/swr-wrapper";
 
@@ -90,6 +91,7 @@ describe("PurchaseLineForm (add)", () => {
         quotedPriceUsd: "20",
         margin: "0.5",
         paymentStatus: "paid",
+        supplierId: null,
       }),
     );
     await waitFor(() => expect(valueOf(/^Precio/)).toBe(""));
@@ -185,5 +187,56 @@ describe("PurchaseLineForm (buy from the list)", () => {
 
     await waitFor(() => expect(product().value).toBe(TOMATO_PRODUCT.name));
     expect(valueOf(/Margen/)).toBe("50");
+  });
+});
+
+describe("PurchaseLineForm (credit)", () => {
+  const STALL = { ...BAKERY, id: "0199f000-0000-7000-8000-0000000000b9", name: "Puesto 7" };
+
+  beforeEach(() => {
+    vi.mocked(addLine).mockReset();
+    vi.mocked(listSuppliers).mockResolvedValue([STALL]);
+    vi.mocked(listProducts).mockResolvedValue({
+      data: [TOMATO_PRODUCT],
+      total: 1,
+      page: 1,
+      pageSize: 100,
+    });
+  });
+
+  it("at Coche a credit line asks which supplier is owed, and sends it", async () => {
+    vi.mocked(addLine).mockResolvedValue({ ...OPEN_TRIP, lines: [TOMATO_LINE], lineCount: 1 });
+    render(<PurchaseLineForm trip={OPEN_TRIP} />, { wrapper: SwrTestWrapper });
+    await chooseTomato();
+    type(/Cantidad bruta/, "24");
+    type(/^Precio/, "20");
+    fireEvent.click(screen.getByRole("radio", { name: "A crédito" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Agregar" }));
+    expect(await screen.findByText("Indica a qué proveedor se le debe")).toBeDefined();
+    expect(addLine).not.toHaveBeenCalled();
+
+    await screen.findByRole("option", { name: "Puesto 7" });
+    fireEvent.change(screen.getByLabelText(/^Proveedor/), { target: { value: STALL.id } });
+    fireEvent.click(screen.getByRole("button", { name: "Agregar" }));
+    await waitFor(() =>
+      expect(addLine).toHaveBeenCalledWith(
+        OPEN_TRIP.id,
+        expect.objectContaining({ paymentStatus: "credit", supplierId: STALL.id }),
+      ),
+    );
+  });
+
+  it("a local purchase is on credit by default, at the BCV rate, with no supplier to choose", async () => {
+    const local = { ...OPEN_TRIP, kind: "local" as const, marketRate: "200.0000" };
+    render(<PurchaseLineForm trip={local} />, { wrapper: SwrTestWrapper });
+
+    expect(
+      await screen.findByText("En dólares. En bolívares se calcula con la tasa BCV (200)."),
+    ).toBeDefined();
+    expect((screen.getByRole("radio", { name: "A crédito" }) as HTMLInputElement).checked).toBe(
+      true,
+    );
+    expect(screen.queryByLabelText(/^Proveedor/)).toBeNull();
   });
 });

@@ -191,7 +191,8 @@ describe("TripScreen", () => {
     );
 
     expect(await screen.findByText("Cerrada")).toBeDefined();
-    expect(closeTrip).toHaveBeenCalledWith(OPEN_TRIP.id);
+    // A Coche trip closes without invoice terms (its invoices get their due date later).
+    expect(closeTrip).toHaveBeenCalledWith(OPEN_TRIP.id, undefined);
     expect(screen.queryByText("Formulario de compra")).toBeNull();
     // No actions on a closed trip.
     expect(screen.queryByRole("button", { name: "Acciones de Tomate perita" })).toBeNull();
@@ -238,5 +239,84 @@ describe("TripScreen", () => {
     );
 
     expect(await screen.findByText("La jornada está cerrada")).toBeDefined();
+  });
+});
+
+describe("TripScreen (local purchase and invoices)", () => {
+  const LOCAL: TripDetail = {
+    ...WITH_LINE,
+    kind: "local",
+    supplierId: "0199f000-0000-7000-8000-0000000000b1",
+    supplierName: "Cambur Don Pedro",
+    marketRate: "200.0000",
+    lines: [{ ...TOMATO_LINE, paymentStatus: "credit" }],
+  };
+
+  beforeEach(() => {
+    vi.mocked(closeTrip).mockReset();
+    vi.mocked(listShoppingItems).mockResolvedValue({ data: [] });
+  });
+
+  it("a local purchase shows its supplier and the add form, not the shopping list", async () => {
+    vi.mocked(getTrip).mockResolvedValue(LOCAL);
+    render(<TripScreen />, { wrapper: SwrTestWrapper });
+
+    expect(await screen.findByText("Compra local · Cambur Don Pedro")).toBeDefined();
+    expect(screen.getByText("Formulario de compra")).toBeDefined();
+    expect(screen.queryByText("Tasa de Coche")).toBeNull();
+    expect(listShoppingItems).not.toHaveBeenCalled();
+  });
+
+  it("saving it on credit asks the invoice's due date, then sends currency and date", async () => {
+    vi.mocked(getTrip).mockResolvedValue(LOCAL);
+    vi.mocked(closeTrip).mockResolvedValue({ ...LOCAL, status: "closed" });
+    render(<TripScreen />, { wrapper: SwrTestWrapper });
+    const save = () => {
+      fireEvent.click(screen.getByRole("button", { name: "Guardar compra" }));
+      fireEvent.click(
+        within(screen.getByRole("group", { name: /¿Guardar la compra/ })).getByRole("button", {
+          name: "Guardar compra",
+        }),
+      );
+    };
+
+    await screen.findByText("Formulario de compra");
+    save();
+    expect(await screen.findByText("Indica el vencimiento de la factura")).toBeDefined();
+    expect(closeTrip).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("radio", { name: "Bolívares" }));
+    fireEvent.change(screen.getByLabelText(/^Vencimiento de la factura/), {
+      target: { value: "2026-10-25" },
+    });
+    save();
+    await waitFor(() =>
+      expect(closeTrip).toHaveBeenCalledWith(OPEN_TRIP.id, {
+        payableCurrency: "VES",
+        payableDueOn: "2026-10-25",
+      }),
+    );
+  });
+
+  it("a closed trip links the invoices its credit lines became", async () => {
+    vi.mocked(getTrip).mockResolvedValue({
+      ...LOCAL,
+      status: "closed",
+      payables: [
+        {
+          id: "0199f000-0000-7000-8000-0000000000d9",
+          code: "CXP-000012",
+          supplierName: "Cambur Don Pedro",
+          currency: "USD",
+          total: "20.0000",
+        },
+      ],
+    });
+    render(<TripScreen />, { wrapper: SwrTestWrapper });
+
+    const link = await screen.findByRole("link", {
+      name: "CXP-000012 · Cambur Don Pedro · 20,00 $",
+    });
+    expect(link.getAttribute("href")).toBe("/payables/0199f000-0000-7000-8000-0000000000d9");
   });
 });

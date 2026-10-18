@@ -17,6 +17,7 @@ export type TripHeaderProps = {
 export function TripHeader({ trip }: TripHeaderProps): React.JSX.Element {
   const t = useTranslations("purchases");
   const isOpen = trip.status === "open";
+  const isLocal = trip.kind === "local";
   const pending = countPendingReceipt(trip);
 
   return (
@@ -27,22 +28,34 @@ export function TripHeader({ trip }: TripHeaderProps): React.JSX.Element {
         </h2>
         <Badge tone={isOpen ? "success" : "neutral"}>{t(`status.${trip.status}`)}</Badge>
       </div>
+      {isLocal && (
+        <p className="font-medium">
+          {t("trip.localTitle")} · {trip.supplierName}
+        </p>
+      )}
       {trip.note && <p className="text-sm text-muted">{trip.note}</p>}
       <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
         <dt className="text-muted">{t("trip.bcvRate")}</dt>
         <dd className="text-right">
           {t("trip.rateValue", { rate: formatDecimal(trip.bcvRate, 2) })}
         </dd>
-        <dt className="text-muted">{t("trip.marketRate")}</dt>
-        <dd className="text-right">
-          {t("trip.rateValue", { rate: formatDecimal(trip.marketRate, 2) })}
-        </dd>
-        <dt className="text-muted">{t("trip.paidToStalls")}</dt>
+        {!isLocal && (
+          <>
+            <dt className="text-muted">{t("trip.marketRate")}</dt>
+            <dd className="text-right">
+              {t("trip.rateValue", { rate: formatDecimal(trip.marketRate, 2) })}
+            </dd>
+          </>
+        )}
+        <dt className="text-muted">
+          {isLocal ? t("trip.paidToSupplier") : t("trip.paidToStalls")}
+        </dt>
         <dd className="text-right font-medium">{formatBs(trip.totalBs)}</dd>
         <dt className="text-muted">{t("trip.realCost")}</dt>
         <dd className="text-right font-semibold">{formatUsd(trip.totalUsd)}</dd>
       </dl>
-      {isOpen && trip.lines.length > 0 && (
+      {/* A local purchase has no truck: it is received when saved. */}
+      {isOpen && !isLocal && trip.lines.length > 0 && (
         <p className="text-sm font-medium" aria-live="polite">
           {pending > 0 ? t("trip.pendingReceipt", { count: pending }) : t("trip.allReceived")}
         </p>

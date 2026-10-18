@@ -60,6 +60,7 @@ describe("AppShell", () => {
       "Faltantes",
       "Tareas",
       "Compras",
+      "Compras locales",
       "Recepción",
       "Precios",
       "Tasas del día",

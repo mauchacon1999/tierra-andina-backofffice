@@ -129,6 +129,13 @@ The home briefing shows the open invoices and what they owe, USD and Bs apart.
   used, "Copiar para pago móvil" per account and a copy button per value, with "Copiado".
 - **Proveedores** `/suppliers` and `/suppliers/[id]`: data, notes, active, and the pago móvil
   accounts (add, edit, remove).
+- **Compras locales** `/local-purchases`: start one (supplier, day; the day's BCV rate must be
+  set), continue the ones in progress, see the saved ones. Its screen is the trip screen
+  (`/purchases/[id]`): supplier and BCV rate in the header, the product form always open (on
+  credit by default), and **Guardar compra**, which asks the invoice's currency and due date
+  when something is on credit.
+- At Coche, a line **A crédito** asks which supplier is owed. Every closed trip links the
+  invoices it created.
 
 ## Later (not built)
 

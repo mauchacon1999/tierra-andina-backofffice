@@ -8,6 +8,7 @@ import {
   House,
   ListTodo,
   Package,
+  ShoppingBasket,
   ShoppingCart,
   Store,
   Tag,
@@ -26,6 +27,7 @@ export type NavItem = {
     | "shoppingList"
     | "tasks"
     | "purchases"
+    | "localPurchases"
     | "receipt"
     | "prices"
     | "rates"
@@ -61,6 +63,12 @@ export const NAV_ITEMS: readonly NavItem[] = [
   },
   { href: "/tasks", labelKey: "tasks", icon: ListTodo, roles: EVERYONE },
   { href: "/purchases", labelKey: "purchases", icon: ShoppingCart, roles: ["owner"] },
+  {
+    href: "/local-purchases",
+    labelKey: "localPurchases",
+    icon: ShoppingBasket,
+    roles: ["owner"],
+  },
   { href: "/receipt", labelKey: "receipt", icon: Truck, roles: ["owner", "receiver"] },
   { href: "/prices", labelKey: "prices", icon: Tag, roles: ["owner", "manager"] },
   { href: "/rates", labelKey: "rates", icon: Coins, roles: ["owner"] },

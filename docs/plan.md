@@ -56,7 +56,8 @@ Each phase is usable on its own. Phases 1 and 2 remove the notebook and WhatsApp
       "Usuarios" screen: the owner creates managers and receivers, edits name and role,
       deactivates them and sets their passwords (users never change their own).
 - [ ] Products, suppliers, employees, expense categories, payment methods.
-      (products done: catalog screens for the owner; suppliers: API only; the rest pending)
+      (products done: catalog screens for the owner; suppliers: screens with pago móvil accounts;
+      the rest pending)
 - [x] Daily BCV rate, Coche (market) rate and sale rate — "Tasas del día" screen.
 - [ ] Initial product catalog loaded from the owner's notebook.
 
@@ -68,7 +69,11 @@ Done when: every product the owner buys is loaded with its purchase and sale uni
 - [x] Per line: stall, supplier rate, packs, gross quantity, shrinkage, USD price, margin
       (last values suggested).
 - [x] Live calculation of real cost, unit cost and sale price.
-- [x] Payment status per line (paid / credit). Payables for credit lines are still pending.
+- [x] Payment status per line (paid / credit). A credit line names its supplier and becomes
+      that supplier's invoice when the trip closes (docs/modules/payables.md).
+- [x] Local purchases: goods a supplier brings to the shop (bananas, panela), costed with the
+      same form at the BCV rate; on credit they become an invoice, paid in cash they only update
+      prices.
 - [x] Receiver view: live list of the trip, big buttons Received / Partial / Missing
       ("Recepción"; refreshes every 5 s; partial lines re-cost with what arrived).
 - [ ] Push notification to the receiver for each line bought.
@@ -102,7 +107,8 @@ Done when: closes no longer arrive by WhatsApp and are no longer typed into Exce
 ### Phase 3 — Debts, expenses and payroll
 
 - [ ] Customer credit: balance, history, register payments.
-- [ ] Supplier payables with partial payments.
+- [x] Supplier payables with partial payments (docs/modules/payables.md): supplies invoices
+      (USD or Bs), payments at the BCV rate, void, "Copiar para pago móvil". QR Suiche 7B later.
 - [ ] Fixed (recurring) and variable expenses.
 - [ ] Weekly payroll with advances.
 

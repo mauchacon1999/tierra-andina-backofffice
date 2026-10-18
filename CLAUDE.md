@@ -46,8 +46,9 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > become one invoice per supplier when the trip closes. Owner screens: `/payables` (filter by
 > status, owed per currency), `/payables/new` and `/payables/[id]/edit` (supplies invoice, quick
 > supplier), `/payables/[id]` (payments, terms, void, "Copiar para pago móvil" per account) and
-> `/suppliers`, `/suppliers/[id]` (data and pago móvil accounts). Local purchase and Coche
-> credit-line screens come next.
+> `/suppliers`, `/suppliers/[id]` (data and pago móvil accounts), `/local-purchases` (start one;
+> its lines and "Guardar compra" with the invoice's currency and due date live on
+> `/purchases/[id]`), and a supplier on Coche credit lines.
 > Next (docs/plan.md): phase 1 leftovers (push,
 > offline) and phase 3 (debts, expenses, payroll).
 > Business rules and DB design: `docs/domain-model.md`; working with the DB: `docs/database.md`;

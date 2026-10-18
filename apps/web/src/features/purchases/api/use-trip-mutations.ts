@@ -1,7 +1,8 @@
 "use client";
 
 import type {
-  OpenTrip,
+  CloseTripInput,
+  OpenTripInput,
   PurchaseLineFields,
   Trip,
   TripDetail,
@@ -18,7 +19,7 @@ import {
   updateLine,
 } from "@/features/purchases/api/purchase-requests";
 import type { ApiError } from "@/lib/api";
-import { isProductsKey, isTripsKey, queryKeys } from "@/lib/query-keys";
+import { isPayablesKey, isProductsKey, isTripsKey, queryKeys } from "@/lib/query-keys";
 
 /*
  * Trip writes. Each one returns the whole trip; it is written into the detail cache right away
@@ -39,9 +40,9 @@ function useAfterTripWrite(): (trip: TripDetail | Trip, refreshProducts: boolean
   };
 }
 
-export function useOpenTrip(): Mutation<OpenTrip, Trip> {
+export function useOpenTrip(): Mutation<OpenTripInput, Trip> {
   const after = useAfterTripWrite();
-  const { trigger, isMutating } = useSWRMutation<Trip, ApiError, readonly string[], OpenTrip>(
+  const { trigger, isMutating } = useSWRMutation<Trip, ApiError, readonly string[], OpenTripInput>(
     ["trips", "mutation", "open"],
     (_key, { arg }) => openTrip(arg),
   );
@@ -55,16 +56,21 @@ export function useOpenTrip(): Mutation<OpenTrip, Trip> {
   };
 }
 
-export function useCloseTrip(tripId: string): Mutation<void, TripDetail> {
+export function useCloseTrip(tripId: string): Mutation<CloseTripInput | undefined, TripDetail> {
   const after = useAfterTripWrite();
-  const { trigger, isMutating } = useSWRMutation<TripDetail, ApiError, readonly string[]>(
-    ["trips", "mutation", "close", tripId],
-    () => closeTrip(tripId),
-  );
+  const { mutate } = useSWRConfig();
+  const { trigger, isMutating } = useSWRMutation<
+    TripDetail,
+    ApiError,
+    readonly string[],
+    { terms: CloseTripInput | undefined }
+  >(["trips", "mutation", "close", tripId], (_key, { arg }) => closeTrip(tripId, arg.terms));
   return {
-    run: async () => {
-      const trip = await trigger();
+    run: async (terms) => {
+      const trip = await trigger({ terms });
       await after(trip, false);
+      // Its credit lines may have become supplier invoices.
+      await Promise.all([mutate(isPayablesKey), mutate(queryKeys.home)]);
       return trip;
     },
     isRunning: isMutating,

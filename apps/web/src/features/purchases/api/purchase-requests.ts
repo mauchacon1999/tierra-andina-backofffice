@@ -4,8 +4,9 @@ import {
   tripDetailSchema,
   tripListSchema,
   tripSchema,
+  type CloseTripInput,
   type CreateSupplier,
-  type OpenTrip,
+  type OpenTripInput,
   type PurchaseLineFields,
   type Supplier,
   type Trip,
@@ -34,12 +35,13 @@ export function getTrip(id: string): Promise<TripDetail> {
   return api.get(`/api/v1/purchase-trips/${id}`, { schema: tripDetailSchema });
 }
 
-export function openTrip(input: OpenTrip): Promise<Trip> {
+export function openTrip(input: OpenTripInput): Promise<Trip> {
   return api.post("/api/v1/purchase-trips", input, { schema: tripSchema });
 }
 
-export function closeTrip(id: string): Promise<TripDetail> {
-  return api.post(`/api/v1/purchase-trips/${id}/close`, undefined, { schema: tripDetailSchema });
+/** Closes the trip; its credit lines become invoices (currency and due date optional). */
+export function closeTrip(id: string, terms: CloseTripInput = {}): Promise<TripDetail> {
+  return api.post(`/api/v1/purchase-trips/${id}/close`, terms, { schema: tripDetailSchema });
 }
 
 export function addLine(tripId: string, line: PurchaseLineFields): Promise<TripDetail> {

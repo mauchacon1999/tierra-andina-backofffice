@@ -1,6 +1,6 @@
 "use client";
 
-import type { PurchaseLine, TripDetail } from "@ta/validators";
+import type { CloseTripInput, PurchaseLine, TripDetail } from "@ta/validators";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -19,7 +19,8 @@ export type UseTripScreenResult = {
   editingLine: PurchaseLine | null;
   editLine: (line: PurchaseLine) => void;
   stopEditing: () => void;
-  closeTrip: () => Promise<void>;
+  /** Closes it; a local purchase may say its invoice's currency and due date. */
+  closeTrip: (terms?: CloseTripInput) => Promise<void>;
   isClosing: boolean;
   deleteLine: (lineId: string) => Promise<void>;
   /** Last failed close/delete, shown above the lines. */
@@ -55,9 +56,9 @@ export function useTripScreen(tripId: string): UseTripScreenResult {
     editingLine: trip?.lines.find((line) => line.id === editingLineId) ?? null,
     editLine: (line) => setEditingLineId(line.id),
     stopEditing: () => setEditingLineId(null),
-    closeTrip: () =>
+    closeTrip: (terms) =>
       run(async () => {
-        await close.run();
+        await close.run(terms);
         setEditingLineId(null);
       }, t("closeFailed")),
     isClosing: close.isRunning,

@@ -11,6 +11,7 @@ const TOMATO: PurchaseLineFormValues = {
   quotedPriceUsd: "20",
   marginPercent: "50",
   paymentStatus: "paid",
+  supplierId: "",
 };
 const TRIP = { bcvRate: "200", marketRate: "201", usdRoundingStep: "0.05", shrinkage: "2" };
 

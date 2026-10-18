@@ -24,6 +24,7 @@ import type { SelectOption } from "@/components/ui/select-field";
 import { useProducts } from "@/features/products/api/use-products";
 import { useUnitLabels } from "@/features/products/hooks/use-unit-labels";
 import { useAddLine, useUpdateLine } from "@/features/purchases/api/use-trip-mutations";
+import { useSuppliers } from "@/features/purchases/api/use-trips";
 import { computeLinePreview, type LinePreview } from "@/features/purchases/helpers/line-preview";
 import { useSettings } from "@/features/settings/api/use-settings";
 import { useErrorMessage } from "@/i18n/use-error-message";
@@ -44,10 +45,15 @@ export type UseLineFormOptions = {
 export type UseLineFormResult = {
   form: UseFormReturn<PurchaseLineFormValues, unknown, PurchaseLineFields>;
   isEdit: boolean;
+  /** A local purchase: its supplier is the purchase's, its rate the BCV. */
+  isLocal: boolean;
+  /** At Coche a credit line says which supplier is owed. */
+  showSupplier: boolean;
+  supplierOptions: SelectOption[];
   productOptions: SelectOption[];
   /** Crate and bundle products can note how many packs; kilos do not. */
   showPacks: boolean;
-  /** Trip's Coche rate, shown next to the price. */
+  /** Trip's supplier rate (Coche, or the BCV for a local purchase), shown next to the price. */
   cocheRate: string;
   /** The price is typed in dollars, or in bolívares converted at the Coche rate. */
   priceCurrency: PriceCurrency;
@@ -103,7 +109,13 @@ const EMPTY: PurchaseLineFormValues = {
   quotedPriceUsd: "",
   marginPercent: "",
   paymentStatus: "paid",
+  supplierId: "",
 };
+
+/** A new line: paid at Coche; on credit for a local purchase (what suppliers usually give). */
+function emptyLine(trip: TripDetail): PurchaseLineFormValues {
+  return trip.kind === "local" ? { ...EMPTY, paymentStatus: "credit" } : EMPTY;
+}
 
 function lineToFormValues(line: PurchaseLine): PurchaseLineFormValues {
   return {
@@ -113,6 +125,7 @@ function lineToFormValues(line: PurchaseLine): PurchaseLineFormValues {
     quotedPriceUsd: normalizeDecimal(line.quotedPriceUsd),
     marginPercent: fractionToPercent(line.margin),
     paymentStatus: line.paymentStatus,
+    supplierId: line.supplierId ?? "",
   };
 }
 
@@ -144,8 +157,10 @@ export function useLineForm({
   const errorMessage = useErrorMessage();
   const form = useForm<PurchaseLineFormValues, unknown, PurchaseLineFields>({
     resolver: useZodResolver(purchaseLineFormSchema),
-    defaultValues: line ? lineToFormValues(line) : EMPTY,
+    defaultValues: line ? lineToFormValues(line) : emptyLine(trip),
   });
+  const { suppliers } = useSuppliers();
+  const isLocal = trip.kind === "local";
   const { settings } = useSettings();
   const { page } = useProducts(PRODUCT_QUERY);
   const addLine = useAddLine(trip.id);
@@ -213,6 +228,10 @@ export function useLineForm({
   };
 
   const onSubmit = form.handleSubmit(async (payload) => {
+    if (!isLocal && payload.paymentStatus === "credit" && !payload.supplierId) {
+      form.setError("supplierId", { message: t("creditSupplierRequired") }, { shouldFocus: true });
+      return;
+    }
     const shrinkage = product?.lastShrinkage ?? line?.shrinkage;
     const body = {
       ...payload,
@@ -225,7 +244,7 @@ export function useLineForm({
       } else {
         await addLine.run(body);
         // The form stays: the next product is the next item of the same day.
-        form.reset({ ...EMPTY, paymentStatus: values.paymentStatus });
+        form.reset({ ...emptyLine(trip), paymentStatus: values.paymentStatus });
         setPriceCurrency("USD");
         setPriceBs("");
       }
@@ -243,6 +262,9 @@ export function useLineForm({
   return {
     form,
     isEdit,
+    isLocal,
+    showSupplier: !isLocal && values.paymentStatus === "credit",
+    supplierOptions: suppliers.map((supplier) => ({ value: supplier.id, label: supplier.name })),
     productOptions,
     selectProduct: (productId) => selectProduct(productId),
     onProductCreated: (newProduct) => {

@@ -8,12 +8,12 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Card } from "@/components/ui/card";
-import { ConfirmButton } from "@/components/ui/confirm-button";
 import { PurchaseLineForm } from "@/features/purchases/components/purchase-line-form";
+import { TripCloseCard } from "@/features/purchases/components/trip-close-card";
 import { TripHeader } from "@/features/purchases/components/trip-header";
 import { TripLines } from "@/features/purchases/components/trip-lines";
 import { TripNeededList } from "@/features/purchases/components/trip-needed-list";
-import { countPendingReceipt } from "@/features/purchases/helpers/line-receipt";
+import { TripPayables } from "@/features/purchases/components/trip-payables";
 import { useTripScreen } from "@/features/purchases/hooks/use-trip-screen";
 import { useErrorMessage } from "@/i18n/use-error-message";
 
@@ -41,6 +41,9 @@ export function TripScreen(): React.JSX.Element {
           <ButtonLink href="/purchases" variant="secondary">
             {t("viewTrips")}
           </ButtonLink>
+          <ButtonLink href="/local-purchases" variant="secondary">
+            {t("viewLocalPurchases")}
+          </ButtonLink>
         </div>
       </div>
     );
@@ -53,19 +56,28 @@ export function TripScreen(): React.JSX.Element {
     );
   }
   const { trip } = s;
+  const isLocal = trip.kind === "local";
 
   return (
     <div className="space-y-6">
       <TripHeader trip={trip} />
       {s.actionError && <Alert tone="error">{s.actionError}</Alert>}
-      {s.isOpen && (
+      <TripPayables trip={trip} />
+      {s.isOpen && isLocal && (
+        <Card className="space-y-3">
+          <h2 className="font-semibold">{t("addLine")}</h2>
+          <p className="text-sm text-muted">{t("addLineHint")}</p>
+          <PurchaseLineForm trip={trip} />
+        </Card>
+      )}
+      {s.isOpen && !isLocal && (
         <TripNeededList
           onBuy={(productId) =>
             setPick((current) => ({ productId, token: (current?.token ?? 0) + 1 }))
           }
         />
       )}
-      {s.isOpen && pick && (
+      {s.isOpen && !isLocal && pick && (
         <Card className="space-y-3">
           <h2 className="font-semibold">{t("addLine")}</h2>
           <PurchaseLineForm
@@ -86,25 +98,7 @@ export function TripScreen(): React.JSX.Element {
         </ButtonLink>
       )}
 
-      {s.isOpen && (
-        <Card className="space-y-3">
-          <p className="text-sm text-muted">{t("closeHint")}</p>
-          <ConfirmButton
-            question={
-              countPendingReceipt(trip) > 0
-                ? t("closeQuestionPending", { count: countPendingReceipt(trip) })
-                : t("closeQuestion")
-            }
-            confirmLabel={t("close")}
-            variant="primary"
-            onConfirm={s.closeTrip}
-            isLoading={s.isClosing}
-            loadingText={t("closing")}
-          >
-            {t("close")}
-          </ConfirmButton>
-        </Card>
-      )}
+      {s.isOpen && <TripCloseCard trip={trip} screen={s} />}
     </div>
   );
 }

@@ -265,10 +265,13 @@ export const purchaseLineFormSchema = z
     quotedPriceUsd: z.string(),
     marginPercent: z.string(),
     paymentStatus: z.enum(PAYMENT_STATUSES),
+    /** Who is owed a credit line at Coche; "" is none (a local purchase uses its own). */
+    supplierId: z.string(),
   })
   .transform((value, ctx) => {
     const fields = {
       productId: value.productId,
+      supplierId: value.supplierId.trim() || null,
       packs: value.packs.trim() || null,
       grossQuantity: value.grossQuantity.trim(),
       quotedPriceUsd: value.quotedPriceUsd.trim(),

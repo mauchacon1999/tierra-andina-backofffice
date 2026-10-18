@@ -7,6 +7,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { SelectField } from "@/components/ui/select-field";
 import { TextField } from "@/components/ui/text-field";
 import { ProductQuickForm } from "@/features/products/components/product-quick-form";
 import { LinePreview } from "@/features/purchases/components/line-preview";
@@ -117,7 +118,7 @@ export function PurchaseLineForm({
             required
             {...decimal}
             suffix="$"
-            hint={t("quotedPriceHint", { rate: f.cocheRate })}
+            hint={t(f.isLocal ? "quotedPriceHintLocal" : "quotedPriceHint", { rate: f.cocheRate })}
             error={errors.quotedPriceUsd?.message}
             {...f.form.register("quotedPriceUsd")}
           />
@@ -130,8 +131,13 @@ export function PurchaseLineForm({
             suffix="Bs"
             hint={
               quotedUsd
-                ? t("quotedPriceBsHint", { usd: formatUsd(quotedUsd), rate: f.cocheRate })
-                : t("quotedPriceBsEmpty", { rate: f.cocheRate })
+                ? t(f.isLocal ? "quotedPriceBsHintLocal" : "quotedPriceBsHint", {
+                    usd: formatUsd(quotedUsd),
+                    rate: f.cocheRate,
+                  })
+                : t(f.isLocal ? "quotedPriceBsEmptyLocal" : "quotedPriceBsEmpty", {
+                    rate: f.cocheRate,
+                  })
             }
             error={errors.quotedPriceUsd?.message}
             value={f.priceBs}
@@ -154,6 +160,17 @@ export function PurchaseLineForm({
         value={f.form.watch("paymentStatus")}
         onChange={(value) => f.form.setValue("paymentStatus", value, { shouldDirty: true })}
       />
+      {f.showSupplier && (
+        <SelectField
+          label={t("supplier")}
+          required
+          placeholder={t("creditSupplierPlaceholder")}
+          options={f.supplierOptions}
+          hint={t("creditSupplierHint")}
+          error={errors.supplierId?.message}
+          {...f.form.register("supplierId")}
+        />
+      )}
       <LinePreview preview={f.preview} quantitySuffix={f.quantitySuffix} />
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button

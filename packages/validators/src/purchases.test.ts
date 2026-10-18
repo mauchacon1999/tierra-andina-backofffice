@@ -117,6 +117,7 @@ describe("purchaseLineFormSchema (web)", () => {
     quotedPriceUsd: "60",
     marginPercent: "50",
     paymentStatus: "credit",
+    supplierId: "",
   } as const;
 
   test("outputs the API payload: empty crates omitted, % → fraction", () => {
@@ -127,8 +128,13 @@ describe("purchaseLineFormSchema (web)", () => {
       quotedPriceUsd: "60",
       margin: "0.5",
       paymentStatus: "credit",
+      supplierId: null,
     });
     expect(purchaseLineFormSchema.parse({ ...FORM, packs: "3" }).packs).toBe("3");
+  });
+
+  test("the supplier chosen for a credit line goes with it", () => {
+    expect(purchaseLineFormSchema.parse({ ...FORM, supplierId: PRODUCT }).supplierId).toBe(PRODUCT);
   });
 
   test("requires a product and reports field errors", () => {
