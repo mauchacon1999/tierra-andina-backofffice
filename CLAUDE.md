@@ -43,7 +43,11 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > móvil accounts, supplies invoices (CXP-000123, USD or Bs), payments at the BCV rate, void and
 > the "Pegar datos" text (`/api/v1/suppliers`, `/api/v1/payables`, `/api/v1/expense-categories`).
 > Local purchases (`kind: "local"` trips, BCV rate, no truck receipt) and Coche credit lines
-> become one invoice per supplier when the trip closes. The screens come next.
+> become one invoice per supplier when the trip closes. Owner screens: `/payables` (filter by
+> status, owed per currency), `/payables/new` and `/payables/[id]/edit` (supplies invoice, quick
+> supplier), `/payables/[id]` (payments, terms, void, "Copiar para pago móvil" per account) and
+> `/suppliers`, `/suppliers/[id]` (data and pago móvil accounts). Local purchase and Coche
+> credit-line screens come next.
 > Next (docs/plan.md): phase 1 leftovers (push,
 > offline) and phase 3 (debts, expenses, payroll).
 > Business rules and DB design: `docs/domain-model.md`; working with the DB: `docs/database.md`;

@@ -4,10 +4,12 @@ import {
   ClipboardCheck,
   ClipboardList,
   Coins,
+  HandCoins,
   House,
   ListTodo,
   Package,
   ShoppingCart,
+  Store,
   Tag,
   Truck,
   UserCog,
@@ -28,6 +30,8 @@ export type NavItem = {
     | "prices"
     | "rates"
     | "products"
+    | "payables"
+    | "suppliers"
     | "users";
   icon: LucideIcon;
   /** Roles that see it; the API enforces the same rule on every request. */
@@ -61,6 +65,8 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/prices", labelKey: "prices", icon: Tag, roles: ["owner", "manager"] },
   { href: "/rates", labelKey: "rates", icon: Coins, roles: ["owner"] },
   { href: "/products", labelKey: "products", icon: Package, roles: ["owner"] },
+  { href: "/payables", labelKey: "payables", icon: HandCoins, roles: ["owner"] },
+  { href: "/suppliers", labelKey: "suppliers", icon: Store, roles: ["owner"] },
   { href: "/users", labelKey: "users", icon: UserCog, roles: ["owner"] },
 ];
 

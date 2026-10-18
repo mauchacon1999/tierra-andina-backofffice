@@ -3,12 +3,18 @@ import { describe, expect, it } from "vitest";
 import {
   formatBs,
   formatDecimal,
+  formatMoney,
   formatPercentFromFraction,
   formatQuantity,
   formatUsd,
 } from "@/utils/format-number";
 
 describe("format-number (es-VE)", () => {
+  it("formats an amount in its own currency", () => {
+    expect(formatMoney("1234.5", "USD")).toBe("1.234,50 $");
+    expect(formatMoney("6400", "VES")).toBe("6.400,00 Bs");
+  });
+
   it("formats money with comma decimals and dot thousands", () => {
     expect(formatUsd("1.4")).toBe("1,40 $");
     expect(formatBs("1234567.5")).toBe("1.234.567,50 Bs");

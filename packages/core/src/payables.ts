@@ -119,6 +119,29 @@ export function balanceInBs(balance: string, currency: Currency, bcvRate: string
     .toFixed(2);
 }
 
+/**
+ * What an invoice still owes, told in the currency of a payment: the balance itself in the
+ * invoice's currency (4 decimals), or converted at `rate` and rounded half-up to 2 decimals
+ * (what is typed in the payment). 20 USD owed, paid in Bs at 201.555 → "4031.10". Paying
+ * exactly this amount settles the invoice (`settlePayment`).
+ * @throws {InvalidValueError} if the balance is negative or the rate ≤ 0.
+ */
+export function balanceIn(
+  balance: string,
+  payableCurrency: Currency,
+  currency: Currency,
+  rate: string,
+): string {
+  const amount = toDecimal(balance, "balance");
+  const r = toDecimal(rate, "rate");
+  if (amount.lt(0)) throw new InvalidValueError("balance", "must be ≥ 0");
+  if (r.lte(0)) throw new InvalidValueError("rate", "must be greater than 0");
+  if (currency === payableCurrency) return toDbString(amount);
+  return convert(amount, payableCurrency, currency, r)
+    .toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
+    .toFixed(2);
+}
+
 export type SettlePaymentInput = {
   /** The invoice's currency and what it still owes, in that currency. */
   payableCurrency: Currency;

@@ -64,6 +64,8 @@ describe("AppShell", () => {
       "Precios",
       "Tasas del día",
       "Productos",
+      "Cuentas por pagar",
+      "Proveedores",
       "Usuarios",
     ]);
     expect(sidebar().getByRole("link", { name: "Compras" }).getAttribute("aria-current")).toBe(

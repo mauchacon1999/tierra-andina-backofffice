@@ -148,6 +148,10 @@ describe("payablePaymentInputSchema", () => {
     ).toEqual({ ...PAYMENT, reference: "001234", accountId: SUPPLIER });
   });
 
+  test("no account chosen in the form is no account", () => {
+    expect(payablePaymentInputSchema.parse({ ...PAYMENT, accountId: "" })).toEqual(PAYMENT);
+  });
+
   test("rejects an unknown method, a zero amount and a zero rate", () => {
     const result = payablePaymentInputSchema.safeParse({
       ...PAYMENT,

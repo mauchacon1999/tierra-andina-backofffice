@@ -115,6 +115,21 @@ each copy.
 
 The home briefing shows the open invoices and what they owe, USD and Bs apart.
 
+## Screens (owner)
+
+- **Cuentas por pagar** `/payables`: status filter, what is still owed in USD and in Bs, the
+  invoices (code, supplier, dates, total, balance, status).
+- **Nueva factura** `/payables/new` (and **Editar** `/payables/[id]/edit` while it has no
+  payments): supplier or "Nuevo proveedor" (shown instead of the invoice form), currency,
+  issue and due dates, lines with their subtotal and the total while typing.
+- **Factura** `/payables/[id]`: amounts, lines (merchandise says it comes from a purchase),
+  payments (delete one by mistake), **Registrar abono** (method → currency, the day's BCV rate
+  suggested, "Pagar todo" with the exact amount, what it takes off the balance), **Cambiar
+  vencimiento**, **Anular**, and **Pagar por pago móvil**: today's amount in Bs with the rate
+  used, "Copiar para pago móvil" per account and a copy button per value, with "Copiado".
+- **Proveedores** `/suppliers` and `/suppliers/[id]`: data, notes, active, and the pago móvil
+  accounts (add, edit, remove).
+
 ## Later (not built)
 
 - QR Suiche 7B: do not invent the format. Either keep the QR image the supplier shares, or

@@ -1,4 +1,8 @@
-import type { ProductListQueryInput, TripListQueryInput } from "@ta/validators";
+import type {
+  PayableListQueryInput,
+  ProductListQueryInput,
+  TripListQueryInput,
+} from "@ta/validators";
 
 /** SWR keys. Always use this factory: never write keys inline (CLAUDE.md §10). */
 export const queryKeys = {
@@ -17,6 +21,14 @@ export const queryKeys = {
     range: (from: string, to: string) => ["exchange-rates", "range", from, to] as const,
   },
   suppliers: ["suppliers"] as const,
+  supplier: (id: string) => ["suppliers", "detail", id] as const,
+  expenseCategories: ["expense-categories"] as const,
+  payables: {
+    all: ["payables"] as const,
+    list: (params: PayableListQueryInput) => ["payables", "list", params] as const,
+    detail: (id: string) => ["payables", "detail", id] as const,
+    mobilePayment: (id: string) => ["payables", "mobile-payment", id] as const,
+  },
   receipts: ["receipts"] as const,
   users: ["users"] as const,
   paymentMethods: ["payment-methods"] as const,
@@ -50,3 +62,5 @@ export const isProductsKey = startsWith(queryKeys.products.all);
 export const isExchangeRatesKey = startsWith(queryKeys.exchangeRates.all);
 export const isTripsKey = startsWith(queryKeys.trips.all);
 export const isDailyClosesKey = startsWith(queryKeys.dailyCloses.all);
+export const isSuppliersKey = startsWith(queryKeys.suppliers);
+export const isPayablesKey = startsWith(queryKeys.payables.all);

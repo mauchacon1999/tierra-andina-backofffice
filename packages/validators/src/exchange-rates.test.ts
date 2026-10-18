@@ -20,6 +20,10 @@ describe("businessDateSchema", () => {
       "La fecha no es válida (AAAA-MM-DD)",
     );
   });
+
+  test("an empty date field asks for the date", () => {
+    expect(message(businessDateSchema.safeParse(""))).toBe("Indica la fecha");
+  });
 });
 
 describe("rateValueSchema", () => {

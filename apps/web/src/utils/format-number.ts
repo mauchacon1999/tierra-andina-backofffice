@@ -38,3 +38,8 @@ export function formatPercentFromFraction(fraction: string): string {
   const percent = fractionToPercent(fraction) as `${number}`;
   return `${new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 2 }).format(percent)} %`;
 }
+
+/** An amount in its currency: "USD" → formatUsd, "VES" → formatBs. */
+export function formatMoney(value: string, currency: "USD" | "VES"): string {
+  return currency === "USD" ? formatUsd(value) : formatBs(value);
+}

@@ -62,6 +62,7 @@ export {
 } from "./mobile-payment";
 export type { BankCode, MobilePaymentClipboardInput } from "./mobile-payment";
 export {
+  balanceIn,
   balanceInBs,
   PAYABLE_PAYMENT_METHOD_CURRENCY,
   PAYABLE_PAYMENT_METHODS,

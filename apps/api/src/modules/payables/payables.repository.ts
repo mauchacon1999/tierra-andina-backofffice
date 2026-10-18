@@ -116,7 +116,7 @@ export type LineRow = {
   purchaseLineId: string | null;
   productId: string | null;
   productName: string | null;
-  purchaseUnit: string | null;
+  purchaseUnit: "crate" | "bundle" | "kg" | null;
   packs: string | null;
   grossQuantity: string | null;
 };

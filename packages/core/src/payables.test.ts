@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { InvalidValueError } from "./errors";
 import {
+  balanceIn,
   balanceInBs,
   PAYABLE_PAYMENT_METHOD_CURRENCY,
   PAYABLE_PAYMENT_METHODS,
@@ -254,5 +255,34 @@ describe("payableCode", () => {
     expect(() => payableCode(0)).toThrow(InvalidValueError);
     expect(() => payableCode(-1)).toThrow(InvalidValueError);
     expect(() => payableCode(1.5)).toThrow(InvalidValueError);
+  });
+});
+
+describe("balanceIn", () => {
+  test("in the invoice's currency: the balance itself", () => {
+    expect(balanceIn("20", "USD", "USD", "201.555")).toBe("20.0000");
+    expect(balanceIn("1500", "VES", "VES", "200")).toBe("1500.0000");
+  });
+
+  test("in the other currency: converted at the rate, 2 decimals", () => {
+    expect(balanceIn("20", "USD", "VES", "201.555")).toBe("4031.10");
+    expect(balanceIn("1500", "VES", "USD", "201.555")).toBe("7.44");
+  });
+
+  test("that amount settles the invoice exactly", () => {
+    const amount = balanceIn("33.3333", "USD", "VES", "201.555");
+    const paid = settlePayment({
+      payableCurrency: "USD",
+      balance: "33.3333",
+      amount,
+      currency: "VES",
+      rate: "201.555",
+    });
+    expect(paid.isFullPayment).toBe(true);
+  });
+
+  test("rejects a negative balance or a rate ≤ 0", () => {
+    expect(() => balanceIn("-1", "USD", "VES", "200")).toThrow(InvalidValueError);
+    expect(() => balanceIn("1", "USD", "VES", "0")).toThrow(InvalidValueError);
   });
 });

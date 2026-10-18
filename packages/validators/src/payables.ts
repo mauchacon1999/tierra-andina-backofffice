@@ -8,6 +8,7 @@ import {
   PAYABLE_PAYMENT_METHODS,
   PAYABLE_STATUSES,
   PAYABLE_UNITS,
+  PURCHASE_UNITS,
 } from "@ta/core";
 import { z } from "zod";
 
@@ -132,8 +133,8 @@ export const payablePaymentInputSchema = z.object({
   rate: rateValueSchema,
   /** Pago móvil or transfer reference. */
   reference: optionalText(30),
-  /** The supplier's account it was sent to. */
-  accountId: z.uuid().optional(),
+  /** The supplier's account it was sent to; "" (no account chosen) is none. */
+  accountId: z.preprocess((v) => (v === "" ? undefined : v), z.uuid().optional()),
   note: optionalText(200),
 });
 
@@ -223,7 +224,7 @@ export const payableLineSchema = z.object({
       id: z.uuid(),
       productId: z.uuid(),
       productName: z.string(),
-      purchaseUnit: z.string(),
+      purchaseUnit: z.enum(PURCHASE_UNITS),
       packs: z.string().nullable(),
       grossQuantity: z.string(),
     })

@@ -7,6 +7,8 @@ import { message } from "./messages";
 /** "YYYY-MM-DD", a real calendar day (business days are America/Caracas dates). */
 export const businessDateSchema = z
   .string({ error: message("date.required") })
+  // An empty date field asks for the date rather than calling it malformed.
+  .min(1, { message: message("date.required"), abort: true })
   .refine(isBusinessDate, { message: message("date.invalid") });
 
 /** Bs per USD, > 0, numeric(14,4). */
