@@ -28,8 +28,8 @@ const valueOf = (label: string | RegExp) =>
   (screen.getByLabelText(label) as HTMLInputElement).value;
 
 async function chooseTomato(): Promise<void> {
-  await screen.findByRole("option", { name: TOMATO_PRODUCT.name });
-  fireEvent.change(screen.getByLabelText(/Producto/), { target: { value: TOMATO_PRODUCT.id } });
+  fireEvent.click(screen.getByRole("button", { name: "Ver opciones" }));
+  fireEvent.click(await screen.findByRole("option", { name: TOMATO_PRODUCT.name }));
 }
 
 describe("PurchaseLineForm (add)", () => {
@@ -44,11 +44,13 @@ describe("PurchaseLineForm (add)", () => {
     render(<PurchaseLineForm trip={OPEN_TRIP} />, { wrapper: SwrTestWrapper });
   });
 
-  it("choosing a product pre-fills its last shrinkage and margin", async () => {
+  it("choosing a product pre-fills its margin and does not ask for merma or a supplier", async () => {
     await chooseTomato();
 
-    expect(valueOf(/Merma/)).toBe("2");
     expect(valueOf(/Margen/)).toBe("50");
+    expect(screen.queryByLabelText(/Merma/)).toBeNull();
+    expect(screen.queryByLabelText(/Proveedor/)).toBeNull();
+    expect(screen.queryByLabelText(/Tasa/)).toBeNull();
   });
 
   it("estimates the gross quantity from the packs until it is typed", async () => {
@@ -64,7 +66,7 @@ describe("PurchaseLineForm (add)", () => {
   it("shows the cost live with the Coche rate of the trip (201): 4.020 Bs, sells at 1,40 $", async () => {
     await chooseTomato();
     type(/Cestas/, "1");
-    type(/Precio total/, "20");
+    type(/^Precio/, "20");
 
     const costs = await screen.findByLabelText("Costo de la compra");
     expect(costs.textContent).toContain("4.020,00 Bs");
@@ -72,41 +74,48 @@ describe("PurchaseLineForm (add)", () => {
     expect(costs.textContent).toContain("1,40 $");
   });
 
-  it("submits the API payload (margin as a fraction, empty supplier rate omitted)", async () => {
+  it("submits without crates: the product's shrinkage and the Coche rate, then stays open", async () => {
     vi.mocked(addLine).mockResolvedValue({ ...OPEN_TRIP, lines: [TOMATO_LINE], lineCount: 1 });
     await chooseTomato();
-    type(/Puesto/, "Puesto 14");
-    type(/Cestas/, "1");
-    type(/Precio total/, "20");
-    fireEvent.click(screen.getByRole("button", { name: "Agregar compra" }));
+    type(/Cantidad bruta/, "24");
+    type(/^Precio/, "20");
+    fireEvent.click(screen.getByRole("button", { name: "Agregar" }));
 
     await waitFor(() =>
       expect(addLine).toHaveBeenCalledWith(OPEN_TRIP.id, {
         productId: TOMATO_PRODUCT.id,
-        supplierId: null,
-        stallReference: "Puesto 14",
-        packs: "1",
+        packs: null,
         grossQuantity: "24",
-        shrinkage: "2",
+        shrinkage: "2.0000",
         quotedPriceUsd: "20",
-        supplierRate: undefined,
         margin: "0.5",
         paymentStatus: "paid",
       }),
     );
-    // Ready for the next purchase.
-    await waitFor(() => expect(valueOf(/Precio total/)).toBe(""));
+    await waitFor(() => expect(valueOf(/^Precio/)).toBe(""));
+    expect(screen.getByRole("button", { name: "Agregar" })).toBeDefined();
   });
 
-  it("shrinkage must be below the gross quantity", async () => {
+  it("accepts the price in bolívares and stores the dollars at the Coche rate (201)", async () => {
+    vi.mocked(addLine).mockResolvedValue({ ...OPEN_TRIP, lines: [TOMATO_LINE], lineCount: 1 });
     await chooseTomato();
-    type(/Cestas/, "1");
-    type(/Merma/, "24");
-    type(/Precio total/, "20");
-    fireEvent.click(screen.getByRole("button", { name: "Agregar compra" }));
+    expect((screen.getByRole("radio", { name: "Dólares" }) as HTMLInputElement).checked).toBe(true);
 
-    expect(await screen.findByText("La merma debe ser menor que la cantidad bruta")).toBeDefined();
-    expect(addLine).not.toHaveBeenCalled();
+    type(/^Precio/, "20");
+    fireEvent.click(screen.getByRole("radio", { name: "Bolívares" }));
+    expect(valueOf(/^Precio/)).toBe("4020");
+    expect(screen.getByText("Son 20,00 $ a la tasa de Coche (201).")).toBeDefined();
+
+    type(/^Precio/, "4020");
+    type(/Cantidad bruta/, "24");
+    fireEvent.click(screen.getByRole("button", { name: "Agregar" }));
+
+    await waitFor(() =>
+      expect(addLine).toHaveBeenCalledWith(
+        OPEN_TRIP.id,
+        expect.objectContaining({ quotedPriceUsd: "20", grossQuantity: "24" }),
+      ),
+    );
   });
 
   it("puts the API's field errors on the right field (margin → Margen)", async () => {
@@ -120,8 +129,8 @@ describe("PurchaseLineForm (add)", () => {
     );
     await chooseTomato();
     type(/Cestas/, "1");
-    type(/Precio total/, "20");
-    fireEvent.click(screen.getByRole("button", { name: "Agregar compra" }));
+    type(/^Precio/, "20");
+    fireEvent.click(screen.getByRole("button", { name: "Agregar" }));
 
     const message = await screen.findByText("El margen debe estar entre 0 % y 500 %");
     expect(screen.getByLabelText(/Margen/).getAttribute("aria-describedby")).toBe(
@@ -139,17 +148,42 @@ describe("PurchaseLineForm (edit)", () => {
       wrapper: SwrTestWrapper,
     });
 
-    expect(valueOf(/Tasa del puesto/)).toBe("201");
+    expect(valueOf(/Cestas/)).toBe("1");
+    expect(screen.queryByLabelText(/Tasa/)).toBeNull();
     expect(screen.queryByRole("button", { name: "+ Nuevo producto" })).toBeNull();
-    type(/Precio total/, "22");
+    type(/^Precio/, "22");
     fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
     await waitFor(() => expect(onDone).toHaveBeenCalledOnce());
     expect(vi.mocked(updateLine).mock.calls[0]?.[1]).toBe(TOMATO_LINE.id);
     expect(vi.mocked(updateLine).mock.calls[0]?.[2]).toMatchObject({
       quotedPriceUsd: "22",
-      supplierRate: "201",
+      packs: "1",
+      shrinkage: "2.0000",
       margin: "0.5",
     });
+  });
+});
+
+describe("PurchaseLineForm (buy from the list)", () => {
+  it("selects the product and its margin once the list has loaded", async () => {
+    let resolveProducts: (page: Awaited<ReturnType<typeof listProducts>>) => void = () => {};
+    vi.mocked(listProducts).mockReturnValue(
+      new Promise((resolve) => {
+        resolveProducts = resolve;
+      }),
+    );
+    render(
+      <PurchaseLineForm trip={OPEN_TRIP} pickedProductId={TOMATO_PRODUCT.id} pickToken={1} />,
+      { wrapper: SwrTestWrapper },
+    );
+
+    const product = () => screen.getByRole("combobox", { name: /Producto/ }) as HTMLInputElement;
+    expect(product().value).toBe("");
+
+    resolveProducts({ data: [TOMATO_PRODUCT], total: 1, page: 1, pageSize: 100 });
+
+    await waitFor(() => expect(product().value).toBe(TOMATO_PRODUCT.name));
+    expect(valueOf(/Margen/)).toBe("50");
   });
 });

@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { SelectField } from "@/components/ui/select-field";
+import { ComboboxField } from "@/components/ui/combobox-field";
 import { TextField } from "@/components/ui/text-field";
 import { useShoppingListForm } from "@/features/shopping-list/hooks/use-shopping-list-form";
 
@@ -26,13 +26,21 @@ export function ShoppingListForm(): React.JSX.Element {
     >
       <h2 className="font-semibold">{t("addTitle")}</h2>
       {errors.root?.message && <Alert tone="error">{errors.root.message}</Alert>}
-      <SelectField
+      <ComboboxField
         label={t("product")}
         options={f.productOptions}
         placeholder={t("productPlaceholder")}
         required
+        value={f.form.watch("productId")}
+        onValueChange={(productId) =>
+          f.form.setValue("productId", productId, {
+            shouldDirty: true,
+            shouldValidate: productId !== "",
+          })
+        }
         error={errors.productId?.message}
-        {...f.form.register("productId")}
+        emptyText={tc("noMatches")}
+        openLabel={tc("showOptions")}
       />
       <TextField
         label={t("note")}

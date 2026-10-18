@@ -132,18 +132,19 @@ earns the most.
 
 ## 4. Roles
 
-| Action                              | Owner | Manager | Receiver |
-| ----------------------------------- | ----- | ------- | -------- |
-| View current price list             | Yes   | Yes     | No       |
-| Record purchases, costs and margins | Yes   | No      | No       |
-| Set truck receipt status            | Yes   | No      | Yes      |
-| Publish price lists                 | Yes   | No      | No       |
-| Submit daily close                  | Yes   | Yes     | No       |
-| Edit a submitted close              | Yes   | No      | No       |
-| Add shopping list items             | Yes   | Yes     | No       |
-| Register customer credit payments   | Yes   | Yes     | No       |
-| Expenses, payables, payroll         | Yes   | No      | No       |
-| Reports and weekly summary          | Yes   | No      | No       |
+| Action                               | Owner | Manager | Receiver |
+| ------------------------------------ | ----- | ------- | -------- |
+| View current price list              | Yes   | Yes     | No       |
+| Record purchases, costs and margins  | Yes   | No      | No       |
+| Set truck receipt status             | Yes   | No      | Yes      |
+| Publish price lists                  | Yes   | No      | No       |
+| Submit daily close                   | Yes   | Yes     | No       |
+| Edit a submitted close               | Yes   | No      | No       |
+| Add shopping list items              | Yes   | Yes     | No       |
+| Register customer credit payments    | Yes   | Yes     | No       |
+| Assign tasks and change their status | Yes   | Yes     | Status   |
+| Expenses, payables, payroll          | Yes   | No      | No       |
+| Reports and weekly summary           | Yes   | No      | No       |
 
 Every change is audited with user and time.
 

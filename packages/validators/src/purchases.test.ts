@@ -41,19 +41,16 @@ describe("openTripSchema", () => {
 });
 
 describe("purchaseLineFieldsSchema", () => {
-  test("defaults: shrinkage 0, paid; supplier rate and margin left to the API", () => {
+  test("defaults payment to paid; omitted packs and shrinkage are left to the API", () => {
     expect(
       purchaseLineFieldsSchema.parse({
         productId: PRODUCT,
-        packs: "3",
         grossQuantity: "72",
         quotedPriceUsd: "60",
       }),
     ).toEqual({
       productId: PRODUCT,
-      packs: "3",
       grossQuantity: "72",
-      shrinkage: "0",
       quotedPriceUsd: "60",
       paymentStatus: "paid",
     });
@@ -91,35 +88,23 @@ describe("updatePurchaseLineSchema", () => {
 describe("purchaseLineFormSchema (web)", () => {
   const FORM = {
     productId: PRODUCT,
-    supplierId: "",
-    stallReference: " Puesto 14 ",
-    packs: "3",
+    packs: "",
     grossQuantity: "72",
-    shrinkage: "6",
     quotedPriceUsd: "60",
-    supplierRate: "",
     marginPercent: "50",
     paymentStatus: "credit",
   } as const;
 
-  test("outputs the API payload: % → fraction, empty values dropped", () => {
+  test("outputs the API payload: empty crates omitted, % → fraction", () => {
     expect(purchaseLineFormSchema.parse(FORM)).toEqual({
       productId: PRODUCT,
-      supplierId: null,
-      stallReference: "Puesto 14",
-      packs: "3",
+      packs: null,
       grossQuantity: "72",
-      shrinkage: "6",
       quotedPriceUsd: "60",
       margin: "0.5",
       paymentStatus: "credit",
     });
-  });
-
-  test("shrinkage must be below the gross quantity", () => {
-    expect(
-      fieldErrors(purchaseLineFormSchema.safeParse({ ...FORM, shrinkage: "72" })).shrinkage,
-    ).toBe("La merma debe ser menor que la cantidad bruta");
+    expect(purchaseLineFormSchema.parse({ ...FORM, packs: "3" }).packs).toBe("3");
   });
 
   test("requires a product and reports field errors", () => {

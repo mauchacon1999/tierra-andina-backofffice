@@ -11,7 +11,7 @@ import {
   pricesFromTrip,
   publishSaleRateProposal,
 } from "@/modules/price-lists/price-lists.service";
-import { call, errorOf, signInRoles, type Json, type RoleSession } from "@/testing/http";
+import { call, errorOf, signInOwnStore, type Json, type RoleSession } from "@/testing/http";
 import { createStore, createUser, signIn } from "@/testing/test-app";
 
 let s: RoleSession;
@@ -19,7 +19,7 @@ let categoryId: string;
 let dayCounter = 0;
 
 beforeAll(async () => {
-  s = await signInRoles();
+  s = await signInOwnStore();
   const [category] = await testConnection()
     .db.select()
     .from(schema.productCategories)

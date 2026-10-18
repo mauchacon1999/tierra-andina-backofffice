@@ -36,11 +36,12 @@ because they have different costs, shrinkage and prices.
 | Field                   | Set at creation                                   | Updated later by                               |
 | ----------------------- | ------------------------------------------------- | ---------------------------------------------- |
 | `default_pack_quantity` | Owner (required for crate/bundle)                 | Owner only                                     |
-| `last_shrinkage`        | Owner (optional, default 0)                       | Purchases module, on every purchase line saved |
+| `last_shrinkage`        | Owner (optional, default 0)                       | Owner, on the product. A purchase copies it    |
 | `last_margin`           | Owner (default = `settings.default_margin`, 0.50) | Purchases module, on every purchase line saved |
 
-These are **suggestions**: every purchase line still decides its own quantity, shrinkage
-and margin. Gross quantity varies per purchase and is always entered at purchase time.
+Quantity and margin are still decided on the purchase. Shrinkage is the product's: the
+line stores a copy and does not write it back. Gross quantity varies per purchase and is
+always entered at purchase time. Crates are optional.
 
 ### 1.4 Name
 

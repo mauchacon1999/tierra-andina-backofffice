@@ -25,6 +25,7 @@ export const VALIDATION_MESSAGES_ES_VE = {
     defaultMargin: "El margen por defecto",
     receivedPacks: "Lo recibido",
     receivedQuantity: "El peso recibido",
+    quantity: "La cantidad",
   },
   decimal: {
     notText: "{subject} debe enviarse como texto",
@@ -85,6 +86,24 @@ export const VALIDATION_MESSAGES_ES_VE = {
     customerRequired: "Elige un cliente o escribe su nombre",
     conceptRequired: "Escribe en qué se gastó",
     duplicatePayment: "Cada forma de pago va una sola vez",
+  },
+  task: {
+    assigneeRequired: "Elige a quién se le asigna",
+  },
+  payable: {
+    supplierRequired: "Elige el proveedor",
+    linesRequired: "Agrega al menos una línea",
+    tooManyLines: "Una factura admite como máximo {max} líneas",
+    descriptionRequired: "Escribe qué se compró",
+    categoryRequired: "Elige la categoría del gasto",
+    dueBeforeIssue: "El vencimiento no puede ser antes de la emisión",
+    methodRequired: "Elige cómo se pagó",
+  },
+  mobilePayment: {
+    bankInvalid: "Elige un banco de la lista",
+    phoneInvalid:
+      "El teléfono debe tener 11 dígitos y empezar por 0412, 0414, 0416, 0422, 0424 o 0426",
+    idDocumentInvalid: "Escribe la cédula o RIF con su letra (V, E, J, G o P) y sin puntos",
   },
   receipt: {
     receivedPacksRange: "Debe ser más de 0 y menos de lo comprado",

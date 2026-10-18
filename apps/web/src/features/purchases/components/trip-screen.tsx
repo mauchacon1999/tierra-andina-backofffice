@@ -60,18 +60,20 @@ export function TripScreen(): React.JSX.Element {
       {s.actionError && <Alert tone="error">{s.actionError}</Alert>}
       {s.isOpen && (
         <TripNeededList
-          onPick={(productId) =>
+          onBuy={(productId) =>
             setPick((current) => ({ productId, token: (current?.token ?? 0) + 1 }))
           }
         />
       )}
-      {s.isOpen && (
+      {s.isOpen && pick && (
         <Card className="space-y-3">
           <h2 className="font-semibold">{t("addLine")}</h2>
           <PurchaseLineForm
             trip={trip}
-            pickedProductId={pick?.productId ?? null}
-            pickToken={pick?.token ?? 0}
+            pickedProductId={pick.productId}
+            pickToken={pick.token}
+            onDone={() => setPick(null)}
+            onCancel={() => setPick(null)}
           />
         </Card>
       )}

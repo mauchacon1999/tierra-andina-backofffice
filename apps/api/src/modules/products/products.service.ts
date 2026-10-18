@@ -317,14 +317,15 @@ export async function findProduct(db: Executor, id: string): Promise<ProductRow 
 }
 
 /**
- * Remembers the shrinkage and margin of the last purchase line as the product's suggestions
- * (products.md §1.3). Runs inside the caller's transaction; audits only when they change.
+ * Remembers the margin of the last purchase line as the product's suggestion
+ * (products.md §1.3). Shrinkage stays what the owner set on the product. Runs inside the
+ * caller's transaction; audits only when the margin changes.
  */
 export async function rememberPurchaseDefaults(
   tx: Executor,
   actor: Actor,
   productId: string,
-  values: { lastShrinkage: string; lastMargin: string },
+  values: { lastMargin: string },
 ): Promise<void> {
   const before = await requireProduct(tx, productId);
   const after = await updateProductById(tx, productId, { ...values, updatedBy: actor.userId });

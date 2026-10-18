@@ -23,16 +23,6 @@ export type UseReceiptScreenResult = {
   actionError: string | null;
 };
 
-const ORDER: Record<ReceiptStatus, number> = { pending: 0, partial: 1, missing: 2, received: 3 };
-
-/** Lines still to check first, then the rest; same status in the order they were bought. */
-export function sortForReceipt(lines: ReceiptLine[]): ReceiptLine[] {
-  return [...lines].sort(
-    (a, b) =>
-      ORDER[a.receiptStatus] - ORDER[b.receiptStatus] || a.createdAt.localeCompare(b.createdAt),
-  );
-}
-
 /** Truck receipt screen: open trips refreshed every few seconds and one-tap marks. */
 export function useReceiptScreen(): UseReceiptScreenResult {
   const receipts = useReceipts();

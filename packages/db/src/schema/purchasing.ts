@@ -1,5 +1,15 @@
 import { relations, sql } from "drizzle-orm";
-import { check, date, index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import {
+  check,
+  date,
+  index,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 import {
   paymentStatus,
@@ -36,6 +46,10 @@ export const purchaseTrips = pgTable(
   (t) => [
     index("purchase_trips_store_id_idx").on(t.storeId),
     index("purchase_trips_business_date_idx").on(t.businessDate),
+    /** One open trip per store: close it before opening the next (owner, 2026-10-17). */
+    uniqueIndex("purchase_trips_one_open_idx")
+      .on(t.storeId)
+      .where(sql`${t.status} = 'open'`),
     check("purchase_trips_bcv_rate_check", sql`${t.bcvRate} > 0`),
     check("purchase_trips_market_rate_check", sql`${t.marketRate} > 0`),
     check("purchase_trips_amounts_check", sql`${t.totalUsd} >= 0 AND ${t.totalBs} >= 0`),
@@ -43,8 +57,8 @@ export const purchaseTrips = pgTable(
 );
 
 /**
- * One product bought at one stall. Supplier, supplier rate and payment status live here because
- * every line can come from a different stall (domain-model §4).
+ * One product bought on the Coche trip. The rate stored is the trip's Coche rate. Supplier and
+ * stall stay nullable for older lines; the form no longer asks for them (domain-model §4).
  *
  * - `quoted_price_usd` is the TOTAL of the line (3 crates at 20 USD → 60).
  * - `amount_bs` is what is paid to the stall: quoted_price_usd × supplier_rate.
@@ -66,7 +80,8 @@ export const purchaseLines = pgTable(
       .references(() => products.id),
     /** Snapshot of the product's unit at purchase time. */
     purchaseUnit: purchaseUnit("purchase_unit").notNull(),
-    packs: quantity("packs").notNull(),
+    /** Null when the crates were not counted; the weight is in `gross_quantity`. */
+    packs: quantity("packs"),
     grossQuantity: quantity("gross_quantity").notNull(),
     shrinkage: quantity("shrinkage").notNull().default("0"),
     usableQuantity: quantity("usable_quantity").notNull(),
@@ -99,7 +114,7 @@ export const purchaseLines = pgTable(
     index("purchase_lines_supplier_id_idx").on(t.supplierId),
     index("purchase_lines_product_id_idx").on(t.productId),
     index("purchase_lines_received_by_idx").on(t.receivedBy),
-    check("purchase_lines_packs_check", sql`${t.packs} > 0`),
+    check("purchase_lines_packs_check", sql`${t.packs} IS NULL OR ${t.packs} > 0`),
     check("purchase_lines_gross_quantity_check", sql`${t.grossQuantity} > 0`),
     check(
       "purchase_lines_shrinkage_check",
@@ -118,7 +133,7 @@ export const purchaseLines = pgTable(
     check("purchase_lines_margin_check", sql`${t.margin} >= 0 AND ${t.margin} <= 5`),
     check(
       "purchase_lines_received_packs_check",
-      sql`${t.receivedPacks} IS NULL OR (${t.receivedPacks} >= 0 AND ${t.receivedPacks} <= ${t.packs})`,
+      sql`${t.receivedPacks} IS NULL OR (${t.packs} IS NOT NULL AND ${t.receivedPacks} >= 0 AND ${t.receivedPacks} <= ${t.packs}) OR (${t.packs} IS NULL AND ${t.receivedPacks} = 0)`,
     ),
     check(
       "purchase_lines_received_costs_check",

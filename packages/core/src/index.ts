@@ -27,11 +27,14 @@ export type {
   PurchaseUnit,
   SaleUnit,
 } from "./products";
-export { amountInBs, sumDecimals } from "./rates";
+export { amountInBs, amountInUsd, sumDecimals } from "./rates";
 export {
   BUSINESS_TIME_ZONE,
   isBusinessDate,
   toBusinessDate,
+  monthContaining,
+  previousMonth,
+  previousWeek,
   weekContaining,
 } from "./business-date";
 export { InvalidReceiptError, pricePartialReceipt } from "./receipt";
@@ -44,3 +47,37 @@ export type {
   DailyCloseTotalsInput,
 } from "./daily-close";
 export type { PartialReceiptInput, PartialReceiptPricing } from "./receipt";
+export {
+  bankName,
+  formatMobilePaymentAmount,
+  formatPagoMovilClipboard,
+  ID_DOCUMENT_PREFIXES,
+  isValidBankCode,
+  isValidIdDocument,
+  isValidMobilePhone,
+  MOBILE_PHONE_PREFIXES,
+  normalizeIdDocument,
+  normalizeMobilePhone,
+  VE_BANKS,
+} from "./mobile-payment";
+export type { BankCode, MobilePaymentClipboardInput } from "./mobile-payment";
+export {
+  balanceInBs,
+  PAYABLE_PAYMENT_METHOD_CURRENCY,
+  PAYABLE_PAYMENT_METHODS,
+  PAYABLE_STATUSES,
+  PAYABLE_UNITS,
+  PaymentExceedsBalanceError,
+  payableBalance,
+  payableLineSubtotal,
+  payableStatus,
+  settlePayment,
+} from "./payables";
+export type {
+  PayablePaymentMethod,
+  PayableStatus,
+  PayableStatusInput,
+  PayableUnit,
+  SettledPayment,
+  SettlePaymentInput,
+} from "./payables";

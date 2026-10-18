@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import type { AppEnv } from "@/lib/types";
 import { getMembership, requireRole } from "@/middleware/auth";
 import { toReceiptTripDto } from "@/modules/purchases/purchases.mapper";
-import { listOpenTrips } from "@/modules/purchases/purchases.service";
+import { listOpenTrips, listToBuy } from "@/modules/purchases/purchases.service";
 import { canSeePrices } from "@/modules/receipts/receipts.service";
 
 /**
@@ -14,10 +14,16 @@ export function receiptsRoutes(): Hono<AppEnv> {
   return new Hono<AppEnv>().get("/", requireRole("owner", "receiver"), async (c) => {
     const db = c.get("db");
     const membership = getMembership(c);
-    const [trips, showPrices] = await Promise.all([
+    const [trips, showPrices, toBuy] = await Promise.all([
       listOpenTrips(db, membership.storeId),
       canSeePrices(db, membership),
+      listToBuy(db, membership.storeId),
     ]);
-    return c.json({ data: trips.map((trip) => toReceiptTripDto(trip, showPrices)) });
+    // Newest trip first (listOpenTrips). Faltantes ride on that one so they are not repeated.
+    return c.json({
+      data: trips.map((trip, index) =>
+        toReceiptTripDto(trip, showPrices, index === 0 ? toBuy : []),
+      ),
+    });
   });
 }

@@ -58,6 +58,7 @@ describe("AppShell", () => {
       "Cierre del día",
       "Cierres",
       "Faltantes",
+      "Tareas",
       "Compras",
       "Recepción",
       "Precios",
@@ -80,6 +81,7 @@ describe("AppShell", () => {
     expect(sidebar().queryByRole("link", { name: "Compras" })).toBeNull();
     expect(sidebar().getByRole("link", { name: "Inicio" })).toBeDefined();
     expect(sidebar().getByRole("link", { name: "Recepción" })).toBeDefined();
+    expect(sidebar().getByRole("link", { name: "Tareas" })).toBeDefined();
     expect(sidebar().queryByRole("link", { name: "Precios" })).toBeNull();
   });
 
@@ -90,7 +92,14 @@ describe("AppShell", () => {
     const links = sidebar()
       .getAllByRole("link")
       .map((a) => a.textContent);
-    expect(links).toEqual(["Tierra Andina", "Inicio", "Cierre del día", "Faltantes", "Precios"]);
+    expect(links).toEqual([
+      "Tierra Andina",
+      "Inicio",
+      "Cierre del día",
+      "Faltantes",
+      "Tareas",
+      "Precios",
+    ]);
   });
 
   it("the owner sees how many closes wait for review, also with the menu collapsed", () => {

@@ -109,7 +109,7 @@ export const purchaseLineSchema = z.object({
   supplierId: z.uuid().nullable(),
   supplierName: z.string().nullable(),
   stallReference: z.string().nullable(),
-  packs: z.string(),
+  packs: z.string().nullable(),
   grossQuantity: z.string(),
   shrinkage: z.string(),
   usableQuantity: z.string(),
@@ -145,16 +145,18 @@ const positiveQuantity = (subject: ValidationSubject) =>
 
 /**
  * POST /api/v1/purchase-trips/:id/lines — field shapes only. `quotedPriceUsd` is the TOTAL of
- * the line. Omitted supplier rate → the trip's Coche rate; omitted margin → product's last.
- * Cross-field rules (shrinkage < gross) are applied by the API with @ta/core (422).
+ * the line. Omitted packs → crates were not counted. Omitted shrinkage → the product's
+ * last shrinkage (the purchase does not change it). Omitted supplier rate → the trip's
+ * Coche rate; omitted margin → the product's last. Cross-field rules (shrinkage < gross)
+ * are applied by the API with @ta/core (422).
  */
 export const purchaseLineFieldsSchema = z.object({
   productId: z.uuid({ error: message("purchase.productRequired") }),
   supplierId: z.uuid().nullable().optional(),
   stallReference: shortTextSchema(60).optional(),
-  packs: positiveQuantity("packs"),
+  packs: positiveQuantity("packs").nullable().optional(),
   grossQuantity: positiveQuantity("grossQuantity"),
-  shrinkage: decimalSchema("shrinkage").default("0"),
+  shrinkage: decimalSchema("shrinkage").optional(),
   quotedPriceUsd: decimalSchema("price"),
   supplierRate: rateValueSchema.optional(),
   margin: decimalSchema("margin").optional(),
@@ -170,7 +172,7 @@ export const updatePurchaseLineSchema = z
     productId: z.uuid().optional(),
     supplierId: z.uuid().nullable().optional(),
     stallReference: shortTextSchema(60).optional(),
-    packs: positiveQuantity("packs").optional(),
+    packs: positiveQuantity("packs").nullable().optional(),
     grossQuantity: positiveQuantity("grossQuantity").optional(),
     shrinkage: decimalSchema("shrinkage").optional(),
     quotedPriceUsd: decimalSchema("price").optional(),
@@ -190,26 +192,18 @@ export const SHRINKAGE_BELOW_GROSS_MESSAGE = message("purchase.shrinkageBelowGro
 export const purchaseLineFormSchema = z
   .object({
     productId: z.string(),
-    supplierId: z.string(),
-    stallReference: z.string(),
     packs: z.string(),
     grossQuantity: z.string(),
-    shrinkage: z.string(),
     quotedPriceUsd: z.string(),
-    supplierRate: z.string(),
     marginPercent: z.string(),
     paymentStatus: z.enum(PAYMENT_STATUSES),
   })
   .transform((value, ctx) => {
     const fields = {
       productId: value.productId,
-      supplierId: value.supplierId === "" ? null : value.supplierId,
-      stallReference: value.stallReference.trim() || undefined,
-      packs: value.packs.trim(),
+      packs: value.packs.trim() || null,
       grossQuantity: value.grossQuantity.trim(),
-      shrinkage: value.shrinkage.trim() || "0",
       quotedPriceUsd: value.quotedPriceUsd.trim(),
-      supplierRate: value.supplierRate.trim() || undefined,
       paymentStatus: value.paymentStatus,
     };
     const marginPercent = decimalSchema("margin", { maxDecimals: 2 }).safeParse(
@@ -226,9 +220,6 @@ export const purchaseLineFormSchema = z
         ctx.addIssue({ code: "custom", path: issue.path, message: issue.message });
       }
       return z.NEVER;
-    }
-    if (compareDecimals(parsed.data.shrinkage, parsed.data.grossQuantity) >= 0) {
-      ctx.addIssue({ code: "custom", path: ["shrinkage"], message: SHRINKAGE_BELOW_GROSS_MESSAGE });
     }
     if (!marginPercent.success) return z.NEVER;
     return {
@@ -289,7 +280,7 @@ export const receiptLineSchema = z.object({
   productName: z.string(),
   purchaseUnit: purchaseUnitSchema,
   saleUnit: saleUnitSchema,
-  packs: z.string(),
+  packs: z.string().nullable(),
   grossQuantity: z.string(),
   supplierName: z.string().nullable(),
   stallReference: z.string().nullable(),
@@ -305,11 +296,22 @@ export const receiptLineSchema = z.object({
 
 export type ReceiptLine = z.infer<typeof receiptLineSchema>;
 
+/** An open shopping-list item shown on the receipt screen: not bought yet, so it cannot be received. */
+export const receiptToBuySchema = z.object({
+  id: z.uuid(),
+  productName: z.string(),
+  note: z.string().nullable(),
+});
+
+export type ReceiptToBuy = z.infer<typeof receiptToBuySchema>;
+
 export const receiptTripSchema = z.object({
   id: z.uuid(),
   businessDate: z.string(),
   note: z.string().nullable(),
   lines: z.array(receiptLineSchema),
+  /** Open shopping-list items. Only the newest open trip carries them; the rest get an empty list. */
+  toBuy: z.array(receiptToBuySchema),
 });
 
 export type ReceiptTrip = z.infer<typeof receiptTripSchema>;

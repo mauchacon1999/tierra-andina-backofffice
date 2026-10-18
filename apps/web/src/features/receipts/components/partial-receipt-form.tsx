@@ -41,7 +41,13 @@ export function PartialReceiptForm({
         required
         inputMode="decimal"
         autoComplete="off"
-        hint={t("receivedPacksHint", { bought: labels.packsCount(line.purchaseUnit, line.packs) })}
+        hint={
+          line.packs
+            ? t("receivedPacksHint", {
+                bought: labels.packsCount(line.purchaseUnit, line.packs),
+              })
+            : undefined
+        }
         error={errors.receivedPacks?.message}
         {...f.form.register("receivedPacks")}
       />

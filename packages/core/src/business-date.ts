@@ -43,6 +43,48 @@ export function weekContaining(businessDate: string): { from: string; to: string
   return { from: isoDay(monday), to: isoDay(sunday) };
 }
 
+/**
+ * The Monday–Sunday week before the one that contains `businessDate`.
+ * "2026-10-17" → 5 to 11 October.
+ * @throws {TypeError} when the date is not a real YYYY-MM-DD day.
+ */
+export function previousWeek(businessDate: string): { from: string; to: string } {
+  const current = weekContaining(businessDate);
+  return weekContaining(addBusinessDays(current.from, -1));
+}
+
+/**
+ * The calendar month that contains a business day, first day through last day.
+ * "2026-10-17" → 1 to 31 October. February respects leap years.
+ * @throws {TypeError} when the date is not a real YYYY-MM-DD day.
+ */
+export function monthContaining(businessDate: string): { from: string; to: string } {
+  if (!isBusinessDate(businessDate)) {
+    throw new TypeError(`monthContaining: "${businessDate}" is not a business date`);
+  }
+  const year = Number(businessDate.slice(0, 4));
+  const month = Number(businessDate.slice(5, 7));
+  const last = new Date(Date.UTC(year, month, 0));
+  return { from: `${businessDate.slice(0, 7)}-01`, to: isoDay(last) };
+}
+
+/**
+ * The calendar month before the one that contains `businessDate`.
+ * "2026-03-01" → 1 to 28 February. "2026-01-15" → December 2025.
+ * @throws {TypeError} when the date is not a real YYYY-MM-DD day.
+ */
+export function previousMonth(businessDate: string): { from: string; to: string } {
+  const current = monthContaining(businessDate);
+  return monthContaining(addBusinessDays(current.from, -1));
+}
+
+/** Moves a business day by whole days. Negative goes backward. Noon UTC avoids zone shifts. */
+function addBusinessDays(businessDate: string, days: number): string {
+  const date = new Date(`${businessDate}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return isoDay(date);
+}
+
 function isoDay(date: Date): string {
   return date.toISOString().slice(0, 10);
 }

@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, type KeyboardEvent, type RefObject } from 
 
 export type UseMenuResult = {
   rootRef: RefObject<HTMLDivElement | null>;
+  /** The list itself, which may be drawn outside the button so a clipping parent cannot hide it. */
+  menuRef: RefObject<HTMLUListElement | null>;
   isOpen: boolean;
   toggle: () => void;
   close: () => void;
@@ -20,13 +22,16 @@ const items = (root: HTMLElement | null): HTMLElement[] =>
  */
 export function useMenu(): UseMenuResult {
   const rootRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
-    items(rootRef.current)[0]?.focus();
+    items(menuRef.current ?? rootRef.current)[0]?.focus();
     const onPointerDown = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setIsOpen(false);
+      const target = event.target as Node;
+      if (rootRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setIsOpen(false);
     };
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
@@ -36,6 +41,7 @@ export function useMenu(): UseMenuResult {
 
   return {
     rootRef,
+    menuRef,
     isOpen,
     toggle: () => setIsOpen((open) => !open),
     close,
@@ -46,7 +52,7 @@ export function useMenu(): UseMenuResult {
       }
     },
     onMenuKeyDown: (event) => {
-      const list = items(rootRef.current);
+      const list = items(menuRef.current ?? rootRef.current);
       const index = list.indexOf(document.activeElement as HTMLElement);
       if (event.key === "Escape") {
         event.preventDefault();

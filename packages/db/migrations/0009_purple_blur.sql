@@ -1,0 +1,5 @@
+ALTER TABLE "purchase_lines" DROP CONSTRAINT "purchase_lines_packs_check";--> statement-breakpoint
+ALTER TABLE "purchase_lines" DROP CONSTRAINT "purchase_lines_received_packs_check";--> statement-breakpoint
+ALTER TABLE "purchase_lines" ALTER COLUMN "packs" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "purchase_lines" ADD CONSTRAINT "purchase_lines_packs_check" CHECK ("purchase_lines"."packs" IS NULL OR "purchase_lines"."packs" > 0);--> statement-breakpoint
+ALTER TABLE "purchase_lines" ADD CONSTRAINT "purchase_lines_received_packs_check" CHECK ("purchase_lines"."received_packs" IS NULL OR ("purchase_lines"."packs" IS NOT NULL AND "purchase_lines"."received_packs" >= 0 AND "purchase_lines"."received_packs" <= "purchase_lines"."packs") OR ("purchase_lines"."packs" IS NULL AND "purchase_lines"."received_packs" = 0));

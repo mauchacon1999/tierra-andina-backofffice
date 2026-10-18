@@ -7,12 +7,12 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { SelectField } from "@/components/ui/select-field";
 import { TextField } from "@/components/ui/text-field";
 import { ProductQuickForm } from "@/features/products/components/product-quick-form";
 import { LinePreview } from "@/features/purchases/components/line-preview";
 import { LineProductField } from "@/features/purchases/components/line-product-field";
-import { useLineForm } from "@/features/purchases/hooks/use-line-form";
+import { useLineForm, type PriceCurrency } from "@/features/purchases/hooks/use-line-form";
+import { formatUsd } from "@/utils/format-number";
 
 export type PurchaseLineFormProps = {
   trip: TripDetail;
@@ -47,6 +47,13 @@ export function PurchaseLineForm({
     value,
     label: t(`paymentStatus.${value}`),
   }));
+  const priceOptions = (
+    [
+      ["USD", "dollars"],
+      ["VES", "bolivars"],
+    ] as const
+  ).map(([value, key]) => ({ value, label: t(key) }));
+  const quotedUsd = f.form.watch("quotedPriceUsd");
   const decimal = { inputMode: "decimal", autoComplete: "off" } as const;
 
   // The quick form is a <form> of its own: it replaces this one instead of nesting.
@@ -76,29 +83,16 @@ export function PurchaseLineForm({
     >
       {f.formError && <Alert tone="error">{f.formError}</Alert>}
       <LineProductField f={f} />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField
-          label={t("supplier")}
-          placeholder={t("supplierPlaceholder")}
-          options={f.supplierOptions}
-          {...f.form.register("supplierId")}
-        />
-        <TextField
-          label={t("stall")}
-          autoComplete="off"
-          hint={t("stallHint")}
-          error={errors.stallReference?.message}
-          {...f.form.register("stallReference")}
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        <TextField
-          label={f.packsLabel}
-          required
-          {...decimal}
-          error={errors.packs?.message}
-          {...f.form.register("packs")}
-        />
+      <div className="grid grid-cols-2 gap-4">
+        {f.showPacks && (
+          <TextField
+            label={f.packsLabel}
+            {...decimal}
+            hint={t("packsHint")}
+            error={errors.packs?.message}
+            {...f.form.register("packs")}
+          />
+        )}
         <TextField
           label={t("grossQuantity")}
           required
@@ -107,31 +101,43 @@ export function PurchaseLineForm({
           error={errors.grossQuantity?.message}
           {...f.form.register("grossQuantity")}
         />
-        <TextField
-          label={t("shrinkage")}
-          {...decimal}
-          suffix={f.quantitySuffix}
-          error={errors.shrinkage?.message}
-          {...f.form.register("shrinkage")}
-        />
-        <TextField
-          label={t("quotedPrice")}
-          required
-          {...decimal}
-          suffix="$"
-          hint={t("quotedPriceHint")}
-          error={errors.quotedPriceUsd?.message}
-          {...f.form.register("quotedPriceUsd")}
-        />
-        <TextField
-          label={t("supplierRate")}
-          {...decimal}
-          suffix="Bs"
-          placeholder={f.supplierRatePlaceholder}
-          hint={t("supplierRateHint")}
-          error={errors.supplierRate?.message}
-          {...f.form.register("supplierRate")}
-        />
+        <div className="col-span-2">
+          <SegmentedControl
+            label={t("priceCurrency")}
+            name="priceCurrency"
+            options={priceOptions}
+            value={f.priceCurrency}
+            onChange={(currency: PriceCurrency) => f.choosePriceCurrency(currency)}
+          />
+        </div>
+        {f.priceCurrency === "USD" ? (
+          <TextField
+            key="price-usd"
+            label={t("quotedPrice")}
+            required
+            {...decimal}
+            suffix="$"
+            hint={t("quotedPriceHint", { rate: f.cocheRate })}
+            error={errors.quotedPriceUsd?.message}
+            {...f.form.register("quotedPriceUsd")}
+          />
+        ) : (
+          <TextField
+            key="price-bs"
+            label={t("quotedPrice")}
+            required
+            {...decimal}
+            suffix="Bs"
+            hint={
+              quotedUsd
+                ? t("quotedPriceBsHint", { usd: formatUsd(quotedUsd), rate: f.cocheRate })
+                : t("quotedPriceBsEmpty", { rate: f.cocheRate })
+            }
+            error={errors.quotedPriceUsd?.message}
+            value={f.priceBs}
+            onChange={(event) => f.setPriceInBs(event.target.value)}
+          />
+        )}
         <TextField
           label={t("margin")}
           required

@@ -5,6 +5,7 @@ import {
   ClipboardList,
   Coins,
   House,
+  ListTodo,
   Package,
   ShoppingCart,
   Tag,
@@ -21,6 +22,7 @@ export type NavItem = {
     | "dailyClose"
     | "closes"
     | "shoppingList"
+    | "tasks"
     | "purchases"
     | "receipt"
     | "prices"
@@ -53,6 +55,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: ClipboardList,
     roles: ["owner", "manager"],
   },
+  { href: "/tasks", labelKey: "tasks", icon: ListTodo, roles: EVERYONE },
   { href: "/purchases", labelKey: "purchases", icon: ShoppingCart, roles: ["owner"] },
   { href: "/receipt", labelKey: "receipt", icon: Truck, roles: ["owner", "receiver"] },
   { href: "/prices", labelKey: "prices", icon: Tag, roles: ["owner", "manager"] },

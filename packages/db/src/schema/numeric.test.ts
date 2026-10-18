@@ -39,6 +39,7 @@ describe("numeric(14,4) columns", () => {
             bcvRate: value,
             marketRate: value,
             totalUsd: value,
+            status: "closed",
           })
           .returning({ bcvRate: purchaseTrips.bcvRate, totalUsd: purchaseTrips.totalUsd });
 
@@ -70,6 +71,7 @@ describe("numeric(14,4) columns", () => {
           businessDate: "2026-10-15",
           bcvRate: "200.12345",
           marketRate: "201",
+          status: "closed",
         })
         .returning({ bcvRate: purchaseTrips.bcvRate });
 
@@ -88,6 +90,7 @@ describe("numeric(14,4) columns", () => {
             businessDate: "2026-10-15",
             bcvRate: "12345678901",
             marketRate: "201",
+            status: "closed",
           }),
         { code: PG_NUMERIC_OUT_OF_RANGE },
       );

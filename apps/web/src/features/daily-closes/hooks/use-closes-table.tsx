@@ -1,7 +1,7 @@
 "use client";
 
 import type { DailyCloseSummary } from "@ta/validators";
-import { Eye } from "lucide-react";
+import { Eye, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
@@ -21,7 +21,9 @@ export type UseClosesTableResult = {
  * Columns of the owner's list, like the shop's Excel: one per payment method, then the totals
  * per currency (never added together), the card batch and the status.
  */
-export function useClosesTable(): UseClosesTableResult {
+export function useClosesTable(
+  onDelete: (close: DailyCloseSummary) => Promise<void>,
+): UseClosesTableResult {
   const t = useTranslations("closes");
   const td = useTranslations("dailyClose");
   const tc = useTranslations("common");
@@ -94,6 +96,17 @@ export function useClosesTable(): UseClosesTableResult {
     columns,
     rowActions: (close) => [
       { id: "view", label: t("view"), icon: Eye, href: `/closes/${close.businessDate}` },
+      {
+        id: "delete",
+        label: t("delete"),
+        icon: Trash2,
+        tone: "danger",
+        onSelect: () => onDelete(close),
+        confirm: {
+          question: t("deleteQuestion", { date: formatBusinessDateLong(close.businessDate) }),
+          confirmLabel: t("delete"),
+        },
+      },
     ],
   };
 }

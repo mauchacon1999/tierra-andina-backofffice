@@ -11,6 +11,7 @@ const TONES = {
   muted: "border-2 border-border-strong bg-surface",
   success: "border-2 border-success-border bg-primary-soft",
   warning: "border-2 border-warning-border bg-warning-soft",
+  info: "border-2 border-info-border bg-info-soft",
   danger: "border-2 border-danger-border bg-danger-soft",
 } as const;
 

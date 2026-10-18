@@ -62,8 +62,9 @@ export function useLineTable({
       {
         id: "packs",
         header: t("columns.packs"),
-        cell: (line) => labels.packsCount(line.purchaseUnit, line.packs),
-        sortValue: (line) => line.packs,
+        cell: (line) =>
+          line.packs ? labels.packsCount(line.purchaseUnit, line.packs) : tc("empty"),
+        sortValue: (line) => line.packs ?? "0",
         sortAs: "decimal",
         align: "end",
       },
@@ -153,7 +154,7 @@ export function useLineTable({
         sortValue: (line) => line.paymentStatus,
       },
     ];
-  }, [t, labels]);
+  }, [t, tc, labels]);
 
   return {
     columns,

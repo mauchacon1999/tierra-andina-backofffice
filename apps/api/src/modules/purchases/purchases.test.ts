@@ -14,7 +14,14 @@ import {
 } from "@ta/validators";
 import { and, eq } from "drizzle-orm";
 
-import { call, errorOf, signInRoles, type Json, type RoleSession } from "@/testing/http";
+import {
+  call,
+  closeOpenTrips,
+  errorOf,
+  signInOwnStore,
+  type Json,
+  type RoleSession,
+} from "@/testing/http";
 import { createStore, createUser, signIn } from "@/testing/test-app";
 
 let s: RoleSession;
@@ -48,6 +55,7 @@ async function tomato(overrides: Json = {}): Promise<Product> {
 }
 
 async function openTrip(date?: string): Promise<string> {
+  await closeOpenTrips(s.storeId);
   const res = await call(s.app, "POST", "/purchase-trips", s.owner, {
     businessDate: date ?? (await dayWithRates()),
   });
@@ -67,7 +75,7 @@ const lastLine = (body: Json) => {
 };
 
 beforeAll(async () => {
-  s = await signInRoles();
+  s = await signInOwnStore();
   const [category] = await testConnection()
     .db.select()
     .from(schema.productCategories)
@@ -120,6 +128,24 @@ describe("POST /api/v1/purchase-trips (open a trip)", () => {
       details: { missing: ["bcv", "market"] },
     });
     expect(errorOf(b.body).details).toEqual({ missing: ["market"] });
+  });
+
+  test("409 TRIP_ALREADY_OPEN while one trip is still open", async () => {
+    await closeOpenTrips(s.storeId);
+    const firstDate = await dayWithRates();
+    const first = await call(s.app, "POST", "/purchase-trips", s.owner, {
+      businessDate: firstDate,
+    });
+    const second = await call(s.app, "POST", "/purchase-trips", s.owner, {
+      businessDate: await dayWithRates(),
+    });
+
+    expect(first.status).toBe(201);
+    expect(second.status).toBe(409);
+    expect(errorOf(second.body)).toMatchObject({
+      code: "TRIP_ALREADY_OPEN",
+      details: { tripId: tripSchema.parse(first.body).id },
+    });
   });
 
   test("owner only", async () => {
@@ -219,17 +245,15 @@ describe("POST /api/v1/purchase-trips/:id/lines", () => {
     });
   });
 
-  test("uses the product's last margin and remembers the line's shrinkage and margin", async () => {
-    const product = await tomato({ lastMargin: "0.4" });
+  test("uses the product's shrinkage and last margin, and remembers only the margin", async () => {
+    const product = await tomato({ lastMargin: "0.4", lastShrinkage: "2" });
     const tripId = await openTrip();
 
     const first = lastLine(
       (
         await addLine(tripId, {
           productId: product.id,
-          packs: "1",
           grossQuantity: "24",
-          shrinkage: "3",
           quotedPriceUsd: "20",
         })
       ).body,
@@ -246,9 +270,14 @@ describe("POST /api/v1/purchase-trips/:id/lines", () => {
       (await call(s.app, "GET", `/products/${product.id}`, s.owner)).body,
     );
 
-    expect(first.line.margin).toBe("0.4000");
+    expect(first.line).toMatchObject({
+      packs: null,
+      shrinkage: "2.0000",
+      margin: "0.4000",
+      supplierRate: "201.0000",
+    });
     expect(detail).toMatchObject({
-      lastShrinkage: "1.0000",
+      lastShrinkage: "2.0000",
       lastMargin: "0.6000",
       isUnitLocked: true,
     });
@@ -430,7 +459,6 @@ describe("PATCH / DELETE lines", () => {
   test("404 LINE_NOT_FOUND for a line of another trip", async () => {
     const product = await tomato();
     const tripA = await openTrip();
-    const tripB = await openTrip();
     const { line } = lastLine(
       (
         await addLine(tripA, {
@@ -441,6 +469,7 @@ describe("PATCH / DELETE lines", () => {
         })
       ).body,
     );
+    const tripB = await openTrip();
 
     const res = await call(s.app, "PATCH", `/purchase-trips/${tripB}/lines/${line.id}`, s.owner, {
       packs: "2",

@@ -12,6 +12,7 @@ import {
   message,
   SHRINKAGE_BELOW_GROSS_MESSAGE,
   type OpenTrip,
+  type ReceiptToBuy,
   type SetReceipt,
   type Paginated,
   type PurchaseLineFields,
@@ -26,7 +27,11 @@ import { getDailyRates } from "@/modules/exchange-rates/exchange-rates.service";
 import { publishFromTrip } from "@/modules/price-lists/price-lists.service";
 import { findProduct, rememberPurchaseDefaults } from "@/modules/products/products.service";
 import { getStoreSettings } from "@/modules/settings/settings.service";
-import { claimOpenItem, releaseItemsForLine } from "@/modules/shopping-list/shopping-list.service";
+import {
+  claimOpenItem,
+  listOpenItems,
+  releaseItemsForLine,
+} from "@/modules/shopping-list/shopping-list.service";
 import { getSupplier } from "@/modules/suppliers/suppliers.service";
 
 import {
@@ -137,7 +142,9 @@ async function refreshTotals(tx: Executor, actor: Actor, tripId: string): Promis
 /**
  * Opens a purchase trip for a business day, copying that day's BCV and Coche rates (set in
  * "Tasas del día"). The copy keeps the trip's costs stable if the day's rates are corrected.
+ * A store has at most one open trip.
  * @throws AppError DAY_RATES_MISSING when the BCV or the Coche rate of the day is not set.
+ * @throws AppError TRIP_ALREADY_OPEN when another trip of the store is still open.
  */
 export async function openTrip(db: Database, actor: Actor, input: OpenTrip): Promise<TripRow> {
   const rates = await getDailyRates(db, actor.storeId, input.businessDate);
@@ -150,26 +157,57 @@ export async function openTrip(db: Database, actor: Actor, input: OpenTrip): Pro
       { missing },
     );
   }
+  const already = await findOpenTrips(db, actor.storeId);
+  const open = already[0];
+  if (open) throw tripAlreadyOpen(open.id);
   const { bcv, market } = rates;
-  const id = await db.transaction(async (tx) => {
-    const trip = await insertTrip(tx, {
-      storeId: actor.storeId,
-      businessDate: input.businessDate,
-      bcvRate: bcv,
-      marketRate: market,
-      note: input.note || null,
-      createdBy: actor.userId,
-      updatedBy: actor.userId,
+  try {
+    const id = await db.transaction(async (tx) => {
+      const trip = await insertTrip(tx, {
+        storeId: actor.storeId,
+        businessDate: input.businessDate,
+        bcvRate: bcv,
+        marketRate: market,
+        note: input.note || null,
+        createdBy: actor.userId,
+        updatedBy: actor.userId,
+      });
+      await recordAudit(tx, actor, {
+        tableName: "purchase_trips",
+        recordId: trip.id,
+        action: "insert",
+        changes: trip,
+      });
+      return trip.id;
     });
-    await recordAudit(tx, actor, {
-      tableName: "purchase_trips",
-      recordId: trip.id,
-      action: "insert",
-      changes: trip,
-    });
-    return trip.id;
-  });
-  return requireTrip(db, actor.storeId, id);
+    return requireTrip(db, actor.storeId, id);
+  } catch (error) {
+    if (!isOneOpenTripViolation(error)) throw error;
+    const winner = (await findOpenTrips(db, actor.storeId))[0];
+    throw tripAlreadyOpen(winner?.id);
+  }
+}
+
+function tripAlreadyOpen(tripId: string | undefined): AppError {
+  return new AppError(
+    ErrorCode.TRIP_ALREADY_OPEN,
+    "Ya hay una jornada abierta. Ciérrala antes de abrir otra.",
+    undefined,
+    tripId ? { tripId } : undefined,
+  );
+}
+
+/** The partial unique index that allows a single open trip per store. */
+function isOneOpenTripViolation(error: unknown): boolean {
+  const cause = error instanceof Error ? (error.cause ?? error) : error;
+  return (
+    typeof cause === "object" &&
+    cause !== null &&
+    "code" in cause &&
+    cause.code === "23505" &&
+    "constraint_name" in cause &&
+    cause.constraint_name === "purchase_trips_one_open_idx"
+  );
 }
 
 /** The store's trips, newest first. */
@@ -227,9 +265,10 @@ export async function closeTrip(db: Database, actor: Actor, id: string): Promise
 }
 
 /**
- * Adds a line bought at a stall (domain-model §3.2). Defaults: supplier rate = trip's Coche
- * rate, margin = product's last margin. Costs come from @ta/core; the product remembers the
- * shrinkage and margin; the trip totals are recomputed. One transaction, audited.
+ * Adds a line bought at Coche (domain-model §3.2). Defaults: packs null when the crates were
+ * not counted, shrinkage = product's last shrinkage (the product is not updated), supplier
+ * rate = trip's Coche rate, margin = product's last margin. Costs come from @ta/core; the
+ * product remembers the margin; the trip totals are recomputed. One transaction, audited.
  * @throws AppError TRIP_NOT_FOUND, TRIP_CLOSED, LINE_PRODUCT_INVALID, SUPPLIER_NOT_FOUND,
  *   INVALID_PURCHASE_LINE
  */
@@ -246,7 +285,7 @@ export async function addLine(
   const values: LineValues = {
     quotedPriceUsd: input.quotedPriceUsd,
     grossQuantity: input.grossQuantity,
-    shrinkage: input.shrinkage,
+    shrinkage: input.shrinkage ?? product.lastShrinkage,
     supplierRate: input.supplierRate ?? trip.marketRate,
     margin: input.margin ?? product.lastMargin,
   };
@@ -259,7 +298,7 @@ export async function addLine(
       purchaseUnit: product.purchaseUnit,
       supplierId: supplier?.id ?? null,
       stallReference: input.stallReference || supplier?.stallReference || null,
-      packs: input.packs,
+      packs: input.packs ?? null,
       paymentStatus: input.paymentStatus,
       ...values,
       ...computed,
@@ -272,10 +311,7 @@ export async function addLine(
       action: "insert",
       changes: line,
     });
-    await rememberPurchaseDefaults(tx, actor, product.id, {
-      lastShrinkage: values.shrinkage,
-      lastMargin: values.margin,
-    });
+    await rememberPurchaseDefaults(tx, actor, product.id, { lastMargin: values.margin });
     await claimOpenItem(tx, actor, product.id, line.id);
     await refreshTotals(tx, actor, tripId);
   });
@@ -307,7 +343,7 @@ export async function updateLine(
     margin: patch.margin ?? before.margin,
   };
   const computed = computeLine(values, trip.bcvRate, settings.usdRoundingStep);
-  const packs = patch.packs ?? before.packs;
+  const packs = patch.packs !== undefined ? patch.packs : before.packs;
   const update: Partial<LineInsert> = {
     productId: product.id,
     purchaseUnit: product.purchaseUnit,
@@ -337,10 +373,7 @@ export async function updateLine(
       action: "update",
       changes: diffChanges(before, after),
     });
-    await rememberPurchaseDefaults(tx, actor, product.id, {
-      lastShrinkage: values.shrinkage,
-      lastMargin: values.margin,
-    });
+    await rememberPurchaseDefaults(tx, actor, product.id, { lastMargin: values.margin });
     if (product.id !== before.productId) {
       await releaseItemsForLine(tx, actor, lineId);
       await claimOpenItem(tx, actor, product.id, lineId);
@@ -393,11 +426,14 @@ type PricingContext = { bcvRate: string; usdRoundingStep: string };
 
 /** Received costs of a partial receipt, or the 422 a receiver can fix (range of the packs). */
 function partialCosts(
-  line: LineValues & { packs: string },
+  line: LineValues & { packs: string | null },
   receivedPacks: string,
   receivedQuantity: string | undefined,
   context: PricingContext,
 ) {
+  if (!line.packs) {
+    throw new AppError(ErrorCode.INVALID_RECEIPT, "Esta compra no tiene cestas anotadas");
+  }
   try {
     return pricePartialReceipt({
       ...line,
@@ -427,7 +463,7 @@ function partialCosts(
  */
 function receiptAfterEdit(
   before: LineRecord,
-  after: LineValues & { productId: string; packs: string },
+  after: LineValues & { productId: string; packs: string | null },
   context: PricingContext,
 ): Partial<LineInsert> {
   if (before.receiptStatus === "pending") return {};
@@ -524,4 +560,23 @@ export async function listOpenTrips(db: Database, storeId: string): Promise<Trip
   return Promise.all(
     trips.map(async (trip) => ({ ...trip, lines: await findTripLines(db, trip.id) })),
   );
+}
+
+/** Open shopping-list items, oldest first, as the receipt screen shows "still to buy". */
+export async function listToBuy(db: Database, storeId: string): Promise<ReceiptToBuy[]> {
+  const items = await listOpenItems(db, storeId);
+  return items.map((item) => ({ id: item.id, productName: item.productName, note: item.note }));
+}
+
+/**
+ * Shopping items for one trip's receipt. They belong to the newest open trip only, so two
+ * open trips (the data that blocks the one-open index) do not list the same faltantes twice.
+ */
+export async function toBuyForTrip(
+  db: Database,
+  storeId: string,
+  tripId: string,
+): Promise<ReceiptToBuy[]> {
+  const [open, toBuy] = await Promise.all([findOpenTrips(db, storeId), listToBuy(db, storeId)]);
+  return open[0]?.id === tripId ? toBuy : [];
 }

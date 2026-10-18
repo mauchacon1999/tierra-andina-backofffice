@@ -9,7 +9,7 @@ import {
   type UpdateDailyClose,
 } from "@ta/validators";
 import { useTranslations } from "next-intl";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   useFieldArray,
   useForm,
@@ -40,7 +40,11 @@ export type UseCloseFormResult = {
   expenses: UseFieldArrayReturn<Values, "expenses">;
   totals: DailyCloseTotals;
   isEdit: boolean;
+  /** Valid contents waiting for the manager to confirm, or to go back and fix them. */
+  pending: UpdateDailyClose | null;
   onSubmit: () => Promise<void>;
+  confirm: () => Promise<void>;
+  backToForm: () => void;
   isSubmitting: boolean;
   formError: string | undefined;
 };
@@ -88,6 +92,7 @@ export function useCloseForm(options: UseCloseFormOptions): UseCloseFormResult {
   const expenses = useFieldArray({ control: form.control, name: "expenses" });
   const submit = useSubmitDailyClose();
   const update = useUpdateDailyClose(close?.id ?? "");
+  const [pending, setPending] = useState<UpdateDailyClose | null>(null);
 
   // The methods arrive after the first render: give the form one row per method then.
   const rows = useWatch({ control: form.control, name: "payments" });
@@ -99,18 +104,25 @@ export function useCloseForm(options: UseCloseFormOptions): UseCloseFormResult {
 
   const values = useWatch({ control: form.control }) as Values;
 
-  const onSubmit = form.handleSubmit(async (contents) => {
+  const onSubmit = form.handleSubmit((contents) => {
+    form.clearErrors("root");
+    setPending(contents);
+  });
+
+  const confirm = async (): Promise<void> => {
+    if (!pending) return;
     try {
       const saved =
         options.mode === "submit"
-          ? await submit.run({ businessDate: options.businessDate, ...contents })
-          : await update.run(contents);
+          ? await submit.run({ businessDate: options.businessDate, ...pending })
+          : await update.run(pending);
+      setPending(null);
       options.onDone?.(saved);
     } catch (error) {
       const fallback = options.mode === "submit" ? t("submitFailed") : t("saveFixFailed");
       form.setError("root", { message: errorMessage(error, fallback) });
     }
-  });
+  };
 
   return {
     form,
@@ -119,8 +131,11 @@ export function useCloseForm(options: UseCloseFormOptions): UseCloseFormResult {
     expenses,
     totals: liveCloseTotals(values, methods),
     isEdit: options.mode === "edit",
+    pending,
     onSubmit: () => onSubmit(),
-    isSubmitting: submit.isRunning || update.isRunning || form.formState.isSubmitting,
+    confirm,
+    backToForm: () => setPending(null),
+    isSubmitting: submit.isRunning || update.isRunning,
     formError: form.formState.errors.root?.message,
   };
 }

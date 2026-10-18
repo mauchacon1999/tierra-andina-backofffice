@@ -15,6 +15,7 @@ import { toDailyCloseDto, toDailyCloseSummaryDto } from "./daily-closes.mapper";
 import {
   approveDailyClose,
   countPendingCloses,
+  deleteDailyClose,
   getDailyClose,
   listDailyCloses,
   submitDailyClose,
@@ -26,7 +27,7 @@ const dateParam = z.object({ date: businessDateSchema });
 
 /**
  * /api/v1/daily-closes — the manager submits one close per day (amounts only, per currency);
- * the owner reviews, corrects and approves (docs/plan.md phase 2).
+ * the owner reviews, corrects, approves or deletes (docs/plan.md phase 2).
  */
 export function dailyClosesRoutes(): Hono<AppEnv> {
   const staff = requireRole("owner", "manager");
@@ -52,7 +53,12 @@ export function dailyClosesRoutes(): Hono<AppEnv> {
       return c.json(toDailyCloseDto(close));
     })
     .post("/", staff, validate("json", submitDailyCloseSchema), async (c) => {
-      const close = await submitDailyClose(c.get("db"), getActor(c), c.req.valid("json"));
+      const membership = getMembership(c);
+      const close = await submitDailyClose(
+        c.get("db"),
+        { ...getActor(c), role: membership.role },
+        c.req.valid("json"),
+      );
       return c.json(toDailyCloseDto(close), 201);
     })
     .patch(
@@ -78,5 +84,9 @@ export function dailyClosesRoutes(): Hono<AppEnv> {
         new Date(),
       );
       return c.json(toDailyCloseDto(close));
+    })
+    .delete("/:id", owner, validate("param", idParam), async (c) => {
+      await deleteDailyClose(c.get("db"), getActor(c), c.req.valid("param").id);
+      return c.body(null, 204);
     });
 }

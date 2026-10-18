@@ -1,10 +1,23 @@
 "use client";
 
 import type { HomeAlertCode, HomeBriefing } from "@ta/validators";
-import { Bell, HandCoins, Landmark, Wallet } from "lucide-react";
+import {
+  ArrowLeftRight,
+  BadgePercent,
+  Bell,
+  ClipboardCheck,
+  ClipboardList,
+  Coins,
+  HandCoins,
+  Landmark,
+  NotebookPen,
+  Tag,
+  Truck,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -45,20 +58,39 @@ const ALERT_KEY: Record<HomeAlertCode, HomeKey> = {
   bcv_changed: "alertBcvChanged",
 };
 
+const ALERT_ICON: Record<HomeAlertCode, LucideIcon> = {
+  closes_pending: ClipboardCheck,
+  rates_missing: Coins,
+  shopping_open: ClipboardList,
+  receipts_pending: Truck,
+  no_price_list: Tag,
+  price_proposal: BadgePercent,
+  bcv_changed: ArrowLeftRight,
+};
+
 type MetricProps = {
   title: string;
-  icon: ReactNode;
+  icon: LucideIcon;
   usd: string;
   bs?: string;
   hint: string;
   tone?: CardTone;
 };
 
-function Metric({ title, icon, usd, bs, hint, tone = "default" }: MetricProps): React.JSX.Element {
+function Metric({
+  title,
+  icon: Icon,
+  usd,
+  bs,
+  hint,
+  tone = "default",
+}: MetricProps): React.JSX.Element {
   return (
     <Card tone={tone} className="space-y-1">
       <p className="flex items-center gap-2 text-sm font-semibold text-muted">
-        {icon}
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-text">
+          <Icon aria-hidden className="size-5" />
+        </span>
         {title}
       </p>
       <p className="text-2xl font-bold tracking-tight text-primary-text">{formatUsd(usd)}</p>
@@ -121,7 +153,7 @@ function BriefingBody({ briefing }: BriefingBodyProps): React.JSX.Element {
       <div className="grid gap-3 sm:grid-cols-2">
         <Metric
           title={t("collected")}
-          icon={<Wallet aria-hidden className="size-4" />}
+          icon={Wallet}
           usd={week.collected.usd}
           bs={week.collected.bs}
           hint={t("collectedHint", { count: week.closeCount })}
@@ -129,7 +161,7 @@ function BriefingBody({ briefing }: BriefingBodyProps): React.JSX.Element {
         />
         <Metric
           title={t("deposited")}
-          icon={<Landmark aria-hidden className="size-4" />}
+          icon={Landmark}
           usd={week.deposited.usd}
           bs={week.deposited.bs}
           hint={t("depositedHint", {
@@ -139,14 +171,14 @@ function BriefingBody({ briefing }: BriefingBodyProps): React.JSX.Element {
         />
         <Metric
           title={t("payables")}
-          icon={<HandCoins aria-hidden className="size-4" />}
+          icon={HandCoins}
           usd={payables.remainingUsd}
           hint={t("payablesHint", { count: payables.count })}
           tone={payables.count > 0 ? "warning" : "default"}
         />
         <Metric
           title={t("credit")}
-          icon={<HandCoins aria-hidden className="size-4" />}
+          icon={NotebookPen}
           usd={credit.usd}
           bs={credit.bs}
           hint={t("creditHint")}
@@ -162,16 +194,20 @@ function BriefingBody({ briefing }: BriefingBodyProps): React.JSX.Element {
           <p className="text-sm text-muted">{t("alertsEmpty")}</p>
         ) : (
           <ul className="space-y-2">
-            {alerts.map((alert) => (
-              <li key={alert.code}>
-                <Link
-                  href={ALERT_HREF[alert.code]}
-                  className="text-sm font-semibold text-primary underline"
-                >
-                  {t(ALERT_KEY[alert.code], { count: alert.count })}
-                </Link>
-              </li>
-            ))}
+            {alerts.map((alert) => {
+              const Icon = ALERT_ICON[alert.code];
+              return (
+                <li key={alert.code}>
+                  <Link
+                    href={ALERT_HREF[alert.code]}
+                    className="flex items-center gap-2 text-sm font-semibold text-primary underline"
+                  >
+                    <Icon aria-hidden className="size-4 shrink-0" />
+                    {t(ALERT_KEY[alert.code], { count: alert.count })}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
       </Card>

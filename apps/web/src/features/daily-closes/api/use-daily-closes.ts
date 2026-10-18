@@ -14,6 +14,7 @@ import useSWRMutation from "swr/mutation";
 import {
   approveDailyClose,
   countPendingCloses,
+  deleteDailyClose,
   getDailyClose,
   listDailyCloses,
   listPaymentMethods,
@@ -84,8 +85,9 @@ export type UseDailyClosesResult = {
 };
 
 export function useDailyCloses(from: string, to: string): UseDailyClosesResult {
+  const enabled = from !== "" && to !== "" && from <= to;
   const { data, error, isLoading, mutate } = useSWR<DailyCloseSummary[], ApiError>(
-    queryKeys.dailyCloses.range(from, to),
+    enabled ? queryKeys.dailyCloses.range(from, to) : null,
     () => listDailyCloses(from, to),
     { keepPreviousData: true },
   );
@@ -165,6 +167,27 @@ export function useApproveDailyClose(id: string): CloseMutation<void> {
       const close = await trigger();
       await after(close);
       return close;
+    },
+    isRunning: isMutating,
+  };
+}
+
+/** Drops the day from the cache and refreshes lists, the pending counter and the home. */
+export function useDeleteDailyClose(): {
+  run: (close: { id: string; businessDate: string }) => Promise<void>;
+  isRunning: boolean;
+} {
+  const { mutate } = useSWRConfig();
+  const { trigger, isMutating } = useSWRMutation<void, ApiError, readonly string[], string>(
+    ["daily-closes", "mutation", "delete"],
+    (_key, { arg }) => deleteDailyClose(arg),
+  );
+  return {
+    run: async (close) => {
+      await trigger(close.id);
+      await mutate(queryKeys.dailyCloses.day(close.businessDate), undefined, { revalidate: false });
+      await mutate((key) => isDailyClosesKey(key) && Array.isArray(key) && key[1] !== "day");
+      await mutate(queryKeys.home);
     },
     isRunning: isMutating,
   };

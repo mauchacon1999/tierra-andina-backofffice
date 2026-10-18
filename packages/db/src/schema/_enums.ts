@@ -38,6 +38,7 @@ export const shoppingListItemStatus = pgEnum("shopping_list_item_status", [
   "bought",
   "dropped",
 ]);
+export const taskStatus = pgEnum("task_status", ["pending", "in_progress", "observation", "done"]);
 
 // Pricing
 export const priceListStatus = pgEnum("price_list_status", ["draft", "published"]);

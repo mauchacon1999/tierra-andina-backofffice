@@ -5,7 +5,7 @@ screen and component; if something is missing here, add it here first.
 
 - Tokens: `apps/web/src/app/globals.css`
 - Primitives: `apps/web/src/components/ui/` — `Button`, `ButtonLink` (a link that looks like a
-  button), `TextField`, `SelectField`, `SegmentedControl` (few exclusive options, real radios),
+  button), `TextField`, `SelectField`, `SelectMenu` (styled dropdown), `ComboboxField` (search a long list by name), `SegmentedControl` (few exclusive options, real radios),
   `Checkbox`, `Alert`, `Card` (tones), `Badge`, `Spinner`, `ConfirmButton` (two-step action),
   `Dialog` (native modal / drawer), `IconButton` (icon only, label required), `Tooltip`
 - Icons: `lucide-react`, `size-5` (`size-6` in the top bar), always `aria-hidden`
@@ -30,7 +30,7 @@ screen and component; if something is missing here, add it here first.
 ## 2. Colors
 
 Only **standard Tailwind palette colors** are used. Primary is green (**emerald**), neutrals are
-**zinc**, and red / amber / sky are reserved for feedback.
+**zinc**, red / amber / sky are reserved for feedback, and violet marks a selected period filter.
 
 ### 2.1 Palettes
 
@@ -41,30 +41,32 @@ Only **standard Tailwind palette colors** are used. Primary is green (**emerald*
 | Danger        | `red`            | 50 `#fef2f2`, 500 `#ef4444`, 700 `#b91c1c`, 800 `#991b1b`                |
 | Warning       | `amber`          | 50 `#fffbeb`, 500 `#f59e0b`, 800 `#92400e`                               |
 | Info          | `sky`            | 50 `#f0f9ff`, 500 `#0ea5e9`, 800 `#075985`                               |
+| Filter        | `violet`         | 50 `#f5f3ff`, 300 `#c4b5fd`, 500 `#8b5cf6`, 800 `#5b21b6`, 950 `#2e1065` |
 
 Success uses the brand green: in this app "done/ok" and "brand" are the same color.
 
 ### 2.2 Semantic tokens (use these, never the palette directly)
 
-| Utility                                                           | Light                | Dark                  | Use for                             |
-| ----------------------------------------------------------------- | -------------------- | --------------------- | ----------------------------------- |
-| `bg-background` / `text-foreground`                               | zinc-50 / zinc-900   | zinc-950 / zinc-100   | Page                                |
-| `bg-surface`                                                      | white                | zinc-900              | Cards, inputs                       |
-| `bg-surface-muted`                                                | zinc-100             | zinc-800              | Hover of neutral elements, disabled |
-| `text-muted`                                                      | zinc-600             | zinc-400              | Secondary text, hints, timestamps   |
-| `border-border`                                                   | zinc-200             | zinc-700              | Card borders, dividers              |
-| `border-border-strong`                                            | zinc-300             | zinc-600              | Input and secondary-button borders  |
-| `bg-primary` / `text-primary-foreground`                          | emerald-700 / white  | emerald-700 / white   | Primary buttons                     |
-| `hover:bg-primary-hover` / `active:bg-primary-active`             | emerald-800 / 900    | same                  | Primary button states               |
-| `text-primary-text`                                               | emerald-800          | emerald-400           | Titles, links, success text         |
-| `bg-primary-soft`                                                 | emerald-50           | emerald-950           | Success backgrounds, ghost hover    |
-| `ring-focus`                                                      | emerald-500          | emerald-500           | Focus ring                          |
-| `bg-danger` / `hover:bg-danger-hover`                             | red-700 / red-800    | same                  | Destructive buttons                 |
-| `text-danger-text`                                                | red-700              | red-400               | Error messages                      |
-| `bg-danger-soft` / `border-danger-border`                         | red-50 / red-500     | red-950 / red-500     | Error boxes, invalid inputs         |
-| `bg-warning-soft` / `text-warning-text` / `border-warning-border` | amber-50 / 800 / 500 | amber-950 / 400 / 500 | Warnings                            |
-| `bg-info-soft` / `text-info-text` / `border-info-border`          | sky-50 / 800 / 500   | sky-950 / 400 / 500   | Information                         |
-| `border-success-border`                                           | emerald-500          | emerald-500           | Success boxes, "ok" dots            |
+| Utility                                                           | Light                 | Dark                   | Use for                              |
+| ----------------------------------------------------------------- | --------------------- | ---------------------- | ------------------------------------ |
+| `bg-background` / `text-foreground`                               | zinc-50 / zinc-900    | zinc-950 / zinc-100    | Page                                 |
+| `bg-surface`                                                      | white                 | zinc-900               | Cards, inputs                        |
+| `bg-surface-muted`                                                | zinc-100              | zinc-800               | Hover of neutral elements, disabled  |
+| `text-muted`                                                      | zinc-600              | zinc-400               | Secondary text, hints, timestamps    |
+| `border-border`                                                   | zinc-200              | zinc-700               | Card borders, dividers               |
+| `border-border-strong`                                            | zinc-300              | zinc-600               | Input and secondary-button borders   |
+| `bg-primary` / `text-primary-foreground`                          | emerald-700 / white   | emerald-700 / white    | Primary buttons                      |
+| `hover:bg-primary-hover` / `active:bg-primary-active`             | emerald-800 / 900     | same                   | Primary button states                |
+| `text-primary-text`                                               | emerald-800           | emerald-400            | Titles, links, success text          |
+| `bg-primary-soft`                                                 | emerald-50            | emerald-950            | Success backgrounds, ghost hover     |
+| `ring-focus`                                                      | emerald-500           | emerald-500            | Focus ring                           |
+| `bg-danger` / `hover:bg-danger-hover`                             | red-700 / red-800     | same                   | Destructive buttons                  |
+| `text-danger-text`                                                | red-700               | red-400                | Error messages                       |
+| `bg-danger-soft` / `border-danger-border`                         | red-50 / red-500      | red-950 / red-500      | Error boxes, invalid inputs          |
+| `bg-warning-soft` / `text-warning-text` / `border-warning-border` | amber-50 / 800 / 500  | amber-950 / 400 / 500  | Warnings                             |
+| `bg-info-soft` / `text-info-text` / `border-info-border`          | sky-50 / 800 / 500    | sky-950 / 400 / 500    | Information                          |
+| `border-success-border`                                           | emerald-500           | emerald-500            | Success boxes, "ok" dots             |
+| `bg-chip-soft` / `text-chip-text` / `border-chip-border`          | violet-50 / 800 / 500 | violet-950 / 300 / 500 | Period filter chips and their totals |
 
 ### 2.3 Rules
 
@@ -90,6 +92,7 @@ Success uses the brand green: in this app "done/ok" and "brand" are the same col
 | Danger text on danger-soft   | 5.91  | 5.84  |
 | Warning text on warning-soft | 6.84  | 8.97  |
 | Info text on info-soft       | 7.09  | 6.48  |
+| Chip text on chip-soft       | 8.19  | 8.25  |
 
 ---
 
@@ -127,7 +130,7 @@ Every signed-in screen is rendered inside `AppShell` (`features/navigation`):
 | Touch targets   | ≥ 44 px tall (`min-h-11`) for anything tappable                                    |
 | Grids           | One column on phones; `sm:grid-cols-2` for side-by-side cards                      |
 
-Use `<Card>` for any boxed content: `tone` = `default` | `muted` | `success` | `warning` |
+Use `<Card>` for any boxed content: `tone` = `default` | `muted` | `success` | `warning` | `info` |
 `danger` picks its colors. Use `cn()` (`utils/cn.ts`) for conditional classes.
 
 **Never override a primitive's colors through `className`** (e.g. `<Card className="bg-danger-soft">`).
@@ -215,6 +218,8 @@ Input types:
 | Money, kg, rates, % | `type="text" inputMode="decimal"` — **never `type="number"`** (it uses floats and the device locale); values stay strings and are validated with `amountSchema`-style schemas |
 | Phone               | `type="tel" inputMode="tel" autoComplete="tel"`                                                                                                                               |
 | Search              | `type="search"`, large, at the top of the screen                                                                                                                              |
+| Long catalog        | `ComboboxField`: type the name (accents ignored) and tap the row. Native `SelectField` stays for short fixed lists (currency, unit)                                           |
+| Styled choice       | `SelectMenu`: a button that opens a list (Downshift, already in the app). `appearance="avatar"` shows only the person's initial in a circle until it is pressed               |
 
 Validation:
 

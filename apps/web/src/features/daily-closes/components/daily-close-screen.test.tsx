@@ -10,6 +10,15 @@ import { DailyCloseScreen } from "@/features/daily-closes/components/daily-close
 import { ApiError } from "@/lib/api";
 import { METHODS, TUESDAY_CLOSE } from "@/testing/close-fixtures";
 import { SwrTestWrapper } from "@/testing/swr-wrapper";
+import { formatBusinessDateLong, todayBusinessDate } from "@/utils/format-date";
+
+const session = vi.hoisted(() => ({ role: "manager" as "owner" | "manager" }));
+
+vi.mock("@/features/auth/hooks/use-require-session", () => ({
+  useRequireSession: () => ({
+    activeMembership: { storeId: "store", storeName: "Tierra Andina", role: session.role },
+  }),
+}));
 
 vi.mock("@/features/daily-closes/api/daily-close-requests", () => ({
   listPaymentMethods: vi.fn(),
@@ -24,9 +33,27 @@ const type = (label: string | RegExp, value: string, within_: HTMLElement = docu
 
 describe("DailyCloseScreen", () => {
   beforeEach(() => {
+    session.role = "manager";
     vi.mocked(listPaymentMethods).mockResolvedValue(METHODS);
     vi.mocked(getDailyClose).mockReset();
     vi.mocked(submitDailyClose).mockReset();
+  });
+
+  it("shows today as text; only the owner can change the date", async () => {
+    vi.mocked(getDailyClose).mockRejectedValue(notFound);
+    const { unmount } = render(<DailyCloseScreen />, { wrapper: SwrTestWrapper });
+
+    expect(await screen.findByText(formatBusinessDateLong(todayBusinessDate()))).toBeDefined();
+    expect(screen.queryByLabelText("Fecha")).toBeNull();
+
+    unmount();
+    session.role = "owner";
+    render(<DailyCloseScreen />, { wrapper: SwrTestWrapper });
+
+    const date = await screen.findByLabelText("Fecha");
+    expect((date as HTMLInputElement).value).toBe(todayBusinessDate());
+    fireEvent.change(date, { target: { value: "2026-10-12" } });
+    await waitFor(() => expect(getDailyClose).toHaveBeenCalledWith("2026-10-12"));
   });
 
   it("one amount per method in the Excel's order, totals per currency while typing", async () => {
@@ -65,7 +92,20 @@ describe("DailyCloseScreen", () => {
     type("Concepto", "Bolsas");
     fireEvent.input(screen.getAllByLabelText(/^Monto/)[1]!, { target: { value: "379" } });
     fireEvent.click(screen.getByRole("radio", { name: "Depositado" }));
-    fireEvent.click(screen.getByRole("button", { name: "Enviar cierre" }));
+    fireEvent.click(screen.getByRole("button", { name: "Revisar cierre" }));
+
+    const review = await screen.findByRole("region", { name: "Revisa el cierre" });
+    expect(submitDailyClose).not.toHaveBeenCalled();
+    expect(review.textContent).toContain("163.344,00 Bs");
+    expect(review.textContent).toContain("Sra. María");
+    expect(review.textContent).toContain("Bolsas");
+    expect(review.textContent).toContain("Depositado");
+
+    fireEvent.click(screen.getByRole("button", { name: "Corregir" }));
+    expect((screen.getByLabelText("Punto de venta") as HTMLInputElement).value).toBe("163344");
+
+    fireEvent.click(screen.getByRole("button", { name: "Revisar cierre" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Enviar cierre" }));
 
     await waitFor(() => expect(submitDailyClose).toHaveBeenCalledOnce());
     const sent = vi.mocked(submitDailyClose).mock.calls[0]![0];
@@ -105,7 +145,8 @@ describe("DailyCloseScreen", () => {
     render(<DailyCloseScreen />, { wrapper: SwrTestWrapper });
 
     await screen.findByLabelText("Punto de venta");
-    fireEvent.click(screen.getByRole("button", { name: "Enviar cierre" }));
+    fireEvent.click(screen.getByRole("button", { name: "Revisar cierre" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Enviar cierre" }));
 
     expect(await screen.findByRole("alert")).toBeDefined();
     expect(screen.getByRole("alert").textContent).toBe("Ese día ya tiene cierre.");

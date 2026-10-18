@@ -162,7 +162,11 @@ export async function insertExpenses(db: Executor, rows: ExpenseInsert[]): Promi
   if (rows.length > 0) await db.insert(expenses).values(rows);
 }
 
-/** Removes the contents of a close before writing the corrected ones (owner edit). */
+export async function deleteCloseById(db: Executor, id: string): Promise<void> {
+  await db.delete(dailyCloses).where(eq(dailyCloses.id, id));
+}
+
+/** Removes the contents of a close before writing the corrected ones, or before deleting it. */
 export async function deleteCloseContents(db: Executor, closeId: string): Promise<void> {
   await db.delete(dailyClosePayments).where(eq(dailyClosePayments.dailyCloseId, closeId));
   await db.delete(customerCreditEntries).where(eq(customerCreditEntries.dailyCloseId, closeId));

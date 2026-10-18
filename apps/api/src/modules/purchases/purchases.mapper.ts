@@ -1,4 +1,11 @@
-import type { PurchaseLine, ReceiptLine, ReceiptTrip, Trip, TripDetail } from "@ta/validators";
+import type {
+  PurchaseLine,
+  ReceiptLine,
+  ReceiptToBuy,
+  ReceiptTrip,
+  Trip,
+  TripDetail,
+} from "@ta/validators";
 
 import type { LineRow, TripRow } from "./purchases.repository";
 import type { TripWithLines } from "./purchases.service";
@@ -73,12 +80,17 @@ export function toReceiptLineDto(row: LineRow, showPrices: boolean): ReceiptLine
   };
 }
 
-export function toReceiptTripDto(trip: TripWithLines, showPrices: boolean): ReceiptTrip {
+export function toReceiptTripDto(
+  trip: TripWithLines,
+  showPrices: boolean,
+  toBuy: ReceiptToBuy[] = [],
+): ReceiptTrip {
   return {
     id: trip.id,
     businessDate: trip.businessDate,
     note: trip.note,
     lines: trip.lines.map((line) => toReceiptLineDto(line, showPrices)),
+    toBuy,
   };
 }
 

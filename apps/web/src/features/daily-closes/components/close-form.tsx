@@ -9,6 +9,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { TextField } from "@/components/ui/text-field";
 import { CloseCreditRow } from "@/features/daily-closes/components/close-credit-row";
 import { CloseExpenseRow } from "@/features/daily-closes/components/close-expense-row";
+import { CloseReview } from "@/features/daily-closes/components/close-review";
 import { CloseTotals } from "@/features/daily-closes/components/close-totals";
 import {
   useCloseForm,
@@ -22,6 +23,20 @@ export function CloseForm(props: CloseFormProps): React.JSX.Element {
   const f = useCloseForm(props);
   const t = useTranslations("dailyClose");
   const { errors } = f.form.formState;
+
+  if (f.pending) {
+    return (
+      <CloseReview
+        contents={f.pending}
+        methods={f.methods}
+        isEdit={f.isEdit}
+        isSubmitting={f.isSubmitting}
+        error={f.formError}
+        onConfirm={() => void f.confirm()}
+        onBack={f.backToForm}
+      />
+    );
+  }
 
   return (
     <form
@@ -114,7 +129,7 @@ export function CloseForm(props: CloseFormProps): React.JSX.Element {
           isLoading={f.isSubmitting}
           loadingText={t("submitting")}
         >
-          {f.isEdit ? t("saveFix") : t("submit")}
+          {f.isEdit ? t("reviewFix") : t("review")}
         </Button>
       </Card>
     </form>

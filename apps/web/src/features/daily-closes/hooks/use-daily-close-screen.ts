@@ -3,12 +3,15 @@
 import type { DailyClose } from "@ta/validators";
 import { useState } from "react";
 
+import { useRequireSession } from "@/features/auth/hooks/use-require-session";
 import { useDailyClose } from "@/features/daily-closes/api/use-daily-closes";
 import type { ApiError } from "@/lib/api";
 import { todayBusinessDate } from "@/utils/format-date";
 
 export type UseDailyCloseScreenResult = {
   date: string;
+  /** The owner can file another day. Everyone else stays on today. */
+  canChangeDate: boolean;
   setDate: (date: string) => void;
   close: DailyClose | undefined;
   /** No close for the day yet: show the form. */
@@ -21,14 +24,16 @@ export type UseDailyCloseScreenResult = {
   onSent: (close: DailyClose) => void;
 };
 
-/** Today by default; another day can be picked (a close sent the next morning). */
+/** Today. Only the owner can move the date (a close filed the next morning). */
 export function useDailyCloseScreen(initialDate?: string): UseDailyCloseScreenResult {
+  const { activeMembership } = useRequireSession();
   const [date, setDate] = useState(initialDate ?? todayBusinessDate());
   const [sentDate, setSentDate] = useState<string | null>(null);
   const day = useDailyClose(date);
 
   return {
     date,
+    canChangeDate: activeMembership?.role === "owner",
     setDate,
     close: day.close,
     isMissing: day.isMissing,

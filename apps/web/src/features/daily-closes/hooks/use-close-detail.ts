@@ -1,10 +1,15 @@
 "use client";
 
 import type { DailyClose } from "@ta/validators";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { useApproveDailyClose, useDailyClose } from "@/features/daily-closes/api/use-daily-closes";
+import {
+  useApproveDailyClose,
+  useDailyClose,
+  useDeleteDailyClose,
+} from "@/features/daily-closes/api/use-daily-closes";
 import { useErrorMessage } from "@/i18n/use-error-message";
 import type { ApiError } from "@/lib/api";
 
@@ -22,6 +27,8 @@ export type UseCloseDetailResult = {
   onFixed: () => void;
   approve: () => Promise<void>;
   isApproving: boolean;
+  remove: () => Promise<void>;
+  isDeleting: boolean;
   actionError: string | null;
 };
 
@@ -29,8 +36,10 @@ export type UseCloseDetailResult = {
 export function useCloseDetail(date: string): UseCloseDetailResult {
   const t = useTranslations("closes");
   const errorMessage = useErrorMessage();
+  const router = useRouter();
   const day = useDailyClose(date);
   const approve = useApproveDailyClose(day.close?.id ?? "");
+  const remove = useDeleteDailyClose();
   const [isFixing, setIsFixing] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -57,6 +66,17 @@ export function useCloseDetail(date: string): UseCloseDetailResult {
       }
     },
     isApproving: approve.isRunning,
+    remove: async () => {
+      if (!day.close) return;
+      setActionError(null);
+      try {
+        await remove.run(day.close);
+        router.push("/closes");
+      } catch (error) {
+        setActionError(errorMessage(error, t("deleteFailed")));
+      }
+    },
+    isDeleting: remove.isRunning,
     actionError,
   };
 }

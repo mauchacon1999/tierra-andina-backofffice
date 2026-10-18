@@ -107,12 +107,13 @@ with the tested ones: adding a CHECK or UNIQUE without a test fails the suite.
 | Catalog            | `schema/catalog.ts`      | `product_categories`, `products`, `suppliers`                                                                                  |
 | Exchange rates     | `schema/rates.ts`        | `exchange_rates`                                                                                                               |
 | Purchasing         | `schema/purchasing.ts`   | `purchase_trips`, `purchase_lines`, `supplier_claims`, `shopping_list_items`                                                   |
+| Tasks              | `schema/tasks.ts`        | `tasks`                                                                                                                        |
 | Pricing            | `schema/pricing.ts`      | `price_lists`, `price_list_lines`                                                                                              |
 | Daily close        | `schema/daily-close.ts`  | `payment_methods`, `daily_closes`, `daily_close_payments`                                                                      |
 | Finance            | `schema/finance.ts`      | `customers`, `customer_credit_entries`, `payables`, `payable_payments`, `expense_categories`, `recurring_expenses`, `expenses` |
 | Payroll            | `schema/payroll.ts`      | `employees`, `payroll_payments`, `salary_advances`                                                                             |
 
-32 tables in total. Migrations: `0000_organization_and_auth`,
+33 tables in total. Migrations: `0000_organization_and_auth`,
 `0001_catalog_rates_purchasing_pricing`, `0002_daily_close_finance_payroll`,
 `0003_fix_products_pack_quantity_check`.
 

@@ -14,6 +14,19 @@ export function amountInBs(amountUsd: string, rate: string): string {
   return toDbString(usd.times(r));
 }
 
+/**
+ * USD for a Bs amount at a rate (amount_usd = amount_bs / rate). Rounded half-up to 4 decimals.
+ * "12060" at 201 → "60.0000". The inverse of `amountInBs`.
+ * @throws {InvalidValueError} if the amount is negative or the rate ≤ 0.
+ */
+export function amountInUsd(amountBs: string, rate: string): string {
+  const bs = toDecimal(amountBs, "amountBs");
+  const r = toDecimal(rate, "rate");
+  if (bs.lt(0)) throw new InvalidValueError("amountBs", "must be ≥ 0");
+  if (r.lte(0)) throw new InvalidValueError("rate", "must be greater than 0");
+  return toDbString(bs.div(r));
+}
+
 /** Exact sum of decimal strings as a 4-decimal string; "0.0000" for an empty list. */
 export function sumDecimals(values: readonly string[]): string {
   return toDbString(

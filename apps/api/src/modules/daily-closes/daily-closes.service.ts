@@ -1,5 +1,6 @@
+import { toBusinessDate } from "@ta/core";
 import type { Database, Executor } from "@ta/db";
-import type { SubmitDailyClose, UpdateDailyClose } from "@ta/validators";
+import type { MembershipRole, SubmitDailyClose, UpdateDailyClose } from "@ta/validators";
 
 import { recordAudit } from "@/lib/audit";
 import { AppError, ErrorCode } from "@/lib/errors";
@@ -9,6 +10,7 @@ import { findActiveMethods } from "@/modules/payment-methods/payment-methods.ser
 
 import {
   countSubmittedCloses,
+  deleteCloseById,
   deleteCloseContents,
   findCloseByDate,
   findCloseById,
@@ -31,7 +33,7 @@ import {
 /*
  * Daily close (docs/domain-model.md §5): the manager writes the amounts collected per payment
  * method, credit sold and expenses paid, each in its own currency (no rate). Once submitted,
- * only the owner can change it, and the owner approves it.
+ * only the owner can change it, and the owner approves it or deletes it.
  */
 
 export type CloseWithParts = CloseRow & {
@@ -154,13 +156,21 @@ async function writeContents(
  * The manager's close of a business day (also the owner). One per store and day; the close
  * and its contents are written and audited in one transaction (the audit entry carries the
  * submitted contents).
- * @throws AppError CLOSE_EXISTS, PAYMENT_METHOD_NOT_FOUND, CUSTOMER_NOT_FOUND
+ * The manager's close is always today (Caracas). Only the owner can file another day.
+ * @throws AppError CLOSE_DATE_LOCKED, CLOSE_EXISTS, PAYMENT_METHOD_NOT_FOUND, CUSTOMER_NOT_FOUND
  */
 export async function submitDailyClose(
   db: Database,
-  actor: Actor,
+  actor: Actor & { role: MembershipRole },
   input: SubmitDailyClose,
+  now: Date = new Date(),
 ): Promise<CloseWithParts> {
+  if (actor.role !== "owner" && input.businessDate !== toBusinessDate(now)) {
+    throw new AppError(
+      ErrorCode.CLOSE_DATE_LOCKED,
+      "Solo el dueño puede registrar el cierre de otro día.",
+    );
+  }
   if (await findCloseByDate(db, actor.storeId, input.businessDate)) {
     throw new AppError(
       ErrorCode.CLOSE_EXISTS,
@@ -269,4 +279,23 @@ export async function approveDailyClose(
     });
   });
   return loadClose(db, actor.storeId, id);
+}
+
+/**
+ * The owner deletes a close, approved or not. Its payments, credit sales and expenses go with
+ * it, and that day can be submitted again. Audited with the day and status that were removed.
+ * @throws AppError CLOSE_NOT_FOUND
+ */
+export async function deleteDailyClose(db: Database, actor: Actor, id: string): Promise<void> {
+  const before = await loadClose(db, actor.storeId, id);
+  await db.transaction(async (tx) => {
+    await recordAudit(tx, actor, {
+      tableName: "daily_closes",
+      recordId: id,
+      action: "delete",
+      changes: { businessDate: before.businessDate, status: before.status },
+    });
+    await deleteCloseContents(tx, id);
+    await deleteCloseById(tx, id);
+  });
 }

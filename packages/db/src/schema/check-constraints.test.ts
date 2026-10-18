@@ -130,26 +130,36 @@ const CASES: CheckCase[] = [
   // purchase_trips
   {
     constraint: "purchase_trips_bcv_rate_check",
-    valid: (tx, b) => tx.insert(purchaseTrips).values(valid.purchaseTrip(b)),
+    valid: (tx, b) => tx.insert(purchaseTrips).values(valid.purchaseTrip(b, { status: "closed" })),
     invalid: {
-      zero: (tx, b) => tx.insert(purchaseTrips).values(valid.purchaseTrip(b, { bcvRate: "0" })),
+      zero: (tx, b) =>
+        tx.insert(purchaseTrips).values(valid.purchaseTrip(b, { status: "closed", bcvRate: "0" })),
     },
   },
   {
     constraint: "purchase_trips_market_rate_check",
-    valid: (tx, b) => tx.insert(purchaseTrips).values(valid.purchaseTrip(b, { marketRate: "201" })),
+    valid: (tx, b) =>
+      tx
+        .insert(purchaseTrips)
+        .values(valid.purchaseTrip(b, { status: "closed", marketRate: "201" })),
     invalid: {
-      zero: (tx, b) => tx.insert(purchaseTrips).values(valid.purchaseTrip(b, { marketRate: "0" })),
+      zero: (tx, b) =>
+        tx
+          .insert(purchaseTrips)
+          .values(valid.purchaseTrip(b, { status: "closed", marketRate: "0" })),
     },
   },
   {
     constraint: "purchase_trips_amounts_check",
-    valid: (tx, b) => tx.insert(purchaseTrips).values(valid.purchaseTrip(b, { totalUsd: "0" })),
+    valid: (tx, b) =>
+      tx.insert(purchaseTrips).values(valid.purchaseTrip(b, { status: "closed", totalUsd: "0" })),
     invalid: {
       "total_usd < 0": (tx, b) =>
-        tx.insert(purchaseTrips).values(valid.purchaseTrip(b, { totalUsd: "-1" })),
+        tx
+          .insert(purchaseTrips)
+          .values(valid.purchaseTrip(b, { status: "closed", totalUsd: "-1" })),
       "total_bs < 0": (tx, b) =>
-        tx.insert(purchaseTrips).values(valid.purchaseTrip(b, { totalBs: "-1" })),
+        tx.insert(purchaseTrips).values(valid.purchaseTrip(b, { status: "closed", totalBs: "-1" })),
     },
   },
   // purchase_lines

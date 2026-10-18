@@ -28,6 +28,8 @@ export const queryKeys = {
     pending: ["daily-closes", "pending"] as const,
   },
   shoppingList: ["shopping-list"] as const,
+  tasks: ["tasks"] as const,
+  taskAssignees: ["tasks", "assignees"] as const,
   priceLists: {
     current: ["price-lists", "current"] as const,
     proposal: ["price-lists", "proposal"] as const,

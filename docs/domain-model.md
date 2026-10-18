@@ -65,9 +65,12 @@ month (paydays). Cash starts at zero every day; the previous day's cash is kept 
 | `bundle`      | Spring onion                | `kg`           | gross kg − shrinkage kg           |
 | `kg`          | Taro, celery: 10 kg         | `kg`           | gross kg − shrinkage kg           |
 
-- Gross quantity varies per purchase and is entered every time (the form pre-fills
-  packs × default pack quantity as an estimate until the weighed quantity is typed).
-- **Shrinkage** is decided per purchase line (the system suggests the last value used).
+- Gross quantity varies per purchase and is entered every time. Crates are optional: when
+  they are typed, the form pre-fills packs × default pack quantity until the weighed
+  quantity is typed. A line with no crates stores `packs` as null.
+- **Shrinkage** belongs to the product (`last_shrinkage`). A purchase copies it onto the
+  line so older purchases keep the number they were costed with, and does not change the
+  product (owner, 2026-10-17).
 - **Margin** is decided per product and can change on every purchase (suggests the last value).
 
 ### 3.2 Pricing formulas
@@ -83,7 +86,8 @@ sale_price_bs     = round_up(sale_price_usd × sale_rate, bs_rounding_step)
 - `quoted_price_usd` is the total of the purchase line (3 crates at 20 USD → 60 USD), and the
   stall is paid `quoted_price_usd × supplier_rate` in Bs (stored as `amount_bs`).
 - `real_cost_usd` captures the supplier's rate rounding so it never silently eats the margin.
-- `supplier_rate` defaults to the trip's `market_rate` (Coche rate of the day); `bcv_rate` and
+- The price is typed in dollars. `supplier_rate` is the trip's `market_rate` (Coche rate of
+  the day): the form does not ask for a per-stall rate (owner, 2026-10-17). `bcv_rate` and
   `market_rate` are copied into the trip from the day's rates when it is opened.
 - Trip totals: `total_usd = Σ real_cost_usd` and `total_bs = Σ amount_bs` of its lines.
 - If goods arrive incomplete (§4), costing uses the **received** quantity: the same real cost
@@ -125,6 +129,17 @@ is missing: one row per request, product and an optional note.
 - Dropping a request means it will not be bought.
 - The list is the plan; the trip can still include products that were not on it.
 
+### 3.6 Tasks
+
+The owner and the manager assign work to someone in the store: a name, an optional description
+and the person. A task starts pending. Anyone in the store can set the status (pending,
+in progress, observation or finished). Only the owner and the manager can change the text,
+the assignment or the priority, or delete the task (owner, 2026-10-18).
+
+- High priority shows an orange border and a flag, and those rows stay first. Pending is blue,
+  in progress is violet, an observation is amber, and a finished task is green.
+- A task does not move money, stock or a daily close.
+
 ---
 
 ## 4. Truck receipt (purchase trips)
@@ -141,6 +156,14 @@ where a **receiver** checks what arrives.
 
 - The owner sees live which lines are in the truck and which are pending (refreshed every
   few seconds) and the count still to receive.
+- The receipt screen groups each open trip: **Pendientes** (open shopping-list items as
+  "still to buy", then `pending` lines "on the way", then `missing`) and **Recibidos**
+  (`partial`, then `received`). A check marks an on-the-way line received and it moves to
+  the second block. An item that has not been bought has no purchase to receive.
+  Those items travel on `GET /api/v1/receipts` (`toBuy`, newest open trip only) because
+  the receiver cannot open the shopping list. Pendientes is a compact row per product
+  (20–30 lines stay a list). The receiver reorders it by dragging; that order stays on
+  the phone and new products go to the end.
 - Before closing the trip, the system warns about pending lines (closing is still allowed).
 - **Partial:** the receiver records the packs that arrived (and the weight, optional; by default
   the same share of the gross quantity). What was paid does not change; the unit cost and sale
@@ -153,8 +176,14 @@ where a **receiver** checks what arrives.
   partial receipt.
 - **No supplier claims in the system** (owner, 2026-10-17): when something is missing the owner
   goes and asks the stall. The `supplier_claims` table stays unused.
-- Because each line can come from a different stall, **supplier, supplier rate and payment
-  status belong to the purchase line**, not to the trip.
+- A store has **one open trip**. Close it before opening another (owner, 2026-10-17).
+  The open trip lists the shopping-list items still to buy, next to the purchases.
+  Each one has a Comprar button that opens that product's purchase. The buyer reorders
+  the list on the phone; new items go to the end.
+- The Coche line does not ask for a supplier or a stall (owner, 2026-10-17). The columns
+  stay so older lines keep them. Payment status (`paid` / `credit`) still belongs to the line.
+  The rate used is always the trip's Coche rate. The buyer types the price in dollars
+  (the default) or in bolívares; bolívares are stored as dollars at that rate.
 - The receiver role sees only the current trip, product and packs (prices hidden by default,
   configurable).
 
@@ -163,6 +192,8 @@ where a **receiver** checks what arrives.
 ## 5. Daily close
 
 - The manager submits one close per business day from the phone (the owner can too).
+  The date is today; only the owner can choose another day (owner, 2026-10-17).
+  Before it is stored, they see the amounts and can go back to fix them.
 - **Amounts only, each in its own currency — no rate and no conversion** (owner, 2026-10-17).
   Bolívares and dollars are never added together: totals are per currency
   (`dailyCloseTotals` in @ta/core). A USD view of the week (phase 4) converts at report time
@@ -178,6 +209,8 @@ where a **receiver** checks what arrives.
 - Cash destination: `kept` or `deposited`.
 - Once submitted, only the owner can change a close; the owner reviews and approves it. A
   counter of closes waiting for review shows in the app (push notifications come later).
+- The owner can delete a close, approved or not (owner, 2026-10-17). Its payments, credit
+  sales and expenses go with it, the deletion is audited, and that day can be submitted again.
 
 ---
 
@@ -195,11 +228,11 @@ where a **receiver** checks what arrives.
 
 ## 7. Roles
 
-| Role       | Can                                                                                                |
-| ---------- | -------------------------------------------------------------------------------------------------- |
-| `owner`    | Everything                                                                                         |
-| `manager`  | View current price list, submit daily close, add customer credit payments, add shopping list items |
-| `receiver` | View the current purchase trip and set receipt status                                              |
+| Role       | Can                                                                                                                           |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `owner`    | Everything                                                                                                                    |
+| `manager`  | View current price list, submit daily close, add customer credit payments, add shopping list items, assign and reassign tasks |
+| `receiver` | View the current purchase trip, set receipt status, and change an assigned task's status                                      |
 
 Roles are assigned per store through memberships, so a person can have different roles in
 different stores.
@@ -208,19 +241,19 @@ different stores.
 
 ## 8. Scalability decisions
 
-| Decision                                                               | Why                                                     |
-| ---------------------------------------------------------------------- | ------------------------------------------------------- |
-| `stores` table + `store_id` on every operational table                 | A second shop needs no redesign                         |
-| Payment methods, expense categories, product categories as tables      | New values without migrations                           |
-| Settings as key/value per store (`jsonb`)                              | New configuration without migrations                    |
-| Supplier, rate and payment status per purchase line                    | Matches stall-by-stall buying                           |
-| Price lists versioned, never overwritten                               | Historical prices and margins stay correct              |
-| UUID v7 primary keys generated in the app (`Bun.randomUUIDv7()`)       | Time-ordered, index-friendly, safe for offline creation |
-| `timestamptz` for instants, `date` for business days (America/Caracas) | No timezone bugs in closes and reports                  |
-| Soft delete (`is_active`) on catalogs; never on financial records      | History is preserved                                    |
-| Audit log of every write                                               | Know who changed what, without the owner at the shop    |
-| Reports computed from data (views/queries), not stored                 | One source of truth                                     |
-| Sales, sale lines and inventory reserved for phase 5 (POS)             | Product and price-list ids are already compatible       |
+| Decision                                                                                           | Why                                                     |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `stores` table + `store_id` on every operational table                                             | A second shop needs no redesign                         |
+| Payment methods, expense categories, product categories as tables                                  | New values without migrations                           |
+| Settings as key/value per store (`jsonb`)                                                          | New configuration without migrations                    |
+| Supplier, rate and payment status per purchase line                                                | Matches stall-by-stall buying                           |
+| Price lists versioned, never overwritten                                                           | Historical prices and margins stay correct              |
+| UUID v7 primary keys generated in the app (`Bun.randomUUIDv7()`)                                   | Time-ordered, index-friendly, safe for offline creation |
+| `timestamptz` for instants, `date` for business days (America/Caracas)                             | No timezone bugs in closes and reports                  |
+| Soft delete (`is_active`) on catalogs; financial rows stay, except a daily close the owner deletes | History is preserved; a wrong close can be redone       |
+| Audit log of every write                                                                           | Know who changed what, without the owner at the shop    |
+| Reports computed from data (views/queries), not stored                                             | One source of truth                                     |
+| Sales, sale lines and inventory reserved for phase 5 (POS)                                         | Product and price-list ids are already compatible       |
 
 ---
 
@@ -290,6 +323,7 @@ have no store, sale rows always have one.
 | `purchase_lines`      | trip_id, supplier_id (nullable), stall_reference, product_id, purchase_unit, packs, gross_quantity, shrinkage, usable_quantity, quoted_price_usd, amount_bs, supplier_rate, real_cost_usd, unit_cost_usd, margin, sale_price_usd, payment_status (`paid`/`credit`), receipt_status (`pending`/`received`/`partial`/`missing`), received_packs, received_quantity, received_by, received_at, receipt_note, received_usable_quantity, received_unit_cost_usd, received_sale_price_usd (partial receipts) |
 | `supplier_claims`     | purchase_line_id (unique), supplier_id (nullable), missing_packs, amount_usd, status (`open`/`resolved`/`written_off`), resolution_note                                                                                                                                                                                                                                                                                                                                                                |
 | `shopping_list_items` | store_id, product_id, requested_by, note, status (`open`/`bought`/`dropped`), purchase_line_id (nullable)                                                                                                                                                                                                                                                                                                                                                                                              |
+| `tasks`               | store_id, title, description (nullable), assignee_id, status (`pending`/`in_progress`/`observation`/`done`), is_high_priority                                                                                                                                                                                                                                                                                                                                                                          |
 
 - `quoted_price_usd` is the **total of the line** (3 crates at 20 USD → 60 USD).
 - `amount_bs` = `quoted_price_usd × supplier_rate`: what is paid to the stall in Bs, at the
@@ -365,8 +399,9 @@ erDiagram
   (never used to filter; `audit_logs` answers "who did what"). Every `business_date` is indexed.
 - Named `CHECK` constraints (`<table>_<rule>_check`), 38 in total:
   - amounts ≥ 0 and rates > 0 on every money/rate column;
-  - `purchase_lines`: packs > 0, gross_quantity > 0, 0 ≤ shrinkage < gross_quantity,
-    usable_quantity = gross_quantity − shrinkage, 0 ≤ received_packs ≤ packs,
+  - `purchase_lines`: packs is null or > 0, gross_quantity > 0, 0 ≤ shrinkage < gross_quantity,
+    usable_quantity = gross_quantity − shrinkage, received_packs is null, or
+    (packs set and 0 ≤ received_packs ≤ packs), or (packs null and received_packs = 0),
     0 ≤ received_quantity ≤ gross_quantity;
   - margins between 0 and 5 (0–500 %) in products, purchase lines and price list lines;
   - `products`: no kg → unit combination; pack quantity required (> 0) for crate/bundle and
@@ -375,7 +410,8 @@ erDiagram
   - `price_lists`: a published list has `published_at`;
   - `payables`: due_on ≥ issued_on.
 - Uniques listed in the tables above (16). A purchase line has at most one supplier claim and
-  at most one payable (§9.8).
+  at most one payable (§9.8). Partial unique index `purchase_trips_one_open_idx`: one open
+  trip per store.
 - Every CHECK and UNIQUE constraint has an integration test; a meta-test fails if one is added
   without a test.
 

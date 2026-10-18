@@ -45,7 +45,7 @@ describe("TripScreen", () => {
     vi.mocked(listShoppingItems).mockResolvedValue({ data: [] });
   });
 
-  it("an open trip shows its rates, totals, the line form and its purchases", async () => {
+  it("an open trip shows its rates, totals and its purchases, without the add form", async () => {
     setDesktop(true);
     vi.mocked(getTrip).mockResolvedValue(WITH_LINE);
     render(<TripScreen />, { wrapper: SwrTestWrapper });
@@ -59,7 +59,7 @@ describe("TripScreen", () => {
     expect(within(row).getByText("1,40 $/kg")).toBeDefined();
     expect(screen.getByText("201,00 Bs")).toBeDefined();
     expect(screen.getAllByText("4.020,00 Bs").length).toBeGreaterThan(0);
-    expect(screen.getByText("Formulario de compra")).toBeDefined();
+    expect(screen.queryByText("Formulario de compra")).toBeNull();
     expect(within(row).getByText("Por recibir")).toBeDefined();
     expect(screen.getByText("1 compra por recibir")).toBeDefined();
   });
@@ -91,7 +91,7 @@ describe("TripScreen", () => {
     expect(screen.getByText("Todo recibido en la camioneta")).toBeDefined();
   });
 
-  it("shows what is still to buy and offers it on the form", async () => {
+  it("shows what is still to buy, without the add form", async () => {
     vi.mocked(getTrip).mockResolvedValue(OPEN_TRIP);
     vi.mocked(listShoppingItems).mockResolvedValue({
       data: [
@@ -110,7 +110,59 @@ describe("TripScreen", () => {
 
     expect(await screen.findByText("Cebolla")).toBeDefined();
     expect(screen.getByText("se acabó")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Comprar" })).toBeDefined();
+    expect(screen.getByText("1 por comprar")).toBeDefined();
+    expect(screen.getByText(/ordénalos como vas a recorrer el mercado/)).toBeDefined();
+    expect(screen.queryByText("Formulario de compra")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Comprar Cebolla" }));
+
+    expect(screen.getByText("Formulario de compra")).toBeDefined();
+  });
+
+  it("reorders the pending list and keeps that order on this phone", async () => {
+    vi.mocked(getTrip).mockResolvedValue(OPEN_TRIP);
+    vi.mocked(listShoppingItems).mockResolvedValue({
+      data: [
+        {
+          id: "0199f0a0-0000-7000-8000-000000000001",
+          productId: "0199f0a0-0000-7000-8000-000000000002",
+          productName: "Cebolla",
+          note: null,
+          status: "open",
+          purchaseLineId: null,
+          createdAt: "2026-10-16T12:00:00.000Z",
+        },
+        {
+          id: "0199f0a0-0000-7000-8000-000000000003",
+          productId: "0199f0a0-0000-7000-8000-000000000004",
+          productName: "Tomate perita",
+          note: null,
+          status: "open",
+          purchaseLineId: null,
+          createdAt: "2026-10-16T12:01:00.000Z",
+        },
+      ],
+    });
+    const { unmount } = render(<TripScreen />, { wrapper: SwrTestWrapper });
+    const pending = async () =>
+      within(await screen.findByRole("region", { name: "Faltantes" })).getAllByRole("listitem");
+
+    fireEvent.keyDown(
+      within((await pending())[0]!).getByRole("button", { name: "Mover Cebolla" }),
+      {
+        key: "ArrowDown",
+      },
+    );
+
+    const names = (await pending()).map((item) => item.textContent);
+    expect(names[0]).toContain("Tomate perita");
+    expect(names[1]).toContain("Cebolla");
+
+    unmount();
+    render(<TripScreen />, { wrapper: SwrTestWrapper });
+    const again = (await pending()).map((item) => item.textContent);
+    expect(again[0]).toContain("Tomate perita");
+    expect(again[1]).toContain("Cebolla");
   });
 
   it("closing with purchases still to receive warns first", async () => {

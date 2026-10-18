@@ -29,6 +29,7 @@ import {
   payrollPayments,
   priceListLines,
   productCategories,
+  purchaseTrips,
   products,
   pushSubscriptions,
   sessions,
@@ -199,6 +200,23 @@ describe("UNIQUE constraints", () => {
       });
     });
   }
+
+  test("a store has at most one open purchase trip", async () => {
+    await inRollback(async (tx) => {
+      const base = await createBase(tx);
+      await expectPgError(
+        tx,
+        (sp) =>
+          sp.insert(purchaseTrips).values(valid.purchaseTrip(base, { businessDate: "2026-10-16" })),
+        { code: PG_UNIQUE_VIOLATION, constraint: "purchase_trips_one_open_idx" },
+      );
+      await expectOk(tx, (sp) =>
+        sp
+          .insert(purchaseTrips)
+          .values(valid.purchaseTrip(base, { businessDate: "2026-10-16", status: "closed" })),
+      );
+    });
+  });
 
   test("different stores or days do not collide", async () => {
     await inRollback(async (tx) => {

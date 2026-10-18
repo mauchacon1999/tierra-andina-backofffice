@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { BUSINESS_TIME_ZONE, isBusinessDate, toBusinessDate } from "./business-date";
 import { InvalidValueError } from "./errors";
-import { amountInBs, sumDecimals } from "./rates";
+import { amountInBs, amountInUsd, sumDecimals } from "./rates";
 
 describe("amountInBs", () => {
   test("3 crates quoted at 60 USD, paid at the Coche rate 201 → 12060 Bs", () => {
@@ -17,6 +17,22 @@ describe("amountInBs", () => {
   test("rejects a negative amount or a rate ≤ 0", () => {
     expect(() => amountInBs("-1", "200")).toThrow(InvalidValueError);
     expect(() => amountInBs("10", "0")).toThrow(InvalidValueError);
+  });
+});
+
+describe("amountInUsd", () => {
+  test("12060 Bs at the Coche rate 201 is 60 USD", () => {
+    expect(amountInUsd("12060", "201")).toBe("60.0000");
+  });
+
+  test("rounds half-up to 4 decimals", () => {
+    expect(amountInUsd("1", "3")).toBe("0.3333");
+    expect(amountInUsd("2", "3")).toBe("0.6667");
+  });
+
+  test("rejects a negative amount or a rate ≤ 0", () => {
+    expect(() => amountInUsd("-1", "200")).toThrow(InvalidValueError);
+    expect(() => amountInUsd("10", "0")).toThrow(InvalidValueError);
   });
 });
 

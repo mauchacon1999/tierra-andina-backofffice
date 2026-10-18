@@ -34,6 +34,7 @@ const TRIP: ReceiptTrip = {
   id: "01a14314-2825-7000-a1d1-bdf734d059a0",
   businessDate: "2026-10-16",
   note: null,
+  toBuy: [],
   lines: [
     {
       ...LINE,
@@ -55,21 +56,76 @@ describe("ReceiptScreen", () => {
     vi.mocked(setReceipt).mockReset();
   });
 
-  it("lists what to check, pending first, with the count still to receive and no prices", async () => {
-    vi.mocked(listReceipts).mockResolvedValue([TRIP]);
+  it("splits the trip into pending and received, with a status on each product", async () => {
+    vi.mocked(listReceipts).mockResolvedValue([
+      {
+        ...TRIP,
+        toBuy: [
+          {
+            id: "01a14314-2825-7000-a1d1-bdf734d059b1",
+            productName: "Cebolla",
+            note: "se acabó",
+          },
+        ],
+      },
+    ]);
     render(<ReceiptScreen />, { wrapper: SwrTestWrapper });
 
     const section = await screen.findByRole("region", { name: "viernes 16/10/2026" });
-    expect(within(section).getByText("1 por recibir")).toBeDefined();
-    const names = within(section)
+    const pending = within(section).getByRole("region", { name: "Pendientes" });
+    const received = within(section).getByRole("region", { name: "Recibidos" });
+    const pendingNames = within(pending)
       .getAllByRole("listitem")
-      .map((item) => within(item).getAllByText(/Tomate perita|Cilantro/)[0]?.textContent);
-    expect(names).toEqual(["Tomate perita", "Cilantro"]);
-    expect(within(section).getAllByText("3 cestas · Puesto 14")).toHaveLength(2);
+      .map((item) => item.textContent);
+    expect(pendingNames[0]).toContain("Cebolla");
+    expect(pendingNames[0]).toContain("Por comprar");
+    expect(pendingNames[1]).toContain("Tomate perita");
+    expect(pendingNames[1]).toContain("En camino");
+    expect(
+      within(pending).queryByRole("button", { name: "Marcar Cebolla como recibido" }),
+    ).toBeNull();
+    expect(within(received).getByText("Cilantro")).toBeDefined();
+    expect(within(received).getByText("Recibido")).toBeDefined();
+    expect(within(section).getByText("1 por recibir")).toBeDefined();
     expect(within(section).queryByText(/Precio/)).toBeNull();
   });
 
-  it("'Recibido' saves at once", async () => {
+  it("dragging a pending row reorders the list and keeps that order", async () => {
+    vi.mocked(listReceipts).mockResolvedValue([
+      {
+        ...TRIP,
+        toBuy: [
+          {
+            id: "01a14314-2825-7000-a1d1-bdf734d059b1",
+            productName: "Cebolla",
+            note: null,
+          },
+        ],
+      },
+    ]);
+    const { unmount } = render(<ReceiptScreen />, { wrapper: SwrTestWrapper });
+
+    const pending = async () =>
+      within(await screen.findByRole("region", { name: "Pendientes" })).getAllByRole("listitem");
+    fireEvent.keyDown(
+      within((await pending())[0]!).getByRole("button", { name: "Mover Cebolla" }),
+      {
+        key: "ArrowDown",
+      },
+    );
+
+    const names = (await pending()).map((item) => item.textContent);
+    expect(names[0]).toContain("Tomate perita");
+    expect(names[1]).toContain("Cebolla");
+
+    unmount();
+    render(<ReceiptScreen />, { wrapper: SwrTestWrapper });
+    const again = (await pending()).map((item) => item.textContent);
+    expect(again[0]).toContain("Tomate perita");
+    expect(again[1]).toContain("Cebolla");
+  });
+
+  it("the check marks the product received and moves it to Recibidos", async () => {
     vi.mocked(listReceipts).mockResolvedValue([TRIP]);
     vi.mocked(setReceipt).mockResolvedValue({
       ...TRIP,
@@ -78,12 +134,18 @@ describe("ReceiptScreen", () => {
     render(<ReceiptScreen />, { wrapper: SwrTestWrapper });
 
     const group = await screen.findByRole("group", { name: "Qué llegó de Tomate perita" });
-    fireEvent.click(within(group).getByRole("button", { name: "Recibido" }));
-
-    await waitFor(() =>
-      expect(setReceipt).toHaveBeenCalledWith(TRIP.id, LINE.id, { status: "received" }),
+    fireEvent.click(
+      within(group).getByRole("button", { name: "Marcar Tomate perita como recibido" }),
     );
-    expect(await screen.findByText("Todo revisado")).toBeDefined();
+
+    await waitFor(() => {
+      const received = screen.getByRole("region", { name: "Recibidos" });
+      expect(within(received).getByText("Tomate perita")).toBeDefined();
+    });
+    expect(setReceipt).toHaveBeenCalledWith(TRIP.id, LINE.id, { status: "received" });
+    expect(
+      within(screen.getByRole("region", { name: "Pendientes" })).queryByText("Tomate perita"),
+    ).toBeNull();
   });
 
   it("'Incompleto' asks how much arrived and sends it", async () => {

@@ -1,5 +1,6 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Card } from "@/components/ui/card";
@@ -31,10 +32,11 @@ const STYLES = {
 
 export type StatusCardProps = {
   title: string;
+  icon: LucideIcon;
   state: CheckState;
 };
 
-export function StatusCard({ title, state }: StatusCardProps): React.JSX.Element {
+export function StatusCard({ title, icon: Icon, state }: StatusCardProps): React.JSX.Element {
   const style = STYLES[state.status];
   const t = useTranslations("systemStatus");
   const errorMessage = useErrorMessage();
@@ -42,7 +44,10 @@ export function StatusCard({ title, state }: StatusCardProps): React.JSX.Element
   return (
     <Card aria-live="polite" aria-label={title} tone={style.tone}>
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">{title}</h2>
+        <h2 className="flex items-center gap-2 text-lg font-semibold">
+          <Icon aria-hidden className="size-5 shrink-0 text-primary-text" />
+          {title}
+        </h2>
         <span className={cn("flex items-center gap-2 text-sm font-medium", style.label)}>
           <span aria-hidden className={cn("size-3 rounded-full", style.dot)} />
           {t(style.text)}

@@ -11,7 +11,7 @@ import { useDailyCloseScreen } from "@/features/daily-closes/hooks/use-daily-clo
 import { useErrorMessage } from "@/i18n/use-error-message";
 import { formatBusinessDateLong } from "@/utils/format-date";
 
-/** The manager's "Cierre del día": pick the day; send its close, or see the one already sent. */
+/** The day's close: today for the manager; the owner can choose another day. */
 export function DailyCloseScreen(): React.JSX.Element {
   const s = useDailyCloseScreen();
   const t = useTranslations("dailyClose");
@@ -20,13 +20,22 @@ export function DailyCloseScreen(): React.JSX.Element {
 
   return (
     <div className="space-y-5">
-      <TextField
-        label={t("date")}
-        type="date"
-        value={s.date}
-        onChange={(event) => event.target.value && s.setDate(event.target.value)}
-        hint={formatBusinessDateLong(s.date)}
-      />
+      {s.canChangeDate ? (
+        <TextField
+          label={t("date")}
+          type="date"
+          value={s.date}
+          onChange={(event) => event.target.value && s.setDate(event.target.value)}
+          hint={formatBusinessDateLong(s.date)}
+        />
+      ) : (
+        <p className="text-sm">
+          <span className="font-medium text-foreground">{t("date")}</span>
+          <span className="mt-1 block capitalize text-foreground">
+            {formatBusinessDateLong(s.date)}
+          </span>
+        </p>
+      )}
       {s.error && (
         <Alert tone="error" title={t("loadFailed")}>
           <p>{errorMessage(s.error, s.error.message)}</p>

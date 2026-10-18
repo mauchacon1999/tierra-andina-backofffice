@@ -82,6 +82,16 @@ export function CloseDetailScreen(): React.JSX.Element {
             <Button variant="secondary" onClick={s.startFix}>
               {t("fix")}
             </Button>
+            <ConfirmButton
+              question={t("deleteQuestion", { date: day })}
+              confirmLabel={t("delete")}
+              variant="danger"
+              onConfirm={s.remove}
+              isLoading={s.isDeleting}
+              loadingText={t("deleting")}
+            >
+              {t("delete")}
+            </ConfirmButton>
           </div>
         </>
       )}

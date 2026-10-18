@@ -143,6 +143,7 @@ Content-Type: application/json
 
 ### Open a trip — 201; copies the day's BCV and Coche rates (422 DAY_RATES_MISSING if not set)
 # @name openTrip
+# 409 TRIP_ALREADY_OPEN (details.tripId) while another trip of the store is still open.
 POST {{baseUrl}}/api/v1/purchase-trips
 Origin: http://localhost:3000
 Content-Type: application/json
@@ -152,8 +153,10 @@ Content-Type: application/json
 ### Trips — 200 { data, total, page, pageSize }
 GET {{baseUrl}}/api/v1/purchase-trips?status=open
 
-### Add a line — 201 trip with lines. quotedPriceUsd is the line TOTAL; supplierRate defaults to
-### the trip's Coche rate and margin to the product's last margin.
+### Add a line — 201 trip with lines. quotedPriceUsd is the line TOTAL in dollars.
+### Omitted packs → crates not counted. Omitted shrinkage → the product's last shrinkage
+### (the product is not changed). supplierRate defaults to the trip's Coche rate.
+### Margin defaults to the product's last margin.
 POST {{baseUrl}}/api/v1/purchase-trips/{{openTrip.response.body.id}}/lines
 Origin: http://localhost:3000
 Content-Type: application/json
@@ -179,7 +182,8 @@ Content-Type: application/json
 
 { "status": "partial", "receivedPacks": "2", "receivedQuantity": "47.5", "note": "Faltó una cesta" }
 
-### Open trips with what to check at the truck — 200 { data: [{ id, businessDate, note, lines }] }
+### Open trips with what to check at the truck — 200 { data: [{ id, businessDate, note, lines, toBuy }] }
+### toBuy: open shopping-list items on the newest trip only (the receiver cannot call /shopping-list)
 GET {{baseUrl}}/api/v1/receipts
 
 ### Close the trip — 200; lines can no longer change. Publishes the sale price list
@@ -222,7 +226,8 @@ GET {{baseUrl}}/api/v1/payment-methods
 ### Customers for credit sales (search by name)
 GET {{baseUrl}}/api/v1/customers?search=mar
 
-### Submit a close (manager or owner) — 201; 409 CLOSE_EXISTS if that day already has one
+### Submit a close (manager or owner) — 201; 409 CLOSE_EXISTS if that day already has one.
+### The manager can only send today; another day is 422 CLOSE_DATE_LOCKED (the owner may).
 POST {{baseUrl}}/api/v1/daily-closes
 Origin: http://localhost:3000
 Content-Type: application/json
@@ -261,6 +266,10 @@ Content-Type: application/json
 POST {{baseUrl}}/api/v1/daily-closes/<close id>/approve
 Origin: http://localhost:3000
 
+### Delete (owner) — 204. Approved closes too. That day can be submitted again. 403 for a manager
+DELETE {{baseUrl}}/api/v1/daily-closes/<close id>
+Origin: http://localhost:3000
+
 ### Users of the active store (owner only), owners first; `isSelf` marks the caller
 GET {{baseUrl}}/api/v1/users
 
@@ -284,3 +293,29 @@ Origin: http://localhost:3000
 Content-Type: application/json
 
 { "password": "clave-nueva-2" }
+
+### Tasks ---------------------------------------------------------------------------------------
+### Active people a task can be assigned to (owner and manager)
+GET {{baseUrl}}/api/v1/tasks/assignees
+
+### Tasks of the store: high priority first, then in progress, observation, pending, finished.
+GET {{baseUrl}}/api/v1/tasks
+
+### Create a pending task (owner or manager) — 201; 422 ASSIGNEE_NOT_FOUND; 403 for a receiver
+POST {{baseUrl}}/api/v1/tasks
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "title": "Comprar bolsas", "description": "Las grandes", "assigneeId": "<user id>" }
+
+### Flag it, set the status (`pending`, `in_progress`, `observation`, `done`) or reassign it.
+### A receiver may send only status — 403 otherwise
+PATCH {{baseUrl}}/api/v1/tasks/<task id>
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "isHighPriority": true, "status": "in_progress", "assigneeId": "<user id>" }
+
+### Delete (owner or manager) — 204. 403 for a receiver. 404 if it is already gone
+DELETE {{baseUrl}}/api/v1/tasks/<task id>
+Origin: http://localhost:3000

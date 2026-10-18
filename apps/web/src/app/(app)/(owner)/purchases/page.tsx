@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
 import { ButtonLink } from "@/components/ui/button-link";
-import { Card } from "@/components/ui/card";
-import { OpenTripForm } from "@/features/purchases/components/open-trip-form";
+import { OpenTripSection } from "@/features/purchases/components/open-trip-section";
 import { TripList } from "@/features/purchases/components/trip-list";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -29,9 +28,7 @@ export default async function PurchasesPage(): Promise<React.JSX.Element> {
           </ButtonLink>
         </div>
       </header>
-      <Card>
-        <OpenTripForm />
-      </Card>
+      <OpenTripSection />
       <TripList />
     </div>
   );

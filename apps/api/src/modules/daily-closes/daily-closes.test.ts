@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 
+import { toBusinessDate } from "@ta/core";
 import { uniq } from "@ta/db/testing";
 import {
   customerListSchema,
@@ -60,8 +61,8 @@ describe("GET /api/v1/payment-methods", () => {
 });
 
 describe("POST /api/v1/daily-closes", () => {
-  test("the manager submits Tuesday: amounts per currency, batch, credit and expenses", async () => {
-    const day = nextDay();
+  test("the manager submits today: amounts per currency, batch, credit and expenses", async () => {
+    const day = toBusinessDate(new Date());
     const customer = uniq("Sra. María");
 
     const res = await submit(
@@ -91,11 +92,21 @@ describe("POST /api/v1/daily-closes", () => {
     expect(close).not.toHaveProperty("rate");
   });
 
+  test("a manager cannot file another day; the owner can", async () => {
+    const other = nextDay();
+
+    const denied = await submit(s.manager, tuesday(other));
+
+    expect(denied.status).toBe(422);
+    expect(errorOf(denied.body).code).toBe("CLOSE_DATE_LOCKED");
+    expect((await submit(s.owner, tuesday(other))).status).toBe(201);
+  });
+
   test("one close per day: a second one is 409 CLOSE_EXISTS", async () => {
     const day = nextDay();
-    await submit(s.manager, tuesday(day));
+    await submit(s.owner, tuesday(day));
 
-    const again = await submit(s.manager, tuesday(day));
+    const again = await submit(s.owner, tuesday(day));
 
     expect(again.status).toBe(409);
     expect(errorOf(again.body).code).toBe("CLOSE_EXISTS");
@@ -104,11 +115,11 @@ describe("POST /api/v1/daily-closes", () => {
   test("a customer written again (other case) is the same customer; search finds it", async () => {
     const name = uniq("Pedro");
     await submit(
-      s.manager,
+      s.owner,
       tuesday(nextDay(), { credits: [{ customerName: name, amount: "10", currency: "USD" }] }),
     );
     await submit(
-      s.manager,
+      s.owner,
       tuesday(nextDay(), {
         credits: [{ customerName: name.toUpperCase(), amount: "5", currency: "USD" }],
       }),
@@ -129,7 +140,7 @@ describe("POST /api/v1/daily-closes", () => {
     expect(found).toHaveLength(1);
 
     const byId = await submit(
-      s.manager,
+      s.owner,
       tuesday(nextDay(), { credits: [{ customerId: found[0]!.id, amount: "1", currency: "VES" }] }),
     );
     expect(dailyCloseSchema.parse(byId.body).credits[0]?.customerName).toBe(found[0]!.name);
@@ -137,19 +148,19 @@ describe("POST /api/v1/daily-closes", () => {
 
   test("400 for a repeated method, 422 for an unknown method or customer, 403 for a receiver", async () => {
     const card = { paymentMethodId: methods.card_terminal!.id, amount: "1" };
-    expect((await submit(s.manager, tuesday(nextDay(), { payments: [card, card] }))).status).toBe(
+    expect((await submit(s.owner, tuesday(nextDay(), { payments: [card, card] }))).status).toBe(
       400,
     );
 
     const unknownMethod = await submit(
-      s.manager,
+      s.owner,
       tuesday(nextDay(), { payments: [{ paymentMethodId: crypto.randomUUID(), amount: "1" }] }),
     );
     expect(unknownMethod.status).toBe(422);
     expect(errorOf(unknownMethod.body).code).toBe("PAYMENT_METHOD_NOT_FOUND");
 
     const unknownCustomer = await submit(
-      s.manager,
+      s.owner,
       tuesday(nextDay(), {
         credits: [{ customerId: crypto.randomUUID(), amount: "1", currency: "VES" }],
       }),
@@ -163,7 +174,7 @@ describe("POST /api/v1/daily-closes", () => {
 describe("reading closes", () => {
   test("by day (manager and owner), 404 for a day without close, 403 for a receiver", async () => {
     const day = nextDay();
-    await submit(s.manager, tuesday(day));
+    await submit(s.owner, tuesday(day));
 
     expect((await call(s.app, "GET", `/daily-closes/${day}`, s.owner)).status).toBe(200);
     expect((await call(s.app, "GET", `/daily-closes/${day}`, s.manager)).status).toBe(200);
@@ -174,8 +185,8 @@ describe("reading closes", () => {
   test("a range, newest first, with the totals of each day", async () => {
     const first = nextDay();
     const second = nextDay();
-    await submit(s.manager, tuesday(first));
-    await submit(s.manager, tuesday(second));
+    await submit(s.owner, tuesday(first));
+    await submit(s.owner, tuesday(second));
 
     const res = await call(s.app, "GET", `/daily-closes?from=${first}&to=${second}`, s.owner);
 
@@ -198,7 +209,7 @@ describe("owner review", () => {
         (await call(s.app, "GET", "/daily-closes/pending-count", s.owner)).body,
       ).count;
     const before = await pending();
-    const created = dailyCloseSchema.parse((await submit(s.manager, tuesday(nextDay()))).body);
+    const created = dailyCloseSchema.parse((await submit(s.owner, tuesday(nextDay()))).body);
     expect(await pending()).toBe(before + 1);
 
     const correction = {
@@ -234,8 +245,24 @@ describe("owner review", () => {
     expect((await call(s.app, "GET", "/daily-closes/pending-count", s.manager)).status).toBe(403);
   });
 
-  test("404 when correcting or approving a close that does not exist", async () => {
+  test("the owner deletes a close, approved or not, and that day can be submitted again", async () => {
+    const day = nextDay();
+    const created = dailyCloseSchema.parse((await submit(s.owner, tuesday(day))).body);
+    expect((await call(s.app, "POST", `/daily-closes/${created.id}/approve`, s.owner)).status).toBe(
+      200,
+    );
+
+    expect((await call(s.app, "DELETE", `/daily-closes/${created.id}`, s.manager)).status).toBe(
+      403,
+    );
+    expect((await call(s.app, "DELETE", `/daily-closes/${created.id}`, s.owner)).status).toBe(204);
+    expect((await call(s.app, "GET", `/daily-closes/${day}`, s.owner)).status).toBe(404);
+    expect((await submit(s.owner, tuesday(day))).status).toBe(201);
+  });
+
+  test("404 when correcting, approving or deleting a close that does not exist", async () => {
     const id = crypto.randomUUID();
     expect((await call(s.app, "POST", `/daily-closes/${id}/approve`, s.owner)).status).toBe(404);
+    expect((await call(s.app, "DELETE", `/daily-closes/${id}`, s.owner)).status).toBe(404);
   });
 });

@@ -54,3 +54,7 @@ export function updateDailyClose(id: string, contents: UpdateDailyClose): Promis
 export function approveDailyClose(id: string): Promise<DailyClose> {
   return api.post(`/api/v1/daily-closes/${id}/approve`, undefined, { schema: dailyCloseSchema });
 }
+
+export function deleteDailyClose(id: string): Promise<void> {
+  return api.delete(`/api/v1/daily-closes/${id}`);
+}

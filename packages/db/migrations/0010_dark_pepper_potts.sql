@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "purchase_trips_one_open_idx" ON "purchase_trips" USING btree ("store_id") WHERE "purchase_trips"."status" = 'open';

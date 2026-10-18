@@ -21,6 +21,7 @@ import {
   listTrips,
   openTrip,
   setLineReceipt,
+  toBuyForTrip,
   updateLine,
 } from "./purchases.service";
 import { canSeePrices } from "@/modules/receipts/receipts.service";
@@ -83,7 +84,12 @@ export function purchaseTripsRoutes(): Hono<AppEnv> {
           c.req.valid("json"),
           new Date(),
         );
-        return c.json(toReceiptTripDto(trip, await canSeePrices(db, getMembership(c))));
+        const membership = getMembership(c);
+        const [showPrices, toBuy] = await Promise.all([
+          canSeePrices(db, membership),
+          toBuyForTrip(db, membership.storeId, trip.id),
+        ]);
+        return c.json(toReceiptTripDto(trip, showPrices, toBuy));
       },
     )
     .patch(

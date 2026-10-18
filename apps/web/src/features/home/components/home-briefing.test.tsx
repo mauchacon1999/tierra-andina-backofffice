@@ -66,9 +66,10 @@ describe("HomeBriefing", () => {
     expect(screen.getByText(/En la tienda quedó 18.000,00 \$ y 5.500,00 Bs/)).toBeDefined();
     expect(screen.getByText("6,00 $")).toBeDefined();
     expect(screen.getByText("1.200,00 Bs")).toBeDefined();
-    expect(screen.getByRole("link", { name: "2 cierres por revisar" }).getAttribute("href")).toBe(
-      "/closes",
-    );
+    const closes = screen.getByRole("link", { name: "2 cierres por revisar" });
+    expect(closes.getAttribute("href")).toBe("/closes");
+    expect(closes.querySelector("svg")).not.toBeNull();
+    expect(screen.getByText("Cobrado").parentElement?.querySelector("svg")).not.toBeNull();
     expect(screen.getByRole("link", { name: "Faltan tasas de hoy" }).getAttribute("href")).toBe(
       "/rates",
     );

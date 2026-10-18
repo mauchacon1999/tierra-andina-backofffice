@@ -5,7 +5,7 @@ It replaces the notebook, WhatsApp and Excel workflow: purchases at the wholesal
 cost and price calculation, daily cash closings, expenses, debts and weekly reports.
 Business context and phases live in `docs/plan.md`. Read it before starting a new feature.
 
-> **Current state (2026-10-17):** monorepo, full database schema in `@ta/db` (32 tables,
+> **Current state (2026-10-18):** monorepo, full database schema in `@ta/db` (33 tables,
 > migrations, idempotent seed, integration tests), Hono API with `/health`, Better Auth
 > (`/api/auth/*`), `requireRole`, audit helper and `GET /api/v1/me`; Next.js status page.
 > Web: login (`/login`), session-protected home. The owner sees this week's
@@ -15,18 +15,25 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > `/products`, `/products/new`, `/products/[id]`); **store settings** (`/api/v1/settings`);
 > **daily rates** (BCV, Coche, sale: `/api/v1/exchange-rates`, owner screen `/rates`);
 > **purchase trips** (`/api/v1/purchase-trips`, `/api/v1/suppliers`, owner screens `/purchases`,
-> `/purchases/[id]`: open a trip with the day's rates, add/edit/delete lines with live costing,
-> close). **i18n**: next-intl in the web (es-VE messages, typed keys, no hard-coded text) and
+> `/purchases/[id]`: one open trip at a time (close it first; the home screen links to it),
+> the shopping list on the trip (Comprar opens that product's line), add products one after another — optional
+> crates, quantity, price in dollars or in bolívares at the Coche rate, shrinkage copied from the product —
+> live costing, close). **i18n**: next-intl in the web (es-VE messages, typed keys, no hard-coded text) and
 > validation message tokens shared with the API. **Backoffice**: sidebar shell, DataTable
 > (TanStack Table) on every list. **Truck receipt**: `/receipt` for receiver and owner
-> (`/api/v1/receipts`, `PATCH …/lines/:lineId/receipt`), live pending count on the trip.
+> (`/api/v1/receipts`, `PATCH …/lines/:lineId/receipt`), grouped into still to buy, on the way and received, with a check that marks a line received. Live pending count on the trip.
 > **Shopping list**: `/shopping-list` — what to buy before Coche; a purchase line checks it off.
 > **Price list**: closing a trip publishes `/prices` (`GET /api/v1/price-lists/current`).
 > A sale-rate change that moves a rounded Bs price proposes a list the owner approves
 > (`GET/POST /api/v1/price-lists/proposal`, `/prices/proposal`). A BCV change only warns.
-> **Daily close** (phase 2): `/close` (manager/owner: amounts only, each in its currency; lote,
-> credit sales, expenses) and `/closes` (owner: list like the Excel, correct, approve; pending
+> **Daily close** (phase 2): `/close` (manager/owner: amounts only, each in its currency; the date is
+> today and only the owner can change it; lote,
+> credit sales, expenses) and `/closes` (owner: list like the Excel, filter by week, month or dates, chips with that period's sales in Bs and in dollars, correct, approve or delete; pending
 > counter in the menu) — `/api/v1/daily-closes`, `/payment-methods`, `/customers`.
+> **Tasks**: `/tasks` (owner and manager assign a name, description and person, and can
+> reassign; high priority is an orange border and a flag and stays first; pending is blue,
+> in progress violet, observation amber, finished green; a receiver can change the status)
+> — `/api/v1/tasks`.
 > **Users**: `/users` (owner: create managers/receivers, edit, deactivate, set passwords;
 > users never change their own) — `/api/v1/users`.
 > **Home** (`GET /api/v1/home`, owner): week result from daily closes (USD and Bs
@@ -172,7 +179,13 @@ Tests of one package: `bun --cwd=packages/core test`, `bun --cwd=apps/web run te
 | Cierre diario                                 | `daily_close`                              |
 | Fiado (cliente)                               | `customer_credit`                          |
 | Abono                                         | `credit_payment`                           |
-| Cuenta por pagar                              | `payable`                                  |
+| Cuenta por pagar / factura por pagar          | `payable`                                  |
+| Línea de factura por pagar                    | `payable_line`                             |
+| Factura vencida / anulada                     | `overdue` / `voided`                       |
+| Bulto / paquete (unidad de factura)           | `sack` / `pack`                            |
+| Cuenta de pago móvil del proveedor            | `supplier_payment_account`                 |
+| Divisa (efectivo en dólares)                  | `cash_usd`                                 |
+| Transferencia                                 | `bank_transfer`                            |
 | Gasto fijo / variable                         | `fixed_expense` / `variable_expense`       |
 | Recepción en camioneta                        | `truck_receipt`                            |
 | Pago móvil                                    | `mobile_payment`                           |
@@ -181,6 +194,7 @@ Tests of one package: `bun --cwd=packages/core test`, `bun --cwd=apps/web run te
 | Dueño / encargado / receptor                  | `owner` / `manager` / `receiver`           |
 | Reclamo al puesto (mercancía faltante)        | `supplier_claim`                           |
 | Lista de faltantes (compras del jueves)       | `shopping_list_item`                       |
+| Tarea                                         | `task`                                     |
 | Tasa de cambio                                | `exchange_rate`                            |
 | Tasa de Coche (mercado mayorista del día)     | `market_rate`                              |
 | Nómina / adelanto                             | `payroll_payment` / `salary_advance`       |
@@ -328,7 +342,7 @@ apps/web/src/
 - **UI follows `docs/design-system.md`**: colors only through the semantic tokens of
   `app/globals.css` (`bg-primary`, `text-muted`, `text-danger-text`…; no palette classes and no
   `dark:` color classes — `src/design-system.test.ts` fails otherwise), primitives from
-  `components/ui/` (`Button`, `ButtonLink`, `TextField`, `SelectField`, `SegmentedControl`,
+  `components/ui/` (`Button`, `ButtonLink`, `TextField`, `SelectField`, `SelectMenu`, `ComboboxField`, `SegmentedControl`,
   `Checkbox`, `Alert`, `Card`, `Badge`, `Spinner`, `ConfirmButton`, `Dialog`, `IconButton`,
   `Tooltip`). Icons: `lucide-react`, always `aria-hidden` next to a text or an accessible name.
 - **Lists of records use `DataTable`** (`components/shared/data-table/`, TanStack Table v9;
