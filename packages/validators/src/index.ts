@@ -83,9 +83,12 @@ export type {
   SetDailyRates,
 } from "./exchange-rates";
 export {
+  closeTripSchema,
   createSupplierSchema,
   updateSupplierSchema,
   openTripSchema,
+  PURCHASE_TRIP_KINDS,
+  tripPayableSchema,
   PAYMENT_STATUSES,
   PURCHASE_TRIP_STATUSES,
   purchaseLineFieldsSchema,
@@ -111,10 +114,14 @@ export {
 } from "./purchases";
 export type {
   CreateSupplier,
+  CloseTrip,
+  CloseTripInput,
   CreateSupplierInput,
   UpdateSupplier,
   UpdateSupplierInput,
   OpenTrip,
+  OpenTripInput,
+  TripPayable,
   PurchaseLine,
   PurchaseLineFields,
   PurchaseLineFormValues,

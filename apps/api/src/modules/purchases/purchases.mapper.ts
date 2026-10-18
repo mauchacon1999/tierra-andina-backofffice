@@ -1,3 +1,4 @@
+import { payableCode } from "@ta/core";
 import type {
   PurchaseLine,
   ReceiptLine,
@@ -13,6 +14,9 @@ import type { TripWithLines } from "./purchases.service";
 export function toTripDto(row: TripRow): Trip {
   return {
     id: row.id,
+    kind: row.kind,
+    supplierId: row.supplierId,
+    supplierName: row.supplierName,
     businessDate: row.businessDate,
     bcvRate: row.bcvRate,
     marketRate: row.marketRate,
@@ -95,5 +99,16 @@ export function toReceiptTripDto(
 }
 
 export function toTripDetailDto(trip: TripWithLines): TripDetail {
-  return { ...toTripDto(trip), lineCount: trip.lines.length, lines: trip.lines.map(toLineDto) };
+  return {
+    ...toTripDto(trip),
+    lineCount: trip.lines.length,
+    lines: trip.lines.map(toLineDto),
+    payables: trip.payables.map((payable) => ({
+      id: payable.id,
+      code: payableCode(payable.number),
+      supplierName: payable.supplierName,
+      currency: payable.currency,
+      total: payable.total,
+    })),
+  };
 }

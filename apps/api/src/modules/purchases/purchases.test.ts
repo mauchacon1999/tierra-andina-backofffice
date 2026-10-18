@@ -286,6 +286,7 @@ describe("POST /api/v1/purchase-trips/:id/lines", () => {
   test("sums the trip totals over every line", async () => {
     const product = await tomato();
     const tripId = await openTrip();
+    const supplier = await call(s.app, "POST", "/suppliers", s.owner, { name: uniq("Puesto") });
     await addLine(tripId, {
       productId: product.id,
       packs: "1",
@@ -295,6 +296,7 @@ describe("POST /api/v1/purchase-trips/:id/lines", () => {
     });
     const res = await addLine(tripId, {
       productId: product.id,
+      supplierId: (supplier.body as { id: string }).id,
       packs: "2",
       grossQuantity: "48",
       shrinkage: "4",

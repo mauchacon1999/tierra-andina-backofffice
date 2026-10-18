@@ -11,6 +11,7 @@ import type { Database, Executor } from "@ta/db";
 import {
   message,
   SHRINKAGE_BELOW_GROSS_MESSAGE,
+  type CloseTrip,
   type OpenTrip,
   type ReceiptToBuy,
   type SetReceipt,
@@ -24,6 +25,11 @@ import { diffChanges, recordAudit } from "@/lib/audit";
 import { AppError, ErrorCode } from "@/lib/errors";
 import type { Actor } from "@/lib/types";
 import { getDailyRates } from "@/modules/exchange-rates/exchange-rates.service";
+import {
+  createTripPayables,
+  listTripPayables,
+  type TripCreditLine,
+} from "@/modules/payables/payables.service";
 import { publishFromTrip } from "@/modules/price-lists/price-lists.service";
 import { findProduct, rememberPurchaseDefaults } from "@/modules/products/products.service";
 import { getStoreSettings } from "@/modules/settings/settings.service";
@@ -44,6 +50,7 @@ import {
   findTrips,
   insertLine,
   insertTrip,
+  markPendingLinesReceived,
   updateLineById,
   updateTripById,
   type LineInsert,
@@ -52,7 +59,10 @@ import {
   type TripRow,
 } from "./purchases.repository";
 
-export type TripWithLines = TripRow & { lines: LineRow[] };
+export type TripWithLines = TripRow & {
+  lines: LineRow[];
+  payables: Awaited<ReturnType<typeof listTripPayables>>;
+};
 
 const FIELD_MESSAGES: Record<string, string> = {
   margin: "El margen debe estar entre 0 % y 500 %",
@@ -105,6 +115,22 @@ async function checkReferences(
   return { product, supplier };
 }
 
+/**
+ * The supplier of a line: a local purchase's own supplier; at Coche the one chosen, which a
+ * credit line must have (its debt becomes that supplier's invoice when the trip closes).
+ */
+function lineSupplier(
+  trip: TripRow,
+  supplierId: string | null | undefined,
+  paymentStatus: "paid" | "credit",
+): string | null | undefined {
+  if (trip.kind === "local") return trip.supplierId;
+  if (paymentStatus === "credit" && !supplierId) {
+    throw invalidLine({ supplierId: ["Indica a qué proveedor se le debe"] });
+  }
+  return supplierId;
+}
+
 type LineValues = {
   quotedPriceUsd: string;
   grossQuantity: string;
@@ -140,13 +166,58 @@ async function refreshTotals(tx: Executor, actor: Actor, tripId: string): Promis
 }
 
 /**
+ * Opens a local purchase: goods a supplier delivers to the shop, priced with the same lines at
+ * the BCV rate (its market rate is the BCV, no Coche premium). Several may be open; they never
+ * block the Coche trip. @throws AppError SUPPLIER_NOT_FOUND, DAY_RATES_MISSING (BCV)
+ */
+async function openLocalPurchase(db: Database, actor: Actor, input: OpenTrip): Promise<TripRow> {
+  const supplier = input.supplierId ? await getSupplier(db, input.supplierId) : undefined;
+  if (!supplier?.isActive) {
+    throw new AppError(ErrorCode.SUPPLIER_NOT_FOUND, "Elige un proveedor de la lista", undefined, {
+      fieldErrors: { supplierId: ["Elige un proveedor de la lista"] },
+    });
+  }
+  const { bcv } = await getDailyRates(db, actor.storeId, input.businessDate);
+  if (!bcv) {
+    throw new AppError(
+      ErrorCode.DAY_RATES_MISSING,
+      "Registra la tasa BCV del día antes de anotar la compra",
+      undefined,
+      { missing: ["bcv"] },
+    );
+  }
+  const id = await db.transaction(async (tx) => {
+    const trip = await insertTrip(tx, {
+      storeId: actor.storeId,
+      kind: "local",
+      supplierId: supplier.id,
+      businessDate: input.businessDate,
+      bcvRate: bcv,
+      marketRate: bcv,
+      note: input.note || null,
+      createdBy: actor.userId,
+      updatedBy: actor.userId,
+    });
+    await recordAudit(tx, actor, {
+      tableName: "purchase_trips",
+      recordId: trip.id,
+      action: "insert",
+      changes: trip,
+    });
+    return trip.id;
+  });
+  return requireTrip(db, actor.storeId, id);
+}
+
+/**
  * Opens a purchase trip for a business day, copying that day's BCV and Coche rates (set in
  * "Tasas del día"). The copy keeps the trip's costs stable if the day's rates are corrected.
- * A store has at most one open trip.
+ * A store has at most one open Coche trip. `kind: "local"` opens a local purchase instead.
  * @throws AppError DAY_RATES_MISSING when the BCV or the Coche rate of the day is not set.
  * @throws AppError TRIP_ALREADY_OPEN when another trip of the store is still open.
  */
 export async function openTrip(db: Database, actor: Actor, input: OpenTrip): Promise<TripRow> {
+  if (input.kind === "local") return openLocalPurchase(db, actor, input);
   const rates = await getDailyRates(db, actor.storeId, input.businessDate);
   const missing = (["bcv", "market"] as const).filter((kind) => rates[kind] === null);
   if (!rates.bcv || !rates.market) {
@@ -223,15 +294,54 @@ export async function listTrips(
 /** A trip with its lines. @throws AppError TRIP_NOT_FOUND */
 export async function getTrip(db: Database, storeId: string, id: string): Promise<TripWithLines> {
   const trip = await requireTrip(db, storeId, id);
-  return { ...trip, lines: await findTripLines(db, id) };
+  const [lines, payables] = await Promise.all([findTripLines(db, id), listTripPayables(db, id)]);
+  return { ...trip, lines, payables };
+}
+
+/** The credit lines of a trip as invoice lines; every one must name its supplier. */
+function creditLines(lines: readonly LineRow[]): TripCreditLine[] {
+  const credit = lines.filter((line) => line.paymentStatus === "credit");
+  const withoutSupplier = credit.filter((line) => line.supplierId === null);
+  if (withoutSupplier.length > 0) {
+    throw new AppError(
+      ErrorCode.CREDIT_LINE_WITHOUT_SUPPLIER,
+      "Hay compras a crédito sin proveedor: indica a quién se le debe antes de cerrar",
+      undefined,
+      { lineIds: withoutSupplier.map((line) => line.id) },
+    );
+  }
+  return credit.map((line) => ({
+    id: line.id,
+    supplierId: line.supplierId as string,
+    quotedPriceUsd: line.quotedPriceUsd,
+    amountBs: line.amountBs,
+  }));
 }
 
 /**
- * Closes an open trip and publishes sale prices for what can be sold (domain-model §3.4).
- * Needs the day's sale rate. @throws TRIP_NOT_FOUND, TRIP_CLOSED, SALE_RATE_MISSING
+ * Closes an open trip, publishes sale prices for what can be sold (domain-model §3.4) and turns
+ * its credit lines into one invoice per supplier (docs/modules/payables.md), in `payableCurrency`
+ * and due on `payableDueOn` (none: the owner sets it later). A local purchase's lines are
+ * marked received first (no truck). Needs the day's sale rate.
+ * @throws TRIP_NOT_FOUND, TRIP_CLOSED, SALE_RATE_MISSING, CREDIT_LINE_WITHOUT_SUPPLIER,
+ *   INVALID_DUE_DATE
  */
-export async function closeTrip(db: Database, actor: Actor, id: string): Promise<TripWithLines> {
+export async function closeTrip(
+  db: Database,
+  actor: Actor,
+  id: string,
+  input: CloseTrip,
+): Promise<TripWithLines> {
   const before = await requireOpenTrip(db, actor.storeId, id);
+  const credit = creditLines(await findTripLines(db, id));
+  if (input.payableDueOn !== undefined && input.payableDueOn < before.businessDate) {
+    throw new AppError(
+      ErrorCode.INVALID_DUE_DATE,
+      "El vencimiento no puede ser antes del día de la compra",
+      undefined,
+      { fieldErrors: { payableDueOn: ["El vencimiento no puede ser antes del día de la compra"] } },
+    );
+  }
   const rates = await getDailyRates(db, actor.storeId, before.businessDate);
   const saleRate = rates.sale;
   if (!saleRate) {
@@ -245,6 +355,7 @@ export async function closeTrip(db: Database, actor: Actor, id: string): Promise
   const settings = await getStoreSettings(db, actor.storeId);
   const now = new Date();
   await db.transaction(async (tx) => {
+    if (before.kind === "local") await markPendingLinesReceived(tx, id, actor.userId, now);
     const after = await updateTripById(tx, id, { status: "closed", updatedBy: actor.userId });
     await recordAudit(tx, actor, {
       tableName: "purchase_trips",
@@ -259,6 +370,13 @@ export async function closeTrip(db: Database, actor: Actor, id: string): Promise
       saleRate,
       bsRoundingStep: settings.bsRoundingStep,
       now,
+    });
+    await createTripPayables(tx, actor, {
+      tripId: id,
+      issuedOn: before.businessDate,
+      currency: input.payableCurrency,
+      dueOn: input.payableDueOn ?? null,
+      lines: credit,
     });
   });
   return getTrip(db, actor.storeId, id);
@@ -279,7 +397,8 @@ export async function addLine(
   input: PurchaseLineFields,
 ): Promise<TripWithLines> {
   const trip = await requireOpenTrip(db, actor.storeId, tripId);
-  const { product, supplier } = await checkReferences(db, input.productId, input.supplierId);
+  const supplierId = lineSupplier(trip, input.supplierId, input.paymentStatus);
+  const { product, supplier } = await checkReferences(db, input.productId, supplierId);
   const settings = await getStoreSettings(db, actor.storeId);
 
   const values: LineValues = {
@@ -331,7 +450,11 @@ export async function updateLine(
   if (!before) throw new AppError(ErrorCode.LINE_NOT_FOUND, "La línea de compra no existe");
 
   const productId = patch.productId ?? before.productId;
-  const supplierId = patch.supplierId !== undefined ? patch.supplierId : before.supplierId;
+  const supplierId = lineSupplier(
+    trip,
+    patch.supplierId !== undefined ? patch.supplierId : before.supplierId,
+    patch.paymentStatus ?? before.paymentStatus,
+  );
   const { product, supplier } = await checkReferences(db, productId, supplierId);
   const settings = await getStoreSettings(db, actor.storeId);
 
@@ -558,7 +681,8 @@ export async function setLineReceipt(
 export async function listOpenTrips(db: Database, storeId: string): Promise<TripWithLines[]> {
   const trips = await findOpenTrips(db, storeId);
   return Promise.all(
-    trips.map(async (trip) => ({ ...trip, lines: await findTripLines(db, trip.id) })),
+    // An open trip has no invoices yet: they are created when it closes.
+    trips.map(async (trip) => ({ ...trip, lines: await findTripLines(db, trip.id), payables: [] })),
   );
 }
 

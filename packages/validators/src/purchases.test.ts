@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import {
   createSupplierSchema,
+  closeTripSchema,
   openTripSchema,
   partialReceiptFormSchema,
   purchaseLineFieldsSchema,
@@ -35,8 +36,31 @@ describe("openTripSchema", () => {
   test("needs a valid business date", () => {
     expect(openTripSchema.parse({ businessDate: "2026-10-19" })).toEqual({
       businessDate: "2026-10-19",
+      kind: "market",
     });
     expect(openTripSchema.safeParse({ businessDate: "19/10/2026" }).success).toBe(false);
+  });
+
+  test("a local purchase needs its supplier", () => {
+    const supplierId = "01a14314-2825-7000-a1d1-bdf734d05981";
+    expect(openTripSchema.parse({ businessDate: "2026-10-19", kind: "local", supplierId })).toEqual(
+      { businessDate: "2026-10-19", kind: "local", supplierId },
+    );
+    const missing = openTripSchema.safeParse({ businessDate: "2026-10-19", kind: "local" });
+    expect(missing.error?.issues.map((i) => [i.path.join("."), text(i.message)])).toEqual([
+      ["supplierId", "Elige el proveedor"],
+    ]);
+  });
+});
+
+describe("closeTripSchema", () => {
+  test("no body → USD invoices without due date; a local purchase may say both", () => {
+    expect(closeTripSchema.parse(undefined)).toEqual({ payableCurrency: "USD" });
+    expect(closeTripSchema.parse({ payableCurrency: "VES", payableDueOn: "2026-10-25" })).toEqual({
+      payableCurrency: "VES",
+      payableDueOn: "2026-10-25",
+    });
+    expect(closeTripSchema.safeParse({ payableCurrency: "EUR" }).success).toBe(false);
   });
 });
 

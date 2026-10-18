@@ -150,8 +150,17 @@ Content-Type: application/json
 
 { "businessDate": "2026-10-19", "note": "Lunes" }
 
-### Trips — 200 { data, total, page, pageSize }
-GET {{baseUrl}}/api/v1/purchase-trips?status=open
+### Open a local purchase (goods a supplier brings to the shop) — 201. Needs only the day's
+### BCV, which is also its supplier rate; several may be open and they never block the Coche
+### trip or show in the truck receipt. 422 SUPPLIER_NOT_FOUND · 422 DAY_RATES_MISSING
+POST {{baseUrl}}/api/v1/purchase-trips
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "kind": "local", "supplierId": "<supplier id>", "businessDate": "2026-10-19" }
+
+### Trips — 200 { data, total, page, pageSize }. kind=market (default) or kind=local
+GET {{baseUrl}}/api/v1/purchase-trips?status=open&kind=market
 
 ### Add a line — 201 trip with lines. quotedPriceUsd is the line TOTAL in dollars.
 ### Omitted packs → crates not counted. Omitted shrinkage → the product's last shrinkage
@@ -187,9 +196,15 @@ Content-Type: application/json
 GET {{baseUrl}}/api/v1/receipts
 
 ### Close the trip — 200; lines can no longer change. Publishes the sale price list
-### (422 SALE_RATE_MISSING if that day has no sale rate).
+### (422 SALE_RATE_MISSING if that day has no sale rate). Credit lines become one invoice per
+### supplier (`payables` in the answer); a local purchase's lines are marked received. Optional
+### body: invoice currency (USD default) and due date (none: set it later with /terms).
+### 422 CREDIT_LINE_WITHOUT_SUPPLIER (details.lineIds) · 422 INVALID_DUE_DATE
 POST {{baseUrl}}/api/v1/purchase-trips/{{openTrip.response.body.id}}/close
 Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "payableCurrency": "USD", "payableDueOn": "2026-10-26" }
 
 ### What the shop still needs before Coche — 200 { data: [...] }, oldest first
 GET {{baseUrl}}/api/v1/shopping-list

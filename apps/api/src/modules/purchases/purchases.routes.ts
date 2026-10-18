@@ -1,4 +1,5 @@
 import {
+  closeTripSchema,
   openTripSchema,
   purchaseLineFieldsSchema,
   setReceiptSchema,
@@ -49,10 +50,21 @@ export function purchaseTripsRoutes(): Hono<AppEnv> {
       const trip = await getTrip(c.get("db"), getMembership(c).storeId, c.req.valid("param").id);
       return c.json(toTripDetailDto(trip));
     })
-    .post("/:id/close", owner, validate("param", tripParam), async (c) => {
-      const trip = await closeTrip(c.get("db"), getActor(c), c.req.valid("param").id);
-      return c.json(toTripDetailDto(trip));
-    })
+    .post(
+      "/:id/close",
+      owner,
+      validate("param", tripParam),
+      validate("json", closeTripSchema),
+      async (c) => {
+        const trip = await closeTrip(
+          c.get("db"),
+          getActor(c),
+          c.req.valid("param").id,
+          c.req.valid("json"),
+        );
+        return c.json(toTripDetailDto(trip));
+      },
+    )
     .post(
       "/:id/lines",
       owner,

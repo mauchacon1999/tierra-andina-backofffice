@@ -51,6 +51,9 @@ export const TOMATO_LINE: PurchaseLine = {
 
 export const OPEN_TRIP: TripDetail = {
   id: "01a14314-2825-7000-a1d1-bdf734d059a0",
+  kind: "market",
+  supplierId: null,
+  supplierName: null,
   businessDate: "2026-10-16",
   bcvRate: "200.0000",
   marketRate: "201.0000",
@@ -61,6 +64,7 @@ export const OPEN_TRIP: TripDetail = {
   lineCount: 0,
   createdAt: "2026-10-16T09:00:00.000Z",
   lines: [],
+  payables: [],
 };
 
 export const SETTINGS_MOCK = {

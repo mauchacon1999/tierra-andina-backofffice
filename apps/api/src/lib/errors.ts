@@ -56,6 +56,7 @@ export const ErrorCode = {
   BCV_RATE_MISSING: "BCV_RATE_MISSING",
   INVALID_DUE_DATE: "INVALID_DUE_DATE",
   INVALID_PAYMENT_AMOUNT: "INVALID_PAYMENT_AMOUNT",
+  CREDIT_LINE_WITHOUT_SUPPLIER: "CREDIT_LINE_WITHOUT_SUPPLIER",
 } as const;
 
 export type ErrorCodeValue = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -117,6 +118,7 @@ export const ERROR_STATUS: Record<ErrorCodeValue, ContentfulStatusCode> = {
   BCV_RATE_MISSING: 422,
   INVALID_DUE_DATE: 422,
   INVALID_PAYMENT_AMOUNT: 422,
+  CREDIT_LINE_WITHOUT_SUPPLIER: 422,
 };
 
 /**

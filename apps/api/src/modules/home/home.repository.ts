@@ -73,6 +73,13 @@ export async function countPendingReceipts(db: Executor, storeId: string): Promi
     .select({ total: count() })
     .from(purchaseLines)
     .innerJoin(purchaseTrips, eq(purchaseTrips.id, purchaseLines.tripId))
-    .where(and(eq(purchaseTrips.storeId, storeId), eq(purchaseLines.receiptStatus, "pending")));
+    .where(
+      and(
+        eq(purchaseTrips.storeId, storeId),
+        // Local purchases are checked at the shop when they are saved, not at the truck.
+        eq(purchaseTrips.kind, "market"),
+        eq(purchaseLines.receiptStatus, "pending"),
+      ),
+    );
   return row?.total ?? 0;
 }

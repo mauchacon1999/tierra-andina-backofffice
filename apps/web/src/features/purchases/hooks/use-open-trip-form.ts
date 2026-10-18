@@ -1,6 +1,6 @@
 "use client";
 
-import { openTripSchema, type DailyRates, type OpenTrip } from "@ta/validators";
+import { openTripSchema, type DailyRates, type OpenTrip, type OpenTripInput } from "@ta/validators";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
@@ -12,7 +12,7 @@ import { useZodResolver } from "@/i18n/use-zod-resolver";
 import { todayBusinessDate } from "@/utils/format-date";
 
 export type UseOpenTripFormResult = {
-  form: UseFormReturn<OpenTrip>;
+  form: UseFormReturn<OpenTripInput, unknown, OpenTrip>;
   businessDate: string;
   /** The selected day's rates, to show what the trip will use. */
   rates: DailyRates | undefined;
@@ -32,7 +32,7 @@ export function useOpenTripForm(initialDate?: string): UseOpenTripFormResult {
   const router = useRouter();
   const t = useTranslations("purchases.openTrip");
   const errorMessage = useErrorMessage();
-  const form = useForm<OpenTrip>({
+  const form = useForm<OpenTripInput, unknown, OpenTrip>({
     resolver: useZodResolver(openTripSchema),
     defaultValues: { businessDate: initialDate ?? todayBusinessDate(), note: "" },
   });

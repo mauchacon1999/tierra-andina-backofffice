@@ -42,6 +42,7 @@ import {
   findPayment,
   findPayments,
   findStorePayables,
+  findTripPayables,
   hasPurchaseLines,
   insertLines,
   insertPayable,
@@ -52,6 +53,7 @@ import {
   type LineRow,
   type PayableRow,
   type PaymentRecord,
+  type TripPayableRow,
 } from "./payables.repository";
 
 /*
@@ -527,4 +529,74 @@ export async function getMobilePaymentData(
         clipboard: formatPagoMovilClipboard({ ...account, amountBs }),
       })),
   };
+}
+
+export type TripCreditLine = {
+  id: string;
+  supplierId: string;
+  /** Total of the line in USD (`quoted_price_usd`) and what it costs in Bs (`amount_bs`). */
+  quotedPriceUsd: string;
+  amountBs: string;
+};
+
+export type TripPayablesInput = {
+  tripId: string;
+  issuedOn: string;
+  currency: "USD" | "VES";
+  dueOn: string | null;
+  lines: readonly TripCreditLine[];
+};
+
+/**
+ * One invoice per supplier for a closing trip's credit lines (merchandise: each line points to
+ * its purchase line; subtotal = its total in USD, or in Bs for a Bs invoice). Runs inside the
+ * caller's transaction; audited. Returns the new invoices' ids.
+ */
+export async function createTripPayables(
+  tx: Executor,
+  actor: Actor,
+  input: TripPayablesInput,
+): Promise<string[]> {
+  const bySupplier = new Map<string, TripCreditLine[]>();
+  for (const line of input.lines) {
+    bySupplier.set(line.supplierId, [...(bySupplier.get(line.supplierId) ?? []), line]);
+  }
+  if (bySupplier.size === 0) return [];
+  await lockStore(tx, actor.storeId);
+  const ids: string[] = [];
+  for (const [supplierId, lines] of bySupplier) {
+    const subtotals = lines.map((line) => ({
+      purchaseLineId: line.id,
+      subtotal: sumDecimals([input.currency === "USD" ? line.quotedPriceUsd : line.amountBs]),
+    }));
+    const row = await insertPayable(tx, {
+      storeId: actor.storeId,
+      number: await nextPayableNumber(tx, actor.storeId),
+      supplierId,
+      currency: input.currency,
+      total: sumDecimals(subtotals.map((line) => line.subtotal)),
+      issuedOn: input.issuedOn,
+      dueOn: input.dueOn,
+      tripId: input.tripId,
+      createdBy: actor.userId,
+      updatedBy: actor.userId,
+    });
+    await insertLines(
+      tx,
+      subtotals.map((line) => ({ payableId: row.id, ...line, createdBy: actor.userId })),
+    );
+    await recordAudit(tx, actor, {
+      tableName: "payables",
+      recordId: row.id,
+      action: "insert",
+      changes: { ...row, lines: subtotals },
+    });
+    ids.push(row.id);
+  }
+  return ids;
+}
+
+/** The invoices a trip created when it closed (none while open). */
+export async function listTripPayables(db: Executor, tripId: string): Promise<TripPayableRow[]> {
+  return findTripPayables(db, tripId);
 }

@@ -1,4 +1,4 @@
-import { cleanProductName, compareDecimals, percentToFraction } from "@ta/core";
+import { CURRENCIES, cleanProductName, compareDecimals, percentToFraction } from "@ta/core";
 import { z } from "zod";
 
 import { decimalSchema } from "./amount";
@@ -79,19 +79,50 @@ export const supplierListSchema = z.object({ data: z.array(supplierSchema) });
 // Trips ------------------------------------------------------------------------------------------
 
 export const PURCHASE_TRIP_STATUSES = ["open", "closed"] as const;
+/** market: the Coche trip · local: goods a supplier delivers to the shop (docs/modules/payables.md). */
+export const PURCHASE_TRIP_KINDS = ["market", "local"] as const;
 export const PAYMENT_STATUSES = ["paid", "credit"] as const;
 export const RECEIPT_STATUSES = ["pending", "received", "partial", "missing"] as const;
 
 /** POST /api/v1/purchase-trips — rates are copied from the day's rates ("Tasas del día"). */
-export const openTripSchema = z.object({
-  businessDate: businessDateSchema,
-  note: shortTextSchema(200).optional(),
-});
+/**
+ * POST /api/v1/purchase-trips — a Coche trip (default) or a local purchase, which needs the
+ * supplier who delivers the goods.
+ */
+export const openTripSchema = z
+  .object({
+    businessDate: businessDateSchema,
+    note: shortTextSchema(200).optional(),
+    kind: z.enum(PURCHASE_TRIP_KINDS).default("market"),
+    supplierId: z.uuid({ error: message("payable.supplierRequired") }).optional(),
+  })
+  .refine((v) => v.kind === "market" || v.supplierId !== undefined, {
+    message: message("payable.supplierRequired"),
+    path: ["supplierId"],
+  });
 
-export type OpenTrip = z.infer<typeof openTripSchema>;
+export type OpenTripInput = z.input<typeof openTripSchema>;
+export type OpenTrip = z.output<typeof openTripSchema>;
+
+/**
+ * POST /api/v1/purchase-trips/:id/close — optional body. The credit lines become one invoice
+ * per supplier; for a local purchase the owner may say its currency and due date (a Coche
+ * trip's invoices are in USD and get their due date later).
+ */
+export const closeTripSchema = z
+  .object({
+    payableCurrency: z.enum(CURRENCIES).default("USD"),
+    payableDueOn: businessDateSchema.optional(),
+  })
+  .default({ payableCurrency: "USD" });
+
+export type CloseTripInput = z.input<typeof closeTripSchema>;
+export type CloseTrip = z.output<typeof closeTripSchema>;
 
 export const tripListQuerySchema = paginationQuerySchema.extend({
   status: z.enum(PURCHASE_TRIP_STATUSES).optional(),
+  /** Coche trips unless asked for local purchases. */
+  kind: z.enum(PURCHASE_TRIP_KINDS).default("market"),
 });
 
 export type TripListQueryInput = z.input<typeof tripListQuerySchema>;
@@ -99,6 +130,10 @@ export type TripListQuery = z.output<typeof tripListQuerySchema>;
 
 export const tripSchema = z.object({
   id: z.uuid(),
+  kind: z.enum(PURCHASE_TRIP_KINDS),
+  /** Local purchases: who delivered the goods. */
+  supplierId: z.uuid().nullable(),
+  supplierName: z.string().nullable(),
   businessDate: z.string(),
   bcvRate: z.string(),
   marketRate: z.string(),
@@ -154,7 +189,21 @@ export const purchaseLineSchema = z.object({
 
 export type PurchaseLine = z.infer<typeof purchaseLineSchema>;
 
-export const tripDetailSchema = tripSchema.extend({ lines: z.array(purchaseLineSchema) });
+/** An invoice created when the trip closed (its credit lines from one supplier). */
+export const tripPayableSchema = z.object({
+  id: z.uuid(),
+  code: z.string(),
+  supplierName: z.string(),
+  currency: z.enum(CURRENCIES),
+  total: z.string(),
+});
+
+export type TripPayable = z.infer<typeof tripPayableSchema>;
+
+export const tripDetailSchema = tripSchema.extend({
+  lines: z.array(purchaseLineSchema),
+  payables: z.array(tripPayableSchema),
+});
 export type TripDetail = z.infer<typeof tripDetailSchema>;
 
 const positiveQuantity = (subject: ValidationSubject) =>

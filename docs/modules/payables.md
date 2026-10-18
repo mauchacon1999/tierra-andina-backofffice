@@ -44,6 +44,18 @@ computed and the price list is updated. Supplies go through the manual invoice f
 A product line of an invoice points to its purchase line; its subtotal is the line's total
 (USD, or Bs for a Bs invoice).
 
+How it works in the API:
+
+- A local purchase is a purchase trip with `kind: "local"` and its supplier
+  (`POST /purchase-trips`). Its lines use the same endpoints as a Coche trip; they take the
+  purchase's supplier and the BCV as supplier rate. Several may be open at once, they are not
+  listed with the Coche trips (`?kind=local`) and never reach the truck receipt.
+- At Coche a line on credit must name its supplier (422 on `supplierId`).
+- Closing any trip (`POST /purchase-trips/:id/close`) publishes the price list and creates one
+  invoice per supplier with its credit lines, in `payableCurrency` (USD by default) and due on
+  `payableDueOn` (or none until `PATCH /payables/:id/terms`). A local purchase's lines are
+  marked received first. Its invoices cannot be replaced (`409 PAYABLE_FROM_PURCHASE`).
+
 ### Status (derived, never typed — `payableStatus`)
 
 | Status    | When                                               |

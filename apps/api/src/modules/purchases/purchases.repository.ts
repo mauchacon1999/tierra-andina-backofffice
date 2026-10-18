@@ -6,7 +6,7 @@ const { purchaseTrips, purchaseLines, products, suppliers } = schema;
 
 export type TripRecord = typeof purchaseTrips.$inferSelect;
 export type TripInsert = typeof purchaseTrips.$inferInsert;
-export type TripRow = TripRecord & { lineCount: number };
+export type TripRow = TripRecord & { lineCount: number; supplierName: string | null };
 export type LineRecord = typeof purchaseLines.$inferSelect;
 export type LineInsert = typeof purchaseLines.$inferInsert;
 export type LineRow = LineRecord & {
@@ -21,7 +21,11 @@ const lineCount = sql<number>`(
   select count(*)::int from ${purchaseLines} as pl
   where pl.trip_id = ${sql.identifier("purchase_trips")}.${sql.identifier("id")}
 )`;
-const tripWithCount = { ...getTableColumns(purchaseTrips), lineCount };
+const tripWithCount = {
+  ...getTableColumns(purchaseTrips),
+  lineCount,
+  supplierName: suppliers.name,
+};
 
 export async function insertTrip(db: Executor, values: TripInsert): Promise<TripRecord> {
   const [row] = await db.insert(purchaseTrips).values(values).returning();
@@ -38,24 +42,32 @@ export async function findTrip(
   const [row] = await db
     .select(tripWithCount)
     .from(purchaseTrips)
+    .leftJoin(suppliers, eq(suppliers.id, purchaseTrips.supplierId))
     .where(and(eq(purchaseTrips.id, id), eq(purchaseTrips.storeId, storeId)))
     .limit(1);
   return row;
 }
 
-/** Trips of the store, newest business date first; on the same day open ones first (enum order). */
+/**
+ * Trips of the store of one kind (Coche trips or local purchases), newest business date first;
+ * on the same day open ones first (enum order).
+ */
 export async function findTrips(
   db: Executor,
   storeId: string,
   query: TripListQuery,
 ): Promise<{ rows: TripRow[]; total: number }> {
-  const conditions: SQL[] = [eq(purchaseTrips.storeId, storeId)];
+  const conditions: SQL[] = [
+    eq(purchaseTrips.storeId, storeId),
+    eq(purchaseTrips.kind, query.kind),
+  ];
   if (query.status) conditions.push(eq(purchaseTrips.status, query.status));
   const where = and(...conditions);
   const [rows, [totals]] = await Promise.all([
     db
       .select(tripWithCount)
       .from(purchaseTrips)
+      .leftJoin(suppliers, eq(suppliers.id, purchaseTrips.supplierId))
       .where(where)
       .orderBy(
         desc(purchaseTrips.businessDate),
@@ -83,12 +95,22 @@ export async function updateTripById(
   return row;
 }
 
-/** Open trips of a store, newest business day first. */
+/**
+ * Open Coche trips of a store, newest business day first. Local purchases are left out: they
+ * do not block a trip and never go through the truck receipt.
+ */
 export async function findOpenTrips(db: Executor, storeId: string): Promise<TripRow[]> {
   return db
     .select(tripWithCount)
     .from(purchaseTrips)
-    .where(and(eq(purchaseTrips.storeId, storeId), eq(purchaseTrips.status, "open")))
+    .leftJoin(suppliers, eq(suppliers.id, purchaseTrips.supplierId))
+    .where(
+      and(
+        eq(purchaseTrips.storeId, storeId),
+        eq(purchaseTrips.status, "open"),
+        eq(purchaseTrips.kind, "market"),
+      ),
+    )
     .orderBy(desc(purchaseTrips.businessDate), desc(purchaseTrips.createdAt));
 }
 
@@ -154,4 +176,27 @@ export async function findLineAmounts(
     .select({ realCostUsd: purchaseLines.realCostUsd, amountBs: purchaseLines.amountBs })
     .from(purchaseLines)
     .where(eq(purchaseLines.tripId, tripId));
+}
+
+/**
+ * Marks every line still pending as received in full (a local purchase is checked at the shop
+ * when it is saved, there is no truck).
+ */
+export async function markPendingLinesReceived(
+  db: Executor,
+  tripId: string,
+  userId: string,
+  now: Date,
+): Promise<void> {
+  await db
+    .update(purchaseLines)
+    .set({
+      receiptStatus: "received",
+      receivedPacks: sql`${purchaseLines.packs}`,
+      receivedQuantity: sql`${purchaseLines.grossQuantity}`,
+      receivedBy: userId,
+      receivedAt: now,
+      updatedBy: userId,
+    })
+    .where(and(eq(purchaseLines.tripId, tripId), eq(purchaseLines.receiptStatus, "pending")));
 }

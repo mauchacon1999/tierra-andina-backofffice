@@ -200,3 +200,27 @@ export async function findPayment(
 export async function deletePaymentById(db: Executor, id: string): Promise<void> {
   await db.delete(payablePayments).where(eq(payablePayments.id, id));
 }
+
+export type TripPayableRow = {
+  id: string;
+  number: number;
+  supplierName: string;
+  currency: "USD" | "VES";
+  total: string;
+};
+
+/** Invoices created from a trip's credit lines, by number. */
+export async function findTripPayables(db: Executor, tripId: string): Promise<TripPayableRow[]> {
+  return db
+    .select({
+      id: payables.id,
+      number: payables.number,
+      supplierName: suppliers.name,
+      currency: payables.currency,
+      total: payables.total,
+    })
+    .from(payables)
+    .innerJoin(suppliers, eq(suppliers.id, payables.supplierId))
+    .where(eq(payables.tripId, tripId))
+    .orderBy(asc(payables.number));
+}
