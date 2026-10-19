@@ -93,20 +93,24 @@ the **test** database on every run.
 Running `bun test` from the root is intentionally blocked; use `bun run test`
 (or `bun --cwd=<package> test` for a single package).
 
-## 5. Deploy (Vercel)
+## 5. Deploy
 
-Two Vercel projects from this repo, one per app:
+The API runs on Railway (a long-running Bun server) and the web on Vercel:
 
-| Project | Root Directory | Framework Preset | Environment variables                                                 |
-| ------- | -------------- | ---------------- | --------------------------------------------------------------------- |
-| API     | `apps/api`     | Bun              | `DATABASE_URL`, `WEB_ORIGIN`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET` |
-| Web     | `apps/web`     | Next.js          | `NEXT_PUBLIC_API_URL`                                                 |
+| App | Where   | Settings                                                                              | Environment variables                                                                                             |
+| --- | ------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| API | Railway | Root Directory: repo root · Build: `bun install` · Start: `bun apps/api/src/index.ts` | `NODE_ENV=production`, `PORT` = `API_PORT`, `DATABASE_URL`, `WEB_ORIGIN`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET` |
+| Web | Vercel  | Root Directory: `apps/web`                                                            | `API_PROXY_URL` (the Railway URL), `NEXT_PUBLIC_API_URL` (the web's own URL)                                      |
 
-The API's `vercel.json` selects the Bun runtime and runs `bun run build`, which bundles
-`src/index.ts` into `dist/index.js`; `apps/api/server.ts` loads that bundle. With Supabase,
-`DATABASE_URL` must be the **session** pooler (port 5432): postgres.js uses prepared
-statements, which the transaction pooler (6543) does not support. Apply migrations and the
-seed from your machine with `DATABASE_URL` pointing at the production database.
+The web proxies `/api/*` to the API (`rewrites` in `apps/web/next.config.ts`): on two different
+sites the browser drops the session cookie (Brave and Safari always), so sign-in succeeded and
+`/api/v1/me` still answered 401. Through the proxy the cookie is first-party, so
+`BETTER_AUTH_URL` and `NEXT_PUBLIC_API_URL` are the **web's** URL and `WEB_ORIGIN` too.
+`NEXT_PUBLIC_API_URL` and the rewrites are fixed at build time: redeploy the web after changing them.
+
+With Supabase, `DATABASE_URL` is the **session** pooler (port 5432): postgres.js uses prepared
+statements, which the transaction pooler (6543) does not support. Apply migrations and the seed
+from your machine with `DATABASE_URL` pointing at the production database.
 
 ## Structure
 

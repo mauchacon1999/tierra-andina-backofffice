@@ -14,6 +14,14 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? "",
   },
+  // Production: the API runs on another site (Railway) and browsers drop its session cookie on
+  // cross-site requests (Brave and Safari always). Proxying /api/* through the web makes it
+  // first-party; NEXT_PUBLIC_API_URL is then the web's own URL. Unset locally: direct calls.
+  async rewrites() {
+    const target = process.env.API_PROXY_URL;
+    if (!target) return [];
+    return [{ source: "/api/:path*", destination: `${target.replace(/\/$/, "")}/api/:path*` }];
+  },
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

@@ -639,10 +639,10 @@ Things that are not obvious from the code and have already cost time:
   `sql.identifier("purchase_trips")` (see `lineCount` in `purchases.repository.ts`).
 - **No nested forms**: a form that offers another form (the purchase line's "Nuevo producto")
   renders it _instead of_ itself; RHF keeps the hidden form's values.
-- **The API deploys to Vercel as a bundle.** Vercel ran `src/*.ts` file by file on Node and
-  failed on `@/lib` (`ERR_MODULE_NOT_FOUND`): it resolves neither the `@/` aliases nor the
-  `@ta/*` workspace sources, and the code needs Bun (`Bun.serve`, `Bun.randomUUIDv7`).
-  `apps/api/vercel.json` sets `bunVersion` and `bun run build`; `apps/api/server.ts` (the Bun
-  preset's entrypoint) imports `dist/index.js`. Steps in `README.md` §5.
+- **Production: the web proxies `/api/*` to the API** (`API_PROXY_URL`, `rewrites` in
+  `apps/web/next.config.ts`). With the API on Railway and the web on Vercel the browser dropped
+  the cross-site session cookie: sign-in answered 200 and `/api/v1/me` 401. So in production
+  `NEXT_PUBLIC_API_URL` and `BETTER_AUTH_URL` are the web's URL. The API is a long-running Bun
+  server: Vercel functions ran it on Node and failed on the `@/` aliases. Steps: `README.md` §5.
 - **Product names**: uniqueness uses `normalizeProductName` (case, accents and spacing ignored)
   but keeps the ñ: "Ñame" and "Name" are different products.
