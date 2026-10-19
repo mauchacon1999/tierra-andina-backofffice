@@ -644,5 +644,7 @@ Things that are not obvious from the code and have already cost time:
   the cross-site session cookie: sign-in answered 200 and `/api/v1/me` 401. So in production
   `NEXT_PUBLIC_API_URL` and `BETTER_AUTH_URL` are the web's URL. The API is a long-running Bun
   server: Vercel functions ran it on Node and failed on the `@/` aliases. Steps: `README.md` §5.
+  Build-time env vars of the web go in `turbo.json` `build.env`, or Turbo's cache replays a
+  build without them.
 - **Product names**: uniqueness uses `normalizeProductName` (case, accents and spacing ignored)
   but keeps the ñ: "Ñame" and "Name" are different products.
