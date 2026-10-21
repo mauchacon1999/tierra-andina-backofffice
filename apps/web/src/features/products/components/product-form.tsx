@@ -109,8 +109,9 @@ export function ProductForm(props: ProductFormProps): React.JSX.Element {
           inputMode="decimal"
           autoComplete="off"
           suffix="%"
-          hint={t("marginHint")}
+          hint={f.canSetMargin ? t("marginHint") : t("marginStoreHint")}
           error={errors.lastMarginPercent?.message}
+          readOnly={!f.canSetMargin}
           {...f.form.register("lastMarginPercent")}
         />
       </div>

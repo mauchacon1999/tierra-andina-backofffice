@@ -7,6 +7,12 @@ import { useProductForm } from "@/features/products/hooks/use-product-form";
 import { ApiError } from "@/lib/api";
 import { SwrTestWrapper } from "@/testing/swr-wrapper";
 
+const session = vi.hoisted(() => ({ role: "owner" as "owner" | "manager" }));
+vi.mock("@/features/auth/hooks/use-require-session", () => ({
+  useRequireSession: () => ({
+    activeMembership: { storeId: "store", storeName: "Tierra Andina", role: session.role },
+  }),
+}));
 vi.mock("@/features/settings/api/use-settings", () => ({
   useSettings: () => ({
     settings: {

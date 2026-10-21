@@ -28,16 +28,19 @@ const accountParam = idParam.extend({
 
 /**
  * /api/v1/suppliers — stalls and local suppliers, with their pago móvil accounts (owner).
- * An account is never deleted (payments point at it): DELETE deactivates it.
+ * The manager can list them and add new ones (owner, 2026-10-21); the detail, edits and
+ * accounts stay with the owner. An account is never deleted (payments point at it): DELETE
+ * deactivates it.
  */
 export function suppliersRoutes(): Hono<AppEnv> {
   const owner = requireRole("owner");
+  const ownerOrManager = requireRole("owner", "manager");
   return new Hono<AppEnv>()
-    .get("/", owner, async (c) => {
+    .get("/", ownerOrManager, async (c) => {
       const rows = await listSuppliers(c.get("db"));
       return c.json({ data: rows.map(toSupplierDto) });
     })
-    .post("/", owner, validate("json", createSupplierSchema), async (c) => {
+    .post("/", ownerOrManager, validate("json", createSupplierSchema), async (c) => {
       const row = await createSupplier(c.get("db"), getActor(c), c.req.valid("json"));
       return c.json(toSupplierDto(row), 201);
     })

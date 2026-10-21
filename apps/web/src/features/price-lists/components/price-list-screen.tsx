@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { DataTable } from "@/components/shared/data-table/data-table";
 import { Alert } from "@/components/ui/alert";
 import { ButtonLink } from "@/components/ui/button-link";
+import { TextField } from "@/components/ui/text-field";
 import { useRequireSession } from "@/features/auth/hooks/use-require-session";
 import { usePriceProposal } from "@/features/price-lists/api/use-price-proposal";
 import { usePriceListTable } from "@/features/price-lists/hooks/use-price-list-table";
@@ -41,9 +42,20 @@ export function PriceListScreen(): React.JSX.Element {
           })}
         </p>
       )}
+      {table.list && table.list.lines.length > 0 && (
+        <div className="sm:w-72">
+          <TextField
+            label={t("search")}
+            type="search"
+            placeholder={t("searchPlaceholder")}
+            value={table.search}
+            onChange={(event) => table.setSearch(event.target.value)}
+          />
+        </div>
+      )}
       <DataTable
         label={t("label")}
-        data={table.isEmpty ? [] : table.list?.lines}
+        data={table.isEmpty ? [] : table.visibleLines}
         columns={table.columns}
         getRowId={(line) => line.id}
         rowName={(line) => line.productName}
@@ -56,7 +68,7 @@ export function PriceListScreen(): React.JSX.Element {
             onRetry: table.retry,
           }
         }
-        empty={<p className="text-muted">{t("empty")}</p>}
+        empty={<p className="text-muted">{table.search.trim() ? t("noMatch") : t("empty")}</p>}
       />
     </div>
   );

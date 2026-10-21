@@ -580,6 +580,6 @@ describe("suppliers", () => {
       phone: "0414-0000000",
     });
     expect(list.data.some((x) => x.name === name)).toBe(true);
-    expect((await call(s.app, "POST", "/suppliers", s.manager, { name: "X y" })).status).toBe(403);
+    expect((await call(s.app, "POST", "/suppliers", s.receiver, { name: "X y" })).status).toBe(403);
   });
 });

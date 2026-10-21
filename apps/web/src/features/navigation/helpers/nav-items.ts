@@ -75,9 +75,9 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/prices", labelKey: "prices", icon: Tag, roles: ["owner", "manager"] },
   { href: "/manual-prices", labelKey: "manualPrices", icon: PencilLine, roles: ["owner"] },
   { href: "/rates", labelKey: "rates", icon: Coins, roles: ["owner"] },
-  { href: "/products", labelKey: "products", icon: Package, roles: ["owner"] },
+  { href: "/products", labelKey: "products", icon: Package, roles: ["owner", "manager"] },
   { href: "/payables", labelKey: "payables", icon: HandCoins, roles: ["owner"] },
-  { href: "/suppliers", labelKey: "suppliers", icon: Store, roles: ["owner"] },
+  { href: "/suppliers", labelKey: "suppliers", icon: Store, roles: ["owner", "manager"] },
   { href: "/users", labelKey: "users", icon: UserCog, roles: ["owner"] },
 ];
 

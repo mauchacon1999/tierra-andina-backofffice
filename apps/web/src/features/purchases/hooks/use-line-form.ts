@@ -6,6 +6,8 @@ import {
   estimateGrossQuantity,
   fractionToPercent,
   normalizeDecimal,
+  purchasePrice,
+  totalFromKiloPrice,
   type PurchaseUnit,
 } from "@ta/core";
 import {
@@ -70,6 +72,10 @@ export type UseLineFormResult = {
   packsLabel: string;
   /** "kg" / "und": the quantity is in the sale unit. */
   quantitySuffix: string;
+  /** Bought by kilo: the price typed is per kilo, the line stores price × kilos. */
+  isPerKilo: boolean;
+  /** That total in dollars while the price and kilos are numbers; null otherwise. */
+  lineTotalUsd: string | null;
   preview: LinePreview | null;
   onSubmit: () => Promise<void>;
   isSubmitting: boolean;
@@ -117,12 +123,33 @@ function emptyLine(trip: TripDetail): PurchaseLineFormValues {
   return trip.kind === "local" ? { ...EMPTY, paymentStatus: "credit" } : EMPTY;
 }
 
+/** The price as the buyer types it: per kilo for a line bought by kilo, else the line total. */
+function typedPrice(line: PurchaseLine): string {
+  if (line.purchaseUnit !== "kg") return line.quotedPriceUsd;
+  return purchasePrice({
+    quotedPriceUsd: line.quotedPriceUsd,
+    packs: null,
+    grossQuantity: line.grossQuantity,
+    purchaseUnit: "kg",
+  }).priceUsd;
+}
+
+/** The line total for the price typed; null while the price or the kilos are not numbers yet. */
+function lineTotal(price: string, grossQuantity: string, isPerKilo: boolean): string | null {
+  if (!isPerKilo) return price;
+  try {
+    return totalFromKiloPrice(price, grossQuantity);
+  } catch {
+    return null;
+  }
+}
+
 function lineToFormValues(line: PurchaseLine): PurchaseLineFormValues {
   return {
     productId: line.productId,
     packs: line.packs ? normalizeDecimal(line.packs) : "",
     grossQuantity: normalizeDecimal(line.grossQuantity),
-    quotedPriceUsd: normalizeDecimal(line.quotedPriceUsd),
+    quotedPriceUsd: normalizeDecimal(typedPrice(line)),
     marginPercent: fractionToPercent(line.margin),
     paymentStatus: line.paymentStatus,
     supplierId: line.supplierId ?? "",
@@ -140,6 +167,8 @@ function toFormField(apiField: string): keyof PurchaseLineFormValues | null {
 /**
  * Purchase line form: one product, optional crates, the quantity and the price.
  * The price is typed in dollars, or in bolívares and stored as dollars at the trip's Coche rate.
+ * Crates and bundles take the line's total; a product bought by kilo takes the price of each
+ * kilo, and the line stores price × kilos (`totalFromKiloPrice`).
  * The shrinkage is the product's.
  * A new line pre-fills the product's margin and, when crates are typed, estimates the
  * quantity. After a save the form stays open for the next product.
@@ -178,6 +207,8 @@ export function useLineForm({
   const values = useWatch({ control: form.control }) as PurchaseLineFormValues;
   const product = products.find((p) => p.id === values.productId);
   const purchaseUnit: PurchaseUnit = product?.purchaseUnit ?? line?.purchaseUnit ?? "crate";
+  const isPerKilo = purchaseUnit === "kg";
+  const total = lineTotal(values.quotedPriceUsd, values.grossQuantity, isPerKilo);
 
   // New lines: gross quantity follows the packs until the user types it (weighed at the stall).
   const estimatedGross = product
@@ -235,6 +266,9 @@ export function useLineForm({
     const shrinkage = product?.lastShrinkage ?? line?.shrinkage;
     const body = {
       ...payload,
+      quotedPriceUsd: isPerKilo
+        ? totalFromKiloPrice(payload.quotedPriceUsd, payload.grossQuantity)
+        : payload.quotedPriceUsd,
       packs: purchaseUnit === "kg" ? null : payload.packs,
       ...(shrinkage ? { shrinkage } : {}),
     };
@@ -297,12 +331,17 @@ export function useLineForm({
     },
     packsLabel: labels.packs(purchaseUnit),
     quantitySuffix: labels.suffix(product?.saleUnit ?? line?.saleUnit ?? "kg"),
-    preview: computeLinePreview(values, {
-      bcvRate: trip.bcvRate,
-      marketRate: trip.marketRate,
-      usdRoundingStep: settings.usdRoundingStep,
-      shrinkage: product?.lastShrinkage ?? line?.shrinkage ?? "",
-    }),
+    isPerKilo,
+    lineTotalUsd: isPerKilo && values.quotedPriceUsd.trim() !== "" ? total : null,
+    preview: computeLinePreview(
+      { ...values, quotedPriceUsd: total ?? "" },
+      {
+        bcvRate: trip.bcvRate,
+        marketRate: trip.marketRate,
+        usdRoundingStep: settings.usdRoundingStep,
+        shrinkage: product?.lastShrinkage ?? line?.shrinkage ?? "",
+      },
+    ),
     onSubmit: () => onSubmit(),
     isSubmitting: addLine.isRunning || updateLine.isRunning || form.formState.isSubmitting,
     formError: form.formState.errors.root?.message,

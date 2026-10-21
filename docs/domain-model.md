@@ -87,6 +87,10 @@ sale_price_bs     = round_up(sale_price_usd × sale_rate, bs_rounding_step)
 
 - `quoted_price_usd` is the total of the purchase line (3 crates at 20 USD → 60 USD), and the
   stall is paid `quoted_price_usd × supplier_rate` in Bs (stored as `amount_bs`).
+- A product **bought by kilo** is typed as the price of each kilo, in dollars or in bolívares at
+  the trip's rate (owner, 2026-10-20); the line stores the total, price × gross kilos
+  (`totalFromKiloPrice`, 1.20 $/kg × 40 kg → 48 $). Editing it shows the price per kilo again.
+  Crates and bundles are still typed as the line total.
 - `real_cost_usd` captures the supplier's rate rounding so it never silently eats the margin.
 - The price is typed in dollars. `supplier_rate` is the trip's `market_rate` (Coche rate of
   the day): the form does not ask for a per-stall rate (owner, 2026-10-17). `bcv_rate` and
@@ -242,11 +246,11 @@ where a **receiver** checks what arrives.
 
 ## 7. Roles
 
-| Role       | Can                                                                                                                           |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `owner`    | Everything                                                                                                                    |
-| `manager`  | View current price list, submit daily close, add customer credit payments, add shopping list items, assign and reassign tasks |
-| `receiver` | View the current purchase trip, set receipt status, and change an assigned task's status                                      |
+| Role       | Can                                                                                                                                                                                                             |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `owner`    | Everything                                                                                                                                                                                                      |
+| `manager`  | View current price list (manual prices included), submit daily close, add customer credit payments, add shopping list items, assign and reassign tasks, list and add suppliers and products (owner, 2026-10-21) |
+| `receiver` | View the current purchase trip, set receipt status, and change an assigned task's status                                                                                                                        |
 
 Roles are assigned per store through memberships, so a person can have different roles in
 different stores.

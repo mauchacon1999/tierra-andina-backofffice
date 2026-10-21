@@ -62,7 +62,7 @@ GET {{baseUrl}}/api/v1/product-categories
 ### sort: name | category | updated, "-" prefix for descending (default name)
 GET {{baseUrl}}/api/v1/products?search=tomate&isActive=true&sort=-category&page=1&pageSize=20
 
-### Create — 201 product (decimals as 4-decimal strings; lastMargin omitted → store default)
+### Create — 201 product (owner and manager; decimals as 4-decimal strings; lastMargin omitted → store default)
 # @name createProduct
 POST {{baseUrl}}/api/v1/products
 Origin: http://localhost:3000
@@ -135,10 +135,10 @@ GET {{baseUrl}}/api/v1/exchange-rates/official
 #     422 DAY_RATES_MISSING · 404 LINE_NOT_FOUND · 422 LINE_PRODUCT_INVALID ·
 #     422 SUPPLIER_NOT_FOUND · 422 INVALID_PURCHASE_LINE
 
-### Suppliers — 200 { data }
+### Suppliers — 200 { data } (owner and manager)
 GET {{baseUrl}}/api/v1/suppliers
 
-### Create a supplier — 201
+### Create a supplier — 201 (owner and manager; the detail, edits and accounts are the owner's)
 POST {{baseUrl}}/api/v1/suppliers
 Origin: http://localhost:3000
 Content-Type: application/json

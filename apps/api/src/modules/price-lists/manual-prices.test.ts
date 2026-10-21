@@ -161,6 +161,18 @@ describe("PUT /api/v1/price-lists/manual/:productId", () => {
     expect(audit).toHaveLength(1);
   });
 
+  test("the manager sees the manual price in the price list", async () => {
+    const yam = await product("Ñame");
+    await setPrice(yam.id, "350");
+
+    const res = await call(s.app, "GET", "/price-lists/current", s.manager);
+
+    expect(res.status).toBe(200);
+    expect(
+      priceListSchema.parse(res.body).lines.find((line) => line.productId === yam.id),
+    ).toMatchObject({ priceBs: "350.0000", unitCostUsd: null, margin: null });
+  });
+
   test("the same price again publishes nothing", async () => {
     const tomato = await product("Tomate");
     await buyAndClose([tomato.id]);

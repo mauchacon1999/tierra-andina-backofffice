@@ -8,6 +8,12 @@ import { SwrTestWrapper } from "@/testing/swr-wrapper";
 
 const CATEGORY = "01a14314-2825-7000-a1d1-bdf734d05981";
 
+const session = vi.hoisted(() => ({ role: "owner" as "owner" | "manager" }));
+vi.mock("@/features/auth/hooks/use-require-session", () => ({
+  useRequireSession: () => ({
+    activeMembership: { storeId: "store", storeName: "Tierra Andina", role: session.role },
+  }),
+}));
 vi.mock("@/features/settings/api/use-settings", () => ({
   useSettings: () => ({
     settings: {
@@ -42,8 +48,22 @@ vi.mock("@/features/products/api/product-requests", () => ({
 const type = (label: string | RegExp, value: string) =>
   fireEvent.input(screen.getByLabelText(label), { target: { value } });
 
+describe("ProductForm (create) for the manager", () => {
+  it("shows the store's margin read-only", async () => {
+    session.role = "manager";
+    render(<ProductForm mode="create" />, { wrapper: SwrTestWrapper });
+
+    const margin = screen.getByLabelText("Margen habitual") as HTMLInputElement;
+    await waitFor(() => expect(margin.value).toBe("60"));
+    expect(margin.readOnly).toBe(true);
+    expect(screen.getByText("El margen de la tienda. Solo el dueño lo cambia.")).toBeDefined();
+    session.role = "owner";
+  });
+});
+
 describe("ProductForm (create)", () => {
   beforeEach(() => {
+    session.role = "owner";
     vi.mocked(createProduct).mockReset();
     render(<ProductForm mode="create" />, { wrapper: SwrTestWrapper });
   });

@@ -167,6 +167,91 @@ describe("PurchaseLineForm (edit)", () => {
   });
 });
 
+describe("PurchaseLineForm (bought by kilo)", () => {
+  const PAPAYA = {
+    ...TOMATO_PRODUCT,
+    id: "01a14314-2825-7000-a1d1-bdf734d05999",
+    name: "Lechoza",
+    purchaseUnit: "kg" as const,
+    defaultPackQuantity: null,
+    lastShrinkage: "0.0000",
+  };
+  const PAPAYA_LINE = {
+    ...TOMATO_LINE,
+    productId: PAPAYA.id,
+    productName: PAPAYA.name,
+    purchaseUnit: "kg" as const,
+    packs: null,
+    grossQuantity: "40.0000",
+    shrinkage: "0.0000",
+    quotedPriceUsd: "48.0000",
+  };
+
+  async function choosePapaya(): Promise<void> {
+    fireEvent.click(screen.getByRole("button", { name: "Ver opciones" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Lechoza" }));
+  }
+
+  beforeEach(() => {
+    vi.mocked(addLine).mockReset();
+    vi.mocked(updateLine).mockReset();
+    vi.mocked(listProducts).mockResolvedValue({ data: [PAPAYA], total: 1, page: 1, pageSize: 100 });
+  });
+
+  it("asks the price of each kilo and sends the line total (1,20 $ × 40 kg = 48 $)", async () => {
+    vi.mocked(addLine).mockResolvedValue({ ...OPEN_TRIP, lines: [PAPAYA_LINE], lineCount: 1 });
+    render(<PurchaseLineForm trip={OPEN_TRIP} />, { wrapper: SwrTestWrapper });
+    await choosePapaya();
+
+    type(/Cantidad bruta/, "40");
+    type(/^Precio por kilo/, "1.2");
+    expect(await screen.findByText("Total de la compra: 48,00 $")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Agregar" }));
+
+    await waitFor(() =>
+      expect(addLine).toHaveBeenCalledWith(
+        OPEN_TRIP.id,
+        expect.objectContaining({ quotedPriceUsd: "48.0000", grossQuantity: "40", packs: null }),
+      ),
+    );
+  });
+
+  it("takes the price per kilo in bolívares at the Coche rate (201)", async () => {
+    vi.mocked(addLine).mockResolvedValue({ ...OPEN_TRIP, lines: [PAPAYA_LINE], lineCount: 1 });
+    render(<PurchaseLineForm trip={OPEN_TRIP} />, { wrapper: SwrTestWrapper });
+    await choosePapaya();
+
+    type(/Cantidad bruta/, "40");
+    fireEvent.click(screen.getByRole("radio", { name: "Bolívares" }));
+    type(/^Precio por kilo/, "241.2");
+    expect(screen.getByText("Son 1,20 $ a la tasa de Coche (201).")).toBeDefined();
+    expect(screen.getByText("Total de la compra: 48,00 $")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Agregar" }));
+
+    await waitFor(() =>
+      expect(addLine).toHaveBeenCalledWith(
+        OPEN_TRIP.id,
+        expect.objectContaining({ quotedPriceUsd: "48.0000" }),
+      ),
+    );
+  });
+
+  it("editing shows the price per kilo and sends the new total", async () => {
+    vi.mocked(updateLine).mockResolvedValue({ ...OPEN_TRIP, lines: [PAPAYA_LINE] });
+    const onDone = vi.fn();
+    render(<PurchaseLineForm trip={OPEN_TRIP} line={PAPAYA_LINE} onDone={onDone} />, {
+      wrapper: SwrTestWrapper,
+    });
+
+    expect(valueOf(/^Precio por kilo/)).toBe("1.2");
+    type(/^Precio por kilo/, "1.5");
+    fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() => expect(onDone).toHaveBeenCalledOnce());
+    expect(vi.mocked(updateLine).mock.calls[0]?.[2]).toMatchObject({ quotedPriceUsd: "60.0000" });
+  });
+});
+
 describe("PurchaseLineForm (buy from the list)", () => {
   it("selects the product and its margin once the list has loaded", async () => {
     let resolveProducts: (page: Awaited<ReturnType<typeof listProducts>>) => void = () => {};

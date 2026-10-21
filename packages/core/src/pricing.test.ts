@@ -8,6 +8,7 @@ import {
   proposeSaleRateList,
   purchasePrice,
   storableMargin,
+  totalFromKiloPrice,
   type LinePricingInput,
 } from "./pricing";
 
@@ -239,5 +240,20 @@ describe("purchasePrice", () => {
     expect(() =>
       purchasePrice({ quotedPriceUsd: "-1", packs: null, grossQuantity: "1", purchaseUnit: "kg" }),
     ).toThrow(InvalidValueError);
+  });
+});
+
+describe("totalFromKiloPrice", () => {
+  test("papaya at 1.20 $/kg × 40 kg is 48 $", () => {
+    expect(totalFromKiloPrice("1.2", "40")).toBe("48.0000");
+  });
+
+  test("rounds half-up to 4 decimals", () => {
+    expect(totalFromKiloPrice("1.2345", "2.5")).toBe("3.0863");
+  });
+
+  test("throws for a negative price or no kilos", () => {
+    expect(() => totalFromKiloPrice("-1", "40")).toThrow(InvalidValueError);
+    expect(() => totalFromKiloPrice("1.2", "0")).toThrow(InvalidValueError);
   });
 });

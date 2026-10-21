@@ -9,7 +9,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { CreateSupplierForm } from "@/features/suppliers/components/supplier-forms";
 import { useSuppliersScreen } from "@/features/suppliers/hooks/use-suppliers-screen";
 
-/** Stalls and local suppliers; each one opens its data and pago móvil accounts. */
+/** Stalls and local suppliers; the owner opens each one's data and pago móvil accounts. */
 export function SuppliersScreen(): React.JSX.Element {
   const s = useSuppliersScreen();
   const router = useRouter();
@@ -42,7 +42,8 @@ export function SuppliersScreen(): React.JSX.Element {
           <CreateSupplierForm
             onDone={(supplier) => {
               s.closeCreate();
-              router.push(`/suppliers/${supplier.id}`);
+              // The owner goes on to its pago móvil accounts; the manager stays on the list.
+              if (s.canOpen) router.push(`/suppliers/${supplier.id}`);
             }}
           />
         )}

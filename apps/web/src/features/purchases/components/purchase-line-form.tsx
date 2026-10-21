@@ -55,6 +55,7 @@ export function PurchaseLineForm({
     ] as const
   ).map(([value, key]) => ({ value, label: t(key) }));
   const quotedUsd = f.form.watch("quotedPriceUsd");
+  const priceLabel = f.isPerKilo ? t("quotedPricePerKilo") : t("quotedPrice");
   const decimal = { inputMode: "decimal", autoComplete: "off" } as const;
 
   // The quick form is a <form> of its own: it replaces this one instead of nesting.
@@ -114,7 +115,7 @@ export function PurchaseLineForm({
         {f.priceCurrency === "USD" ? (
           <TextField
             key="price-usd"
-            label={t("quotedPrice")}
+            label={priceLabel}
             required
             {...decimal}
             suffix="$"
@@ -125,7 +126,7 @@ export function PurchaseLineForm({
         ) : (
           <TextField
             key="price-bs"
-            label={t("quotedPrice")}
+            label={priceLabel}
             required
             {...decimal}
             suffix="Bs"
@@ -143,6 +144,11 @@ export function PurchaseLineForm({
             value={f.priceBs}
             onChange={(event) => f.setPriceInBs(event.target.value)}
           />
+        )}
+        {f.lineTotalUsd && (
+          <p className="col-span-2 text-sm text-muted" aria-live="polite">
+            {t("perKiloTotal", { total: formatUsd(f.lineTotalUsd) })}
+          </p>
         )}
         <TextField
           label={t("margin")}

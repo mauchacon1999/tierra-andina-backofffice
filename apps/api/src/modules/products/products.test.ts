@@ -212,8 +212,14 @@ describe("POST /api/v1/products", () => {
     expect(errorOf(res.body).code).toBe("VALIDATION_ERROR");
   });
 
+  test("the manager can add a product, always at the store's default margin", async () => {
+    const res = await call("POST", "/products", managerCookie, tomato({ lastMargin: "2" }));
+
+    expect(res.status).toBe(201);
+    expect(productSchema.parse(res.body)).toMatchObject({ isActive: true, lastMargin: "0.5000" });
+  });
+
   test.each([
-    ["manager", (): string => managerCookie, 403],
     ["receiver", (): string => receiverCookie, 403],
     ["anonymous", (): null => null, 401],
   ] as const)("%s cannot create (%i)", async (_role, cookie, status) => {

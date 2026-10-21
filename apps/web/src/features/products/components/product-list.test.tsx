@@ -14,6 +14,12 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/products",
   useSearchParams: () => new URLSearchParams(),
 }));
+const session = vi.hoisted(() => ({ role: "owner" as "owner" | "manager" }));
+vi.mock("@/features/auth/hooks/use-require-session", () => ({
+  useRequireSession: () => ({
+    activeMembership: { storeId: "store", storeName: "Tierra Andina", role: session.role },
+  }),
+}));
 vi.mock("@/features/products/api/product-requests", () => ({
   listProducts: vi.fn(),
   setProductActive: vi.fn(),
@@ -46,6 +52,7 @@ describe("ProductList", () => {
   beforeEach(() => {
     vi.mocked(listProducts).mockReset();
     replace.mockReset();
+    session.role = "owner";
   });
 
   it("phones: one card per product with its units, pack, shrinkage and margin", async () => {
@@ -96,6 +103,24 @@ describe("ProductList", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "Desactivar" }));
 
     await waitFor(() => expect(setProductActive).toHaveBeenCalledWith("p1", false));
+  });
+
+  it("the manager sees the products without editing them, and can add one", async () => {
+    session.role = "manager";
+    setDesktop(true);
+    vi.mocked(listProducts).mockResolvedValue({ ...PAGE, data: [], total: 0 });
+    const { unmount } = render(<ProductList />, { wrapper: SwrTestWrapper });
+    expect((await screen.findByRole("link", { name: "Crear producto" })).getAttribute("href")).toBe(
+      "/products/new",
+    );
+    unmount();
+
+    vi.mocked(listProducts).mockResolvedValue(PAGE);
+    render(<ProductList />, { wrapper: SwrTestWrapper });
+
+    expect(await screen.findByText("Tomate perita")).toBeDefined();
+    expect(screen.queryByRole("link", { name: "Tomate perita" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Acciones de Tomate perita" })).toBeNull();
   });
 
   it("shows an empty state with the action that fills it", async () => {

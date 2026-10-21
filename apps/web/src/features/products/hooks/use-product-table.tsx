@@ -13,6 +13,7 @@ import type {
 } from "@/components/shared/data-table/types";
 import { useToggleProductActive } from "@/features/products/api/use-product-mutations";
 import { ProductNameCell } from "@/features/products/components/product-name-cell";
+import { useRequireSession } from "@/features/auth/hooks/use-require-session";
 import { describeProduct } from "@/features/products/helpers/describe-product";
 import type { UseProductFiltersResult } from "@/features/products/hooks/use-product-filters";
 import { useUnitLabels } from "@/features/products/hooks/use-unit-labels";
@@ -20,7 +21,8 @@ import { useUnitLabels } from "@/features/products/hooks/use-unit-labels";
 export type UseProductTableResult = {
   columns: DataColumn<Product>[];
   sorting: DataTableSorting;
-  rowActions: (product: Product) => RowAction[];
+  /** Edit and deactivate are the owner's; the manager only lists and adds products. */
+  rowActions: ((product: Product) => RowAction[]) | undefined;
 };
 
 /** API sort key ("-name") ⇄ table sort ({ id: "name", desc: true }). */
@@ -39,6 +41,7 @@ export function useProductTable(filters: UseProductFiltersResult): UseProductTab
   const tc = useTranslations("common");
   const labels = useUnitLabels();
   const toggle = useToggleProductActive();
+  const canEdit = useRequireSession().activeMembership?.role === "owner";
 
   const columns = useMemo((): DataColumn<Product>[] => {
     const describe = (product: Product) => describeProduct(product, labels);
@@ -46,7 +49,7 @@ export function useProductTable(filters: UseProductFiltersResult): UseProductTab
       {
         id: "name",
         header: t("list.columns.name"),
-        cell: (product) => <ProductNameCell product={product} />,
+        cell: (product) => <ProductNameCell product={product} canEdit={canEdit} />,
         isPrimary: true,
         isServerSortable: true,
       },
@@ -71,7 +74,7 @@ export function useProductTable(filters: UseProductFiltersResult): UseProductTab
         align: "end",
       },
     ];
-  }, [t, tc, labels]);
+  }, [t, tc, labels, canEdit]);
 
   return {
     columns,
@@ -80,17 +83,19 @@ export function useProductTable(filters: UseProductFiltersResult): UseProductTab
       value: toDataSort(filters.filters.sort),
       onChange: (sort) => filters.setSort(toProductSort(sort)),
     },
-    rowActions: (product) => [
-      { id: "edit", label: tc("edit"), icon: Pencil, href: `/products/${product.id}` },
-      {
-        id: "active",
-        label: product.isActive ? t("edit.deactivate") : t("edit.activate"),
-        icon: Power,
-        ...(product.isActive ? { tone: "danger" as const } : {}),
-        onSelect: async () => {
-          await toggle.run({ id: product.id, isActive: !product.isActive });
-        },
-      },
-    ],
+    rowActions: canEdit
+      ? (product) => [
+          { id: "edit", label: tc("edit"), icon: Pencil, href: `/products/${product.id}` },
+          {
+            id: "active",
+            label: product.isActive ? t("edit.deactivate") : t("edit.activate"),
+            icon: Power,
+            ...(product.isActive ? { tone: "danger" as const } : {}),
+            onSelect: async () => {
+              await toggle.run({ id: product.id, isActive: !product.isActive });
+            },
+          },
+        ]
+      : undefined,
   };
 }

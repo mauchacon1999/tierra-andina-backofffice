@@ -182,3 +182,14 @@ export function purchasePrice(input: PurchasePriceInput): PurchasePrice {
   const gross = positive(input.grossQuantity, "grossQuantity");
   return { priceUsd: toDbString(price.dividedBy(gross)), per: "saleUnit" };
 }
+
+/**
+ * Total of a line bought by kilo from the price of each kilo typed at the stall:
+ * total_usd = price_per_kilo_usd × gross_quantity, rounded half-up to 4 decimals (the line
+ * stores the total, `quoted_price_usd`). 1.20 $/kg × 40 kg → "48.0000".
+ * @throws {InvalidValueError} for a negative price or a quantity ≤ 0.
+ */
+export function totalFromKiloPrice(pricePerKiloUsd: string, grossQuantity: string): string {
+  const price = nonNegative(pricePerKiloUsd, "pricePerKiloUsd");
+  return toDbString(price.times(positive(grossQuantity, "grossQuantity")));
+}

@@ -27,6 +27,7 @@ import {
 } from "@/features/products/helpers/product-form-values";
 import type { PriceExampleInput } from "@/features/products/hooks/use-price-example";
 import { useUnitLabels } from "@/features/products/hooks/use-unit-labels";
+import { useRequireSession } from "@/features/auth/hooks/use-require-session";
 import { useSettings } from "@/features/settings/api/use-settings";
 import { useErrorMessage } from "@/i18n/use-error-message";
 import { useZodResolver } from "@/i18n/use-zod-resolver";
@@ -57,6 +58,8 @@ export type UseProductFormResult = {
   priceExampleInput: PriceExampleInput;
   /** Edit mode: the last save succeeded and nothing changed since. */
   isSaved: boolean;
+  /** Only the owner types the margin; a manager's new product takes the store's. */
+  canSetMargin: boolean;
   /** Product just created (create mode), to offer "Crear otro". */
   created: Product | null;
   /** Clears the form to create another product, keeping the units and category. */
@@ -74,6 +77,7 @@ export function useProductForm(options: UseProductFormOptions): UseProductFormRe
     defaultValues: isEdit ? productToFormValues(options.product) : EMPTY_PRODUCT_FORM,
   });
   const { settings, isLoaded: settingsLoaded } = useSettings();
+  const canSetMargin = useRequireSession().activeMembership?.role === "owner";
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct(isEdit ? options.product.id : "");
   const [created, setCreated] = useState<Product | null>(null);
@@ -168,6 +172,7 @@ export function useProductForm(options: UseProductFormOptions): UseProductFormRe
       usdRoundingStep: settings.usdRoundingStep,
     },
     isSaved: hasSaved && !form.formState.isDirty,
+    canSetMargin,
     created,
     resetForAnother: () => {
       const { categoryId } = form.getValues();

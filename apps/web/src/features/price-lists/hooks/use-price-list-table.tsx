@@ -2,20 +2,31 @@
 
 import type { PriceListLine } from "@ta/validators";
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import type { DataColumn } from "@/components/shared/data-table/types";
 import { useUnitLabels } from "@/features/products/hooks/use-unit-labels";
 import { usePriceList } from "@/features/price-lists/api/use-price-list";
 import { formatBs, formatPercentFromFraction, formatUsd } from "@/utils/format-number";
+import { filterByName } from "@/utils/search-text";
 
 export type UsePriceListTableResult = ReturnType<typeof usePriceList> & {
   columns: DataColumn<PriceListLine>[];
+  search: string;
+  setSearch: (text: string) => void;
+  /** The list's lines whose product contains the search (accents and case ignored). */
+  visibleLines: PriceListLine[] | undefined;
 };
 
-/** The published list: product, margin and prices in USD and Bs. */
+/** The published list: product, margin and prices in USD and Bs, searchable by name. */
 export function usePriceListTable(): UsePriceListTableResult {
   const list = usePriceList();
+  const [search, setSearch] = useState("");
+  const lines = list.list?.lines;
+  const visibleLines = useMemo(
+    () => (lines ? filterByName(lines, search, (line) => line.productName) : undefined),
+    [lines, search],
+  );
   const t = useTranslations("prices");
   const tc = useTranslations("common");
   const units = useUnitLabels();
@@ -59,5 +70,5 @@ export function usePriceListTable(): UsePriceListTableResult {
     [t, tc, units],
   );
 
-  return { ...list, columns };
+  return { ...list, columns, search, setSearch, visibleLines };
 }

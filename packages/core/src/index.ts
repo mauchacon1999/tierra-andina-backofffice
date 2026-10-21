@@ -10,6 +10,7 @@ export {
   proposeSaleRateList,
   purchasePrice,
   storableMargin,
+  totalFromKiloPrice,
 } from "./pricing";
 export type {
   LinePricing,

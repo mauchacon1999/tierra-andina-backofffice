@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { listSuppliers } from "@/features/purchases/api/purchase-requests";
 import {
   addAccount,
+  createSupplier,
   deactivateAccount,
   getSupplier,
   updateSupplier,
@@ -23,22 +24,67 @@ vi.mock("@/features/suppliers/api/supplier-requests", () => ({
   replaceAccount: vi.fn(),
   deactivateAccount: vi.fn(),
 }));
+const push = vi.hoisted(() => vi.fn());
+const session = vi.hoisted(() => ({ role: "owner" as "owner" | "manager" }));
+
 vi.mock("next/navigation", () => ({
   useParams: () => ({ id: BAKERY.id }),
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push }),
   usePathname: () => "/suppliers",
+}));
+vi.mock("@/features/auth/hooks/use-require-session", () => ({
+  useRequireSession: () => ({
+    activeMembership: { storeId: "store", storeName: "Tierra Andina", role: session.role },
+  }),
 }));
 
 describe("SuppliersScreen", () => {
+  beforeEach(() => {
+    session.role = "owner";
+    push.mockReset();
+    vi.mocked(createSupplier).mockReset();
+    vi.mocked(listSuppliers).mockResolvedValue([BAKERY]);
+  });
+
   it("lists suppliers with their kind and a link to each one", async () => {
     setDesktop(true);
-    vi.mocked(listSuppliers).mockResolvedValue([BAKERY]);
     render(<SuppliersScreen />, { wrapper: SwrTestWrapper });
 
     const table = await screen.findByRole("table", { name: "Proveedores" });
     const [, row] = within(table).getAllByRole("row");
     expect(within(row!).getByText(BAKERY.name)).toBeDefined();
     expect(within(row!).getByText("Trae a la tienda")).toBeDefined();
+    expect(within(row!).getByRole("button", { name: `Acciones de ${BAKERY.name}` })).toBeDefined();
+  });
+
+  it("the manager adds a supplier and stays on the list; no supplier opens", async () => {
+    session.role = "manager";
+    setDesktop(true);
+    vi.mocked(createSupplier).mockResolvedValue({
+      ...BAKERY,
+      id: "0199f000-0000-7000-8000-0000000000b9",
+      name: "Cambur Don Pedro",
+    });
+    render(<SuppliersScreen />, { wrapper: SwrTestWrapper });
+
+    const table = await screen.findByRole("table", { name: "Proveedores" });
+    expect(within(table).queryByRole("button", { name: `Acciones de ${BAKERY.name}` })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Nuevo proveedor" }));
+    const dialog = screen.getByRole("dialog", { name: "Nuevo proveedor" });
+    fireEvent.input(within(dialog).getByLabelText(/Nombre/), {
+      target: { value: "Cambur Don Pedro" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Crear proveedor" }));
+
+    await waitFor(() => expect(createSupplier).toHaveBeenCalledOnce());
+    expect(vi.mocked(createSupplier).mock.calls[0]?.[0]).toMatchObject({
+      name: "Cambur Don Pedro",
+    });
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Nuevo proveedor" })).toBeNull(),
+    );
+    expect(push).not.toHaveBeenCalled();
   });
 });
 

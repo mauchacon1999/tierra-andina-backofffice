@@ -59,6 +59,21 @@ describe("/api/v1/suppliers", () => {
     expect(logs.map((log) => log.action).sort()).toEqual(["insert", "update"]);
   });
 
+  test("the manager lists and adds suppliers; the receiver cannot", async () => {
+    const name = uniq("Cambur");
+
+    const created = await call(s.app, "POST", "/suppliers", s.manager, { name, kind: "local" });
+    const list = await call(s.app, "GET", "/suppliers", s.manager);
+
+    expect(created.status).toBe(201);
+    expect(supplierSchema.parse(created.body)).toMatchObject({ name, kind: "local" });
+    expect(list.status).toBe(200);
+    expect((list.body.data as { name: string }[]).some((row) => row.name === name)).toBe(true);
+    expect((await call(s.app, "POST", "/suppliers", s.receiver, { name: uniq("X") })).status).toBe(
+      403,
+    );
+  });
+
   test("400 for an empty PATCH, 404 for an unknown supplier, 403 for a manager", async () => {
     const id = await newSupplier();
 
@@ -67,6 +82,9 @@ describe("/api/v1/suppliers", () => {
       "NOT_FOUND",
     );
     expect((await call(s.app, "GET", `/suppliers/${id}`, s.manager)).status).toBe(403);
+    expect((await call(s.app, "PATCH", `/suppliers/${id}`, s.manager, { phone: "1" })).status).toBe(
+      403,
+    );
     expect((await call(s.app, "GET", "/suppliers", s.receiver)).status).toBe(403);
   });
 });

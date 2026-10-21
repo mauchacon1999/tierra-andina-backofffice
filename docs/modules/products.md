@@ -128,18 +128,22 @@ Pure functions with tests:
 
 ## 5. API (`apps/api/src/modules/products`)
 
-| Method | Path                              | Role  | Description                                                                      |
-| ------ | --------------------------------- | ----- | -------------------------------------------------------------------------------- |
-| GET    | `/api/v1/products`                | any   | Paginated list; filters from `productListQuerySchema`; search by normalized name |
-| GET    | `/api/v1/products/:id`            | any   | Detail + `isUnitLocked` flag                                                     |
-| POST   | `/api/v1/products`                | owner | Create                                                                           |
-| POST   | `/api/v1/products/quick`          | owner | Quick create (§1.6)                                                              |
-| PATCH  | `/api/v1/products/:id`            | owner | Update; unit changes rejected if locked                                          |
-| POST   | `/api/v1/products/:id/deactivate` | owner | Soft delete                                                                      |
-| POST   | `/api/v1/products/:id/activate`   | owner | Reactivate                                                                       |
-| GET    | `/api/v1/product-categories`      | any   | List categories                                                                  |
+| Method | Path                              | Role           | Description                                                                      |
+| ------ | --------------------------------- | -------------- | -------------------------------------------------------------------------------- |
+| GET    | `/api/v1/products`                | any            | Paginated list; filters from `productListQuerySchema`; search by normalized name |
+| GET    | `/api/v1/products/:id`            | any            | Detail + `isUnitLocked` flag                                                     |
+| POST   | `/api/v1/products`                | owner, manager | Create (the manager too, owner 2026-10-21)                                       |
+| POST   | `/api/v1/products/quick`          | owner          | Quick create (§1.6)                                                              |
+| PATCH  | `/api/v1/products/:id`            | owner          | Update; unit changes rejected if locked                                          |
+| POST   | `/api/v1/products/:id/deactivate` | owner          | Soft delete                                                                      |
+| POST   | `/api/v1/products/:id/activate`   | owner          | Reactivate                                                                       |
+| GET    | `/api/v1/product-categories`      | any            | List categories                                                                  |
 
 Receivers see only `id`, `name`, `saleUnit` (no margins or defaults).
+The manager sees `/products` (no edit link or actions) and `/products/new`; editing,
+deactivating and `/products/[id]` stay with the owner. A manager's new product always takes the
+store's `default_margin` (50 % unless the owner changes it in settings): the field is read-only
+and the API ignores a margin sent by a manager.
 
 Error codes:
 
@@ -199,12 +203,12 @@ UX rules:
 
 ## 7. Tests
 
-| Layer      | Must cover                                                                                                                                                                                                                                                     |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@ta/core` | Every function in §3: valid/invalid unit pairs, name normalization (accents, case, spaces), defaults validation edge cases                                                                                                                                     |
-| Validators | Valid payloads pass; each rule rejects; percent → fraction conversion                                                                                                                                                                                          |
-| API        | Create (success, duplicate name with accents, invalid combo, invalid defaults), quick create, list with search and filters, update (success, locked units), deactivate/activate, role checks (manager and receiver cannot write; receiver gets reduced fields) |
-| Web        | `use-product-form`: kg forces kg and hides pack quantity; dynamic label; shrinkage validation. `product-form`: submits correct payload. `price-example`: tomato reference case shows 1.40                                                                      |
+| Layer      | Must cover                                                                                                                                                                                                                                                                    |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@ta/core` | Every function in §3: valid/invalid unit pairs, name normalization (accents, case, spaces), defaults validation edge cases                                                                                                                                                    |
+| Validators | Valid payloads pass; each rule rejects; percent → fraction conversion                                                                                                                                                                                                         |
+| API        | Create (success, duplicate name with accents, invalid combo, invalid defaults), quick create, list with search and filters, update (success, locked units), deactivate/activate, role checks (the manager can only create; the receiver cannot write and gets reduced fields) |
+| Web        | `use-product-form`: kg forces kg and hides pack quantity; dynamic label; shrinkage validation. `product-form`: submits correct payload. `price-example`: tomato reference case shows 1.40                                                                                     |
 
 ---
 

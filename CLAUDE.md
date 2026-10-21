@@ -11,8 +11,8 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > Web: login (`/login`), session-protected home. The owner sees this week's
 > collected cash, deposited cash, open debts, fiado balances and real alerts
 > (`GET /api/v1/home`); there is no bank balance.
-> Modules done: **products** (core rules + pricing, validators, `/api/v1/products`, owner screens
-> `/products`, `/products/new`, `/products/[id]`); **store settings** (`/api/v1/settings`);
+> Modules done: **products** (core rules + pricing, validators, `/api/v1/products`, screens
+> `/products` and `/products/new` (the manager too: list and add), `/products/[id]` (owner)); **store settings** (`/api/v1/settings`);
 > **daily rates** (BCV, Coche, sale: `/api/v1/exchange-rates`, owner screen `/rates`; the home
 > and that screen show the official BCV rate from `GET /exchange-rates/official`, and the owner still saves it);
 > **purchase trips** (`/api/v1/purchase-trips`, `/api/v1/suppliers`, owner screens `/purchases`,
@@ -24,7 +24,7 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > (TanStack Table) on every list. **Truck receipt**: `/receipt` for receiver and owner
 > (`/api/v1/receipts`, `PATCH …/lines/:lineId/receipt`), grouped into still to buy, on the way and received, with a check that marks a line received. Live pending count on the trip.
 > **Shopping list**: `/shopping-list` — what to buy before Coche; a purchase line checks it off.
-> **Price list**: closing a trip publishes `/prices` (`GET /api/v1/price-lists/current`).
+> **Price list**: closing a trip publishes `/prices` (`GET /api/v1/price-lists/current`; search by name).
 > A sale-rate change that moves a rounded Bs price proposes a list the owner approves
 > (`GET/POST /api/v1/price-lists/proposal`, `/prices/proposal`). A BCV change only warns.
 > **Precio manual**: `/manual-prices` (owner): each product's last purchase cost in $ per crate,
@@ -51,7 +51,8 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > become one invoice per supplier when the trip closes. Owner screens: `/payables` (filter by
 > status, owed per currency), `/payables/new` and `/payables/[id]/edit` (supplies invoice, quick
 > supplier), `/payables/[id]` (payments, terms, void, "Copiar para pago móvil" per account) and
-> `/suppliers`, `/suppliers/[id]` (data and pago móvil accounts), `/local-purchases` (start one;
+> `/suppliers` (the manager too: list and add), `/suppliers/[id]` (owner: data and pago móvil
+> accounts), `/local-purchases` (start one;
 > its lines and "Guardar compra" with the invoice's currency and due date live on
 > `/purchases/[id]`), and a supplier on Coche credit lines.
 > **Fiados** (phase 3, in progress): API `/api/v1/customers/credit`, `/customers/:id/credit`,

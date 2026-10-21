@@ -89,7 +89,7 @@ describe("AppShell", () => {
     expect(sidebar().queryByRole("link", { name: "Precios" })).toBeNull();
   });
 
-  it("the manager sees the shopping list and the prices, not the purchases", () => {
+  it("the manager sees the shopping list, prices, products and suppliers, not purchases", () => {
     session.role = "manager";
     renderShell();
 
@@ -103,6 +103,8 @@ describe("AppShell", () => {
       "Faltantes",
       "Tareas",
       "Precios",
+      "Productos",
+      "Proveedores",
     ]);
   });
 

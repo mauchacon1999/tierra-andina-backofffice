@@ -167,7 +167,8 @@ export async function getProduct(db: Database, id: string): Promise<ProductWithL
 }
 
 /**
- * Creates a product (products.md §1). Margin defaults to the store's `default_margin`.
+ * Creates a product (products.md §1). Margin defaults to the store's `default_margin`; with
+ * `useStoreMargin` (a manager creating it, owner 2026-10-21) it is always that margin.
  * @throws AppError CATEGORY_NOT_FOUND, INVALID_UNIT_COMBINATION, INVALID_PRODUCT_DEFAULTS,
  *   PRODUCT_NAME_TAKEN
  */
@@ -175,9 +176,11 @@ export async function createProduct(
   db: Database,
   actor: Actor,
   input: CreateProduct,
+  { useStoreMargin = false }: { useStoreMargin?: boolean } = {},
 ): Promise<ProductRow> {
   await requireCategory(db, input.categoryId);
-  const lastMargin = input.lastMargin ?? (await getStoreSettings(db, actor.storeId)).defaultMargin;
+  const typedMargin = useStoreMargin ? undefined : input.lastMargin;
+  const lastMargin = typedMargin ?? (await getStoreSettings(db, actor.storeId)).defaultMargin;
   const values = {
     name: cleanProductName(input.name),
     categoryId: input.categoryId,

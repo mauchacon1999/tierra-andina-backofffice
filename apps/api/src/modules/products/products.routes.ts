@@ -33,7 +33,10 @@ import {
 const ANY_ROLE: MembershipRole[] = ["owner", "manager", "receiver"];
 const idParamSchema = z.object({ id: z.uuid({ error: "Identificador inválido" }) });
 
-/** /api/v1/products (docs/modules/products.md §5). Writes: owner only. */
+/**
+ * /api/v1/products (docs/modules/products.md §5). Writes: owner only, except that the manager
+ * can add new products, always at the store's default margin (owner, 2026-10-21).
+ */
 export function productsRoutes(): Hono<AppEnv> {
   return new Hono<AppEnv>()
     .get("/", requireRole(...ANY_ROLE), validate("query", productListQuerySchema), async (c) => {
@@ -52,10 +55,17 @@ export function productsRoutes(): Hono<AppEnv> {
           : toProductDetailDto(product),
       );
     })
-    .post("/", requireRole("owner"), validate("json", createProductFieldsSchema), async (c) => {
-      const product = await createProduct(c.get("db"), getActor(c), c.req.valid("json"));
-      return c.json(toProductDto(product), 201);
-    })
+    .post(
+      "/",
+      requireRole("owner", "manager"),
+      validate("json", createProductFieldsSchema),
+      async (c) => {
+        const product = await createProduct(c.get("db"), getActor(c), c.req.valid("json"), {
+          useStoreMargin: getMembership(c).role !== "owner",
+        });
+        return c.json(toProductDto(product), 201);
+      },
+    )
     .post(
       "/quick",
       requireRole("owner"),

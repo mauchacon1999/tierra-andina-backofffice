@@ -18,6 +18,7 @@ import { useCopy, type CopyState } from "@/hooks/use-copy";
 import { useErrorMessage } from "@/i18n/use-error-message";
 import { formatBusinessDate, todayBusinessDate } from "@/utils/format-date";
 import { formatBs } from "@/utils/format-number";
+import { filterByName } from "@/utils/search-text";
 
 export type UseManualPricesScreenResult = UseManualPricesResult & {
   columns: DataColumn<ManualPriceRow>[];
@@ -34,15 +35,6 @@ export type UseManualPricesScreenResult = UseManualPricesResult & {
 };
 
 const COPY_KEY = "whatsapp";
-
-/** Accents and case do not matter in the search ("name" finds "Ñame" too). */
-function searchable(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
-    .trim();
-}
 
 /** "Precio manual": search, the table, the WhatsApp switches and the copy for the group. */
 export function useManualPricesScreen(): UseManualPricesScreenResult {
@@ -67,11 +59,10 @@ export function useManualPricesScreen(): UseManualPricesScreenResult {
   );
   const columns = useManualPriceTable({ saleRate: prices.saleRate, onToggleWhatsapp });
 
-  const visibleRows = useMemo(() => {
-    const wanted = searchable(search);
-    if (wanted === "") return prices.rows;
-    return prices.rows.filter((row) => searchable(row.productName).includes(wanted));
-  }, [prices.rows, search]);
+  const visibleRows = useMemo(
+    () => filterByName(prices.rows, search, (row) => row.productName),
+    [prices.rows, search],
+  );
 
   const toCopy = whatsappRows(prices.rows);
 
