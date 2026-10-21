@@ -43,6 +43,8 @@ export const products = pgTable(
     lastShrinkage: quantity("last_shrinkage").notNull().default("0"),
     lastMargin: ratio("last_margin").notNull(),
     isActive: boolean("is_active").notNull().default(true),
+    /** Goes in the price list copied for the WhatsApp group ("Precio manual"). */
+    shareOnWhatsapp: boolean("share_on_whatsapp").notNull().default(false),
     ...timestamps,
     ...auditColumns,
   },

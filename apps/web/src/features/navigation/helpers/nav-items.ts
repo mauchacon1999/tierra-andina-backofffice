@@ -8,6 +8,7 @@ import {
   House,
   ListTodo,
   Package,
+  PencilLine,
   ShoppingBasket,
   ShoppingCart,
   Store,
@@ -30,6 +31,7 @@ export type NavItem = {
     | "localPurchases"
     | "receipt"
     | "prices"
+    | "manualPrices"
     | "rates"
     | "products"
     | "payables"
@@ -71,6 +73,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   },
   { href: "/receipt", labelKey: "receipt", icon: Truck, roles: ["owner", "receiver"] },
   { href: "/prices", labelKey: "prices", icon: Tag, roles: ["owner", "manager"] },
+  { href: "/manual-prices", labelKey: "manualPrices", icon: PencilLine, roles: ["owner"] },
   { href: "/rates", labelKey: "rates", icon: Coins, roles: ["owner"] },
   { href: "/products", labelKey: "products", icon: Package, roles: ["owner"] },
   { href: "/payables", labelKey: "payables", icon: HandCoins, roles: ["owner"] },

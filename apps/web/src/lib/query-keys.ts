@@ -46,6 +46,7 @@ export const queryKeys = {
   priceLists: {
     current: ["price-lists", "current"] as const,
     proposal: ["price-lists", "proposal"] as const,
+    manual: ["price-lists", "manual"] as const,
   },
   trips: {
     all: ["trips"] as const,

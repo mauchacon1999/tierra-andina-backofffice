@@ -127,3 +127,58 @@ export function proposeSaleRateList(
   });
   return proposed.some((line) => line.changed) ? proposed : undefined;
 }
+
+/**
+ * Margin a price typed by hand gives over the unit cost ("Precio manual"):
+ * margin = price_usd / unit_cost_usd − 1, rounded half-up to 4 decimals ("0.5000" = 50 %).
+ * Negative when the price is below cost. Null when the cost is 0 (nothing to compare with).
+ * @throws {InvalidValueError} if the price or the cost is negative.
+ */
+export function impliedMargin(priceUsd: string, unitCostUsd: string): string | null {
+  const price = nonNegative(priceUsd, "priceUsd");
+  const cost = nonNegative(unitCostUsd, "unitCostUsd");
+  if (cost.isZero()) return null;
+  return toDbString(price.dividedBy(cost).minus(1));
+}
+
+/**
+ * The margin a price list can store: the same value when it is within 0–5 (0–500 %), null
+ * otherwise (a price below cost, or an unknown margin). Exact, no rounding.
+ * @throws {TypeError} if the margin is not a decimal number.
+ */
+export function storableMargin(margin: string | null): string | null {
+  if (margin === null) return null;
+  const inRange = compareDecimals(margin, "0") >= 0 && compareDecimals(margin, MAX_MARGIN) <= 0;
+  return inRange ? margin : null;
+}
+
+export type PurchasePriceInput = {
+  /** Total quoted for the line, in USD. */
+  quotedPriceUsd: string;
+  /** Crates/bundles counted, or null when they were not counted (always null for kg). */
+  packs: string | null;
+  /** Gross quantity in the sale unit. */
+  grossQuantity: string;
+  purchaseUnit: "crate" | "bundle" | "kg";
+};
+
+export type PurchasePrice = {
+  priceUsd: string;
+  /** "pack": per crate/bundle; "saleUnit": per kilo or unit of the gross quantity. */
+  per: "pack" | "saleUnit";
+};
+
+/**
+ * What one crate, bundle or kilo cost at the stall ("Precio manual"): quoted_price_usd / packs
+ * for crates and bundles whose packs were counted, otherwise quoted_price_usd / gross_quantity
+ * (per kilo or unit). Rounded half-up to 4 decimals. 3 crates at 60 USD → 20.0000 per pack.
+ * @throws {InvalidValueError} for a negative price or a quantity/packs ≤ 0.
+ */
+export function purchasePrice(input: PurchasePriceInput): PurchasePrice {
+  const price = nonNegative(input.quotedPriceUsd, "quotedPriceUsd");
+  if (input.purchaseUnit !== "kg" && input.packs !== null) {
+    return { priceUsd: toDbString(price.dividedBy(positive(input.packs, "packs"))), per: "pack" };
+  }
+  const gross = positive(input.grossQuantity, "grossQuantity");
+  return { priceUsd: toDbString(price.dividedBy(gross)), per: "saleUnit" };
+}

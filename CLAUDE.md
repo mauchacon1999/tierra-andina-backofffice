@@ -27,6 +27,10 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > **Price list**: closing a trip publishes `/prices` (`GET /api/v1/price-lists/current`).
 > A sale-rate change that moves a rounded Bs price proposes a list the owner approves
 > (`GET/POST /api/v1/price-lists/proposal`, `/prices/proposal`). A BCV change only warns.
+> **Precio manual**: `/manual-prices` (owner): each product's last purchase cost in $ per crate,
+> bundle or kilo and its price typed in Bs, saved per row as a new list (`GET /api/v1/price-lists/manual`,
+> `PUT …/manual/:productId`); a WhatsApp switch per product (`PATCH /api/v1/products/:id/whatsapp`)
+> and "Copiar para WhatsApp".
 > **Daily close** (phase 2): `/close` (manager/owner: amounts only, each in its currency; the date is
 > today and only the owner can change it; lote,
 > credit sales, expenses) and `/closes` (owner: list like the Excel, filter by week, month or dates, chips with that period's sales in Bs and in dollars, correct, approve or delete; pending
@@ -189,6 +193,7 @@ Tests of one package: `bun --cwd=packages/core test`, `bun --cwd=apps/web run te
 | Margen                                        | `margin`                                   |
 | Tasa BCV / tasa de venta / tasa del proveedor | `bcv_rate` / `sale_rate` / `supplier_rate` |
 | Lista de precios                              | `price_list`                               |
+| Precio manual (escrito por el dueño)          | `manual_price`                             |
 | Cierre diario                                 | `daily_close`                              |
 | Fiado (cliente)                               | `customer_credit`                          |
 | Abono                                         | `credit_payment`                           |

@@ -205,6 +205,8 @@ Rules:
 
 `<TextField label hint error suffix required>` from `components/ui/text-field.tsx`, wired with
 React Hook Form: `<TextField label="Nombre" error={errors.name?.message} {...register("name")} />`.
+A field inside a table row (the price on "Precio manual") keeps its label for screen readers
+only with `hideLabel`; the label still names the row ("Precio de Tomate en bolívares").
 
 Structure:
 

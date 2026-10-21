@@ -39,7 +39,11 @@ export const priceLists = pgTable(
   ],
 );
 
-/** One product's price in a list, in USD and Bs (Bs = price_usd × the list's sale_rate). */
+/**
+ * One product's price in a list, in USD and Bs (Bs = price_usd × the list's sale_rate). A price
+ * typed by hand ("Precio manual") has no cost when the product was never bought, and no margin
+ * when it falls outside 0–500 % (below cost); both are then NULL, which the CHECKs accept.
+ */
 export const priceListLines = pgTable(
   "price_list_lines",
   {
@@ -50,8 +54,8 @@ export const priceListLines = pgTable(
     productId: uuid("product_id")
       .notNull()
       .references(() => products.id),
-    unitCostUsd: money("unit_cost_usd").notNull(),
-    margin: ratio("margin").notNull(),
+    unitCostUsd: money("unit_cost_usd"),
+    margin: ratio("margin"),
     priceUsd: money("price_usd").notNull(),
     priceBs: money("price_bs").notNull(),
     sourcePurchaseLineId: uuid("source_purchase_line_id").references(() => purchaseLines.id),

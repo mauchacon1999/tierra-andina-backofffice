@@ -156,10 +156,15 @@ export type {
   ShoppingListItem,
 } from "./shopping-list";
 export {
+  lastPurchasePriceSchema,
+  manualPriceListSchema,
+  manualPriceRowSchema,
   priceListLineSchema,
   priceListSchema,
   priceProposalLineSchema,
   priceProposalSchema,
+  productWhatsappSchema,
+  setManualPriceSchema,
 } from "./price-lists";
 export { HOME_ALERTS, homeAlertSchema, homeBriefingSchema } from "./home";
 export {
@@ -185,7 +190,18 @@ export type {
   UpdateTaskInput,
 } from "./tasks";
 export type { HomeAlertCode, HomeBriefing } from "./home";
-export type { PriceList, PriceListLine, PriceProposal, PriceProposalLine } from "./price-lists";
+export type {
+  LastPurchasePrice,
+  ManualPriceList,
+  ManualPriceRow,
+  PriceList,
+  PriceListLine,
+  PriceProposal,
+  PriceProposalLine,
+  ProductWhatsapp,
+  SetManualPrice,
+  SetManualPriceInput,
+} from "./price-lists";
 export {
   CASH_DESTINATIONS,
   currencySchema,

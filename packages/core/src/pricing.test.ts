@@ -1,7 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
 import { InvalidValueError, ShrinkageExceedsQuantityError } from "./errors";
-import { priceInBs, priceLine, proposeSaleRateList, type LinePricingInput } from "./pricing";
+import {
+  impliedMargin,
+  priceInBs,
+  priceLine,
+  proposeSaleRateList,
+  purchasePrice,
+  storableMargin,
+  type LinePricingInput,
+} from "./pricing";
 
 // Reference cases of docs/domain-model.md §3.3.
 const TOMATO_CRATE: LinePricingInput = {
@@ -135,5 +143,101 @@ describe("proposeSaleRateList", () => {
 
   test("an empty shelf has nothing to propose", () => {
     expect(proposeSaleRateList([], "211", "1")).toBeUndefined();
+  });
+});
+
+describe("impliedMargin", () => {
+  test("tomato at 1.40 USD over a 0.9091 cost is a 54 % margin", () => {
+    expect(impliedMargin("1.4", "0.9091")).toBe("0.5400");
+  });
+
+  test("a price equal to the cost is 0 %; below cost is negative", () => {
+    expect(impliedMargin("2", "2")).toBe("0.0000");
+    expect(impliedMargin("1.5", "2")).toBe("-0.2500");
+  });
+
+  test("rounds half-up to 4 decimals", () => {
+    expect(impliedMargin("1", "3")).toBe("-0.6667");
+  });
+
+  test("null when the cost is 0", () => {
+    expect(impliedMargin("1.4", "0")).toBeNull();
+  });
+
+  test("throws for a negative price or cost", () => {
+    expect(() => impliedMargin("-1", "1")).toThrow(InvalidValueError);
+    expect(() => impliedMargin("1", "-1")).toThrow(InvalidValueError);
+  });
+});
+
+describe("storableMargin", () => {
+  test("keeps margins from 0 to 500 %", () => {
+    expect(storableMargin("0.0000")).toBe("0.0000");
+    expect(storableMargin("0.5400")).toBe("0.5400");
+    expect(storableMargin("5")).toBe("5");
+  });
+
+  test("null below cost, above 500 % or when unknown", () => {
+    expect(storableMargin("-0.2500")).toBeNull();
+    expect(storableMargin("5.0001")).toBeNull();
+    expect(storableMargin(null)).toBeNull();
+  });
+});
+
+describe("purchasePrice", () => {
+  test("3 tomato crates at 60 USD: 20 USD per crate", () => {
+    expect(
+      purchasePrice({
+        quotedPriceUsd: "60",
+        packs: "3",
+        grossQuantity: "72",
+        purchaseUnit: "crate",
+      }),
+    ).toEqual({ priceUsd: "20.0000", per: "pack" });
+  });
+
+  test("bundles: per bundle, rounded half-up to 4 decimals", () => {
+    expect(
+      purchasePrice({
+        quotedPriceUsd: "10",
+        packs: "3",
+        grossQuantity: "30",
+        purchaseUnit: "bundle",
+      }),
+    ).toEqual({ priceUsd: "3.3333", per: "pack" });
+  });
+
+  test("bought by kilo: per kilo of the gross quantity", () => {
+    expect(
+      purchasePrice({ quotedPriceUsd: "30", packs: null, grossQuantity: "25", purchaseUnit: "kg" }),
+    ).toEqual({ priceUsd: "1.2000", per: "saleUnit" });
+  });
+
+  test("crates not counted: per kilo of the gross quantity", () => {
+    expect(
+      purchasePrice({
+        quotedPriceUsd: "20",
+        packs: null,
+        grossQuantity: "24",
+        purchaseUnit: "crate",
+      }),
+    ).toEqual({ priceUsd: "0.8333", per: "saleUnit" });
+  });
+
+  test("throws for 0 packs, 0 kilos or a negative price", () => {
+    expect(() =>
+      purchasePrice({
+        quotedPriceUsd: "20",
+        packs: "0",
+        grossQuantity: "24",
+        purchaseUnit: "crate",
+      }),
+    ).toThrow(InvalidValueError);
+    expect(() =>
+      purchasePrice({ quotedPriceUsd: "20", packs: null, grossQuantity: "0", purchaseUnit: "kg" }),
+    ).toThrow(InvalidValueError);
+    expect(() =>
+      purchasePrice({ quotedPriceUsd: "-1", packs: null, grossQuantity: "1", purchaseUnit: "kg" }),
+    ).toThrow(InvalidValueError);
   });
 });

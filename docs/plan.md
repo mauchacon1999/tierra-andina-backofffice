@@ -84,6 +84,10 @@ Done when: every product the owner buys is loaded with its purchase and sale uni
 - [~] ~~Share that list as image or text on WhatsApp~~ — not needed: the manager sees "Precios"
   in the app (owner, 2026-10-17).
 - [x] Rate-change alert with a proposed list to approve (sale rate moves Bs; BCV only warns).
+- [x] "Precio manual" (owner, 2026-10-20): product, last purchase cost in dollars per crate,
+      bundle or kilo, and the price in Bs typed and saved per row; it publishes a new list. Each product has a
+      WhatsApp switch and "Copiar para WhatsApp" copies the products switched on, to paste in
+      the group.
 - [ ] Offline support for the purchase screen (no signal at the market).
 
 Done when: a full Monday trip is recorded without the notebook and the manager receives

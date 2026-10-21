@@ -17,6 +17,7 @@ export type UsePriceListTableResult = ReturnType<typeof usePriceList> & {
 export function usePriceListTable(): UsePriceListTableResult {
   const list = usePriceList();
   const t = useTranslations("prices");
+  const tc = useTranslations("common");
   const units = useUnitLabels();
 
   const columns = useMemo(
@@ -31,7 +32,9 @@ export function usePriceListTable(): UsePriceListTableResult {
       {
         id: "margin",
         header: t("columns.margin"),
-        cell: (line) => formatPercentFromFraction(line.margin),
+        // A price typed by hand below cost (or with no cost) has no margin.
+        cell: (line) =>
+          line.margin === null ? tc("empty") : formatPercentFromFraction(line.margin),
         align: "end",
       },
       {
@@ -53,7 +56,7 @@ export function usePriceListTable(): UsePriceListTableResult {
         align: "end",
       },
     ],
-    [t, units],
+    [t, tc, units],
   );
 
   return { ...list, columns };

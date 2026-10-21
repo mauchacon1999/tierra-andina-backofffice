@@ -56,7 +56,8 @@
     "users": "Usuarios",
     "payables": "Cuentas por pagar",
     "suppliers": "Proveedores",
-    "localPurchases": "Compras locales"
+    "localPurchases": "Compras locales",
+    "manualPrices": "Precio manual"
   },
   "apiErrors": {
     "NETWORK_ERROR": "No se pudo conectar con la API",
@@ -543,6 +544,47 @@
       "product": "Producto",
       "note": "Nota"
     }
+  },
+  "manualPrices": {
+    "pageTitle": "Precio manual",
+    "title": "Precio manual",
+    "subtitle": "Escribe el precio en bolívares de cada producto. Al guardarlo pasa a la lista de precios.",
+    "label": "Precios por producto",
+    "search": "Buscar producto",
+    "searchPlaceholder": "Tomate, cebolla…",
+    "empty": "No hay productos activos.",
+    "noMatch": "Ningún producto coincide con la búsqueda.",
+    "loadFailed": "No se pudo cargar la lista",
+    "noRate": "Falta la tasa de venta de hoy: anótala para poder guardar precios.",
+    "goToRates": "Ir a Tasas del día",
+    "rateNote": "Los dólares se calculan con la tasa de venta de {rate} Bs.",
+    "columns": {
+      "product": "Producto",
+      "cost": "Costo",
+      "price": "Precio Bs",
+      "whatsapp": "WhatsApp"
+    },
+    "costValue": "{cost}/{unit}",
+    "packName": {
+      "crate": "cesta",
+      "bundle": "cuenta"
+    },
+    "priceLabel": "Precio de {product} en bolívares",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "saved": "Guardado",
+    "saveFailed": "No se pudo guardar el precio. Intenta de nuevo",
+    "whatsappToggle": "Incluir {product} en la lista de WhatsApp",
+    "whatsappOn": "Va en la lista de WhatsApp",
+    "whatsappOff": "No va en la lista de WhatsApp",
+    "whatsappFailed": "No se pudo cambiar {product} en la lista de WhatsApp",
+    "copy": "Copiar para WhatsApp",
+    "copyCount": "{count, plural, one {# producto marcado} other {# productos marcados}}",
+    "copyNone": "Marca con el ícono de WhatsApp los productos que van en la lista.",
+    "copied": "Lista copiada ({count, plural, one {# producto} other {# productos}})",
+    "copyFailed": "No se pudo copiar. Intenta de nuevo.",
+    "whatsappTitle": "*{store} — Precios del {date}*",
+    "whatsappLine": "{product}: {price}/{unit}"
   },
   "prices": {
     "pageTitle": "Precios",

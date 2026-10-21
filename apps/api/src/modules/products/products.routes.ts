@@ -1,6 +1,7 @@
 import {
   createProductFieldsSchema,
   productListQuerySchema,
+  productWhatsappSchema,
   quickCreateProductFieldsSchema,
   updateProductSchema,
   type MembershipRole,
@@ -25,6 +26,7 @@ import {
   listProducts,
   quickCreateProduct,
   setProductActive,
+  setShareOnWhatsapp,
   updateProduct,
 } from "./products.service";
 
@@ -85,7 +87,23 @@ export function productsRoutes(): Hono<AppEnv> {
     .post("/:id/activate", requireRole("owner"), validate("param", idParamSchema), async (c) => {
       const id = c.req.valid("param").id;
       return c.json(toProductDto(await setProductActive(c.get("db"), getActor(c), id, true)));
-    });
+    })
+    .patch(
+      "/:id/whatsapp",
+      requireRole("owner"),
+      validate("param", idParamSchema),
+      validate("json", productWhatsappSchema),
+      async (c) => {
+        const { shareOnWhatsapp } = c.req.valid("json");
+        const product = await setShareOnWhatsapp(
+          c.get("db"),
+          getActor(c),
+          c.req.valid("param").id,
+          shareOnWhatsapp,
+        );
+        return c.json({ id: product.id, shareOnWhatsapp: product.shareOnWhatsapp });
+      },
+    );
 }
 
 /** /api/v1/product-categories */

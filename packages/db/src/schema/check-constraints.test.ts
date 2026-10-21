@@ -634,3 +634,17 @@ describe("CHECK constraints", () => {
     });
   }
 });
+
+// A price typed by hand ("Precio manual") may lack a cost (never bought) or a margin (below cost).
+describe("price_list_lines without cost or margin", () => {
+  test("accepts a manual price with no cost and no margin", async () => {
+    await inRollback(async (tx) => {
+      const base = await createBase(tx);
+      await expectOk(tx, (sp) =>
+        sp
+          .insert(priceListLines)
+          .values(valid.priceListLine(base, { unitCostUsd: null, margin: null })),
+      );
+    });
+  });
+});

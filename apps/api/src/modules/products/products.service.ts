@@ -306,6 +306,31 @@ export async function setProductActive(
   return requireProduct(db, id);
 }
 
+/**
+ * Whether the product goes in the price list copied for WhatsApp ("Precio manual"). Audited.
+ * @throws AppError PRODUCT_NOT_FOUND
+ */
+export async function setShareOnWhatsapp(
+  db: Database,
+  actor: Actor,
+  id: string,
+  shareOnWhatsapp: boolean,
+): Promise<ProductRow> {
+  const before = await requireProduct(db, id);
+  if (before.shareOnWhatsapp === shareOnWhatsapp) return before;
+
+  await db.transaction(async (tx) => {
+    const after = await updateProductById(tx, id, { shareOnWhatsapp, updatedBy: actor.userId });
+    await recordAudit(tx, actor, {
+      tableName: TABLE,
+      recordId: id,
+      action: "update",
+      changes: diffChanges(before, after),
+    });
+  });
+  return requireProduct(db, id);
+}
+
 /** Product categories ordered for selects. */
 export async function listCategories(db: Database): Promise<CategoryRecord[]> {
   return findAllCategories(db);

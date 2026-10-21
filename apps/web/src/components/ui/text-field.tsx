@@ -10,6 +10,8 @@ export type TextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
   error?: string | undefined;
   /** Text after the value inside the field, e.g. "kg", "$", "Bs". */
   suffix?: string | undefined;
+  /** Label only for screen readers (a field inside a table row, named by its row). */
+  hideLabel?: boolean;
   ref?: Ref<HTMLInputElement>;
 };
 
@@ -19,6 +21,7 @@ export function TextField({
   hint,
   error,
   suffix,
+  hideLabel = false,
   required,
   className,
   ref,
@@ -30,7 +33,10 @@ export function TextField({
 
   return (
     <div className="space-y-1">
-      <label htmlFor={id} className="block text-sm font-medium text-foreground">
+      <label
+        htmlFor={id}
+        className={cn("block text-sm font-medium text-foreground", hideLabel && "sr-only")}
+      >
         {label}
         {required && (
           <span aria-hidden className="ml-0.5 text-danger-text">

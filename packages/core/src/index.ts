@@ -2,8 +2,23 @@
 export { compareDecimals, normalizeDecimal, sum } from "./decimal";
 export { DomainError, InvalidValueError, ShrinkageExceedsQuantityError } from "./errors";
 export { roundUpToStep } from "./rounding";
-export { MAX_MARGIN, priceInBs, priceLine, proposeSaleRateList } from "./pricing";
-export type { LinePricing, LinePricingInput, ProposedShelfPrice, ShelfPrice } from "./pricing";
+export {
+  impliedMargin,
+  MAX_MARGIN,
+  priceInBs,
+  priceLine,
+  proposeSaleRateList,
+  purchasePrice,
+  storableMargin,
+} from "./pricing";
+export type {
+  LinePricing,
+  LinePricingInput,
+  ProposedShelfPrice,
+  PurchasePrice,
+  PurchasePriceInput,
+  ShelfPrice,
+} from "./pricing";
 export {
   allowedSaleUnits,
   assertValidProduct,

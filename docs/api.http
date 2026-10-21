@@ -238,6 +238,28 @@ Origin: http://localhost:3000
 POST {{baseUrl}}/api/v1/price-lists/proposal
 Origin: http://localhost:3000
 
+### "Precio manual" (owner) — 200 { saleRate, data: [{ productId, productName, saleUnit,
+# lastPurchase: { priceUsd, per: "pack" | "saleUnit", purchaseUnit } | null, priceUsd, priceBs,
+# shareOnWhatsapp }] } — lastPurchase.priceUsd is per crate/bundle ("pack") or per kilo/unit.
+# Every active product; nulls when never bought / not priced. saleRate null: no list, no rate.
+GET {{baseUrl}}/api/v1/price-lists/manual
+
+### Set one price in Bs (owner) — 200 the product's row. Publishes a new list (the same price
+# again publishes nothing). 400 (priceBs > 0, "." decimals) · 404 PRODUCT_NOT_FOUND ·
+# 422 SALE_RATE_MISSING (no list and no sale rate today) · 403 for a manager
+PUT {{baseUrl}}/api/v1/price-lists/manual/<product id>
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "priceBs": "450" }
+
+### Whether a product goes in the list copied for WhatsApp (owner) — 200 { id, shareOnWhatsapp }
+PATCH {{baseUrl}}/api/v1/products/<product id>/whatsapp
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "shareOnWhatsapp": true }
+
 ### Daily close ----------------------------------------------------------------------------------
 ### Amounts only, each in its own currency (no rate). Payment methods: GET /payment-methods
 GET {{baseUrl}}/api/v1/payment-methods

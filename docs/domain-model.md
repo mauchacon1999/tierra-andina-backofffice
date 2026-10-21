@@ -119,6 +119,18 @@ sale_price_bs     = round_up(sale_price_usd × sale_rate, bs_rounding_step)
   take the sale price of that line; a partial receipt uses the price of what arrived; missing
   goods keep their previous price. Bolívares are `price_usd ×` the day's sale rate, rounded up
   with `bs_rounding_step`. Without that day's sale rate the trip cannot be closed.
+- **Precio manual** (owner, 2026-10-20): the owner types a product's shelf price in bolívares
+  on `/manual-prices`, next to what its last purchase cost in dollars per crate or bundle
+  (quoted price / packs), or per kilo when bought by kilo or the crates were not counted
+  (`purchasePrice`). No kilos and no margin on that screen. Saving publishes a new list: the one in force
+  with that product changed or added. Bolívares are stored as typed (no rounding); dollars are
+  Bs / the list's sale rate (today's when there is no list yet), so no other price moves. The
+  margin is the one the price gives over the cost, stored only within 0–500 %; a product never
+  bought has no cost. The next trip that buys the product, or an approved sale-rate change,
+  replaces that price as usual.
+- **WhatsApp list**: each product has an on/off switch (`products.share_on_whatsapp`). "Copiar
+  para WhatsApp" copies the title and one line per product switched on that has a price
+  ("Tomate perita: 450,00 Bs/kg").
 
 ### 3.5 Shopping list
 
@@ -298,11 +310,11 @@ Initial settings: `usd_rounding_step = "0.05"`, `bs_rounding_step = "1"`,
 
 ### 9.2 Catalog
 
-| Table                | Key columns                                                                                                                                                                |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `product_categories` | code (unique: fruit, vegetable, greens, tubers, other), name, sort_order                                                                                                   |
-| `products`           | name, normalized_name (unique), category_id, purchase_unit (`crate`/`bundle`/`kg`), sale_unit (`kg`/`unit`), default_pack_quantity, last_shrinkage, last_margin, is_active |
-| `suppliers`          | name, kind (`wholesale_stall`/`local`), phone, stall_reference, notes, is_active                                                                                           |
+| Table                | Key columns                                                                                                                                                                                   |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `product_categories` | code (unique: fruit, vegetable, greens, tubers, other), name, sort_order                                                                                                                      |
+| `products`           | name, normalized_name (unique), category_id, purchase_unit (`crate`/`bundle`/`kg`), sale_unit (`kg`/`unit`), default_pack_quantity, last_shrinkage, last_margin, is_active, share_on_whatsapp |
+| `suppliers`          | name, kind (`wholesale_stall`/`local`), phone, stall_reference, notes, is_active                                                                                                              |
 
 `normalized_name` (lowercase, no accents, single spaces) makes "Cebollín" and "cebollin" the same
 product (`docs/modules/products.md` §1.4).
@@ -335,10 +347,10 @@ have no store, sale rows always have one.
 
 ### 9.5 Pricing
 
-| Table              | Key columns                                                                                                                                    |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `price_lists`      | store_id, trip_id (nullable), sale_rate, status (`draft`/`published`), published_at, published_by                                              |
-| `price_list_lines` | price_list_id, product_id, unit_cost_usd, margin, price_usd, price_bs, source_purchase_line_id (nullable) · unique (price_list_id, product_id) |
+| Table              | Key columns                                                                                                                                                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `price_lists`      | store_id, trip_id (nullable), sale_rate, status (`draft`/`published`), published_at, published_by                                                                                                                              |
+| `price_list_lines` | price_list_id, product_id, unit_cost_usd (nullable: manual price, never bought), margin (nullable: manual price outside 0–500 %), price_usd, price_bs, source_purchase_line_id (nullable) · unique (price_list_id, product_id) |
 
 ### 9.6 Daily close
 

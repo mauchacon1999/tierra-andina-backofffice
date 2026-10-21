@@ -106,6 +106,13 @@
       "when": 1792335092361,
       "tag": "0014_payables_drop_old",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792541607198,
+      "tag": "0015_manual_prices",
+      "breakpoints": true
     }
   ]
 }

@@ -72,6 +72,7 @@ export const VALIDATION_MESSAGES_ES_VE = {
     SHRINKAGE_NEGATIVE: "La merma no puede ser negativa",
     SHRINKAGE_NOT_BELOW_PACK: "La merma debe ser menor que la cantidad por bulto",
     MARGIN_OUT_OF_RANGE: "El margen debe estar entre 0 % y 500 %",
+    whatsappRequired: "Indica si va en la lista de WhatsApp",
   },
   purchase: {
     productRequired: "Elige un producto",
