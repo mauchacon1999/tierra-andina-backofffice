@@ -10,11 +10,12 @@ about day-to-day work.
 packages/db/
 ├── drizzle.config.ts          # drizzle-kit: schema → migrations/
 ├── migrations/                # generated SQL, committed, never edited once applied
-├── scripts/                   # db:ping, db:reset, db:seed
+├── scripts/                   # db:ping, db:reset, db:seed, purge-except-closes
 └── src/
     ├── client.ts              # createDb(url) + default db/ping/closeDb (DATABASE_URL)
     ├── migrate.ts             # migrateDatabase, resetDatabase, isLocalDatabaseUrl
     ├── seed.ts, seed-data.ts  # idempotent initial data
+    ├── purge-except-closes.ts # one-off cleanup that keeps only the daily closes
     ├── schema/                # one file per area (below) + _shared.ts + _enums.ts
     └── testing/               # test DB helpers, fixtures, preload (tests only)
 ```
@@ -37,6 +38,26 @@ packages/db/
 `NODE_ENV=production`.
 
 Fresh local database: `bun run db:up && bun run db:reset && bun run db:seed`.
+
+### One-off cleanup: keep only the daily closes
+
+`packages/db/scripts/purge-except-closes.ts` (owner, 2026-11-04) has no `bun run` shortcut on
+purpose, and the env file is always named explicitly. It works on the whole database, in one
+transaction, and rolls back if a count of what must stay moves.
+
+- **Stays:** daily closes and their payments; the expenses, credit entries and customers tied to
+  a close; products and categories; employees, payroll and advances; payment methods; stores, settings, users, sessions; the
+  audit log.
+- **Goes:** payables, purchases and trips, price lists, suppliers and their accounts, shopping
+  list, exchange rates, tasks, recurring expenses, expenses and credit
+  entries outside a close (so a customer's payments go too), and customers without a close.
+
+From `packages/db`, with a backup taken first:
+
+```bash
+bun --env-file=<env file> scripts/purge-except-closes.ts   # only shows the counts
+bun --env-file=<env file> scripts/purge-except-closes.ts --execute --confirm-host=<db host>
+```
 
 ## Creating a migration
 
