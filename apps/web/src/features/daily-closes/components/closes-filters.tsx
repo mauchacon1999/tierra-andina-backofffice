@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 
-import { TextField } from "@/components/ui/text-field";
+import { DateField } from "@/components/ui/date-field";
 import { CLOSE_PRESETS, type ClosePreset } from "@/features/daily-closes/helpers/close-range";
 import { cn } from "@/utils/cn";
 
@@ -51,19 +51,8 @@ export function ClosesFilters({
         })}
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <TextField
-          label={t("from")}
-          type="date"
-          value={from}
-          onChange={(event) => onFromChange(event.target.value)}
-        />
-        <TextField
-          label={t("to")}
-          type="date"
-          value={to}
-          error={orderError}
-          onChange={(event) => onToChange(event.target.value)}
-        />
+        <DateField label={t("from")} required value={from} onChange={onFromChange} />
+        <DateField label={t("to")} required value={to} error={orderError} onChange={onToChange} />
       </div>
     </div>
   );

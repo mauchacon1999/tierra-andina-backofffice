@@ -40,6 +40,9 @@ export type UseCloseFormResult = {
   expenses: UseFieldArrayReturn<Values, "expenses">;
   totals: DailyCloseTotals;
   isEdit: boolean;
+  /** Edit: the close's day; the owner can move it to another day. */
+  businessDate: string;
+  setBusinessDate: (date: string) => void;
   /** Valid contents waiting for the manager to confirm, or to go back and fix them. */
   pending: UpdateDailyClose | null;
   onSubmit: () => Promise<void>;
@@ -78,6 +81,7 @@ function initialValues(methods: readonly PaymentMethod[], close?: DailyClose): V
 /**
  * "Cierre del día" (manager) and "Corregir" (owner): amounts per payment method, card batch,
  * credit sales, expenses and where the cash went, with the totals per currency while typing.
+ * The correction can also move the close to another day.
  */
 export function useCloseForm(options: UseCloseFormOptions): UseCloseFormResult {
   const t = useTranslations("dailyClose");
@@ -91,7 +95,8 @@ export function useCloseForm(options: UseCloseFormOptions): UseCloseFormResult {
   const credits = useFieldArray({ control: form.control, name: "credits" });
   const expenses = useFieldArray({ control: form.control, name: "expenses" });
   const submit = useSubmitDailyClose();
-  const update = useUpdateDailyClose(close?.id ?? "");
+  const update = useUpdateDailyClose(close?.id ?? "", close?.businessDate);
+  const [businessDate, setBusinessDate] = useState(close?.businessDate ?? "");
   const [pending, setPending] = useState<UpdateDailyClose | null>(null);
   // The confirmation runs outside handleSubmit: busy until the save and its refresh finish.
   const [isConfirming, setIsConfirming] = useState(false);
@@ -108,7 +113,7 @@ export function useCloseForm(options: UseCloseFormOptions): UseCloseFormResult {
 
   const onSubmit = form.handleSubmit((contents) => {
     form.clearErrors("root");
-    setPending(contents);
+    setPending(close ? { ...contents, businessDate } : contents);
   });
 
   const confirm = async (): Promise<void> => {
@@ -136,6 +141,8 @@ export function useCloseForm(options: UseCloseFormOptions): UseCloseFormResult {
     expenses,
     totals: liveCloseTotals(values, methods),
     isEdit: options.mode === "edit",
+    businessDate,
+    setBusinessDate,
     pending,
     onSubmit: () => onSubmit(),
     confirm,

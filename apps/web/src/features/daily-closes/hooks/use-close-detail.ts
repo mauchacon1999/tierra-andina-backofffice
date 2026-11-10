@@ -1,7 +1,7 @@
 "use client";
 
 import type { DailyClose } from "@ta/validators";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -24,7 +24,9 @@ export type UseCloseDetailResult = {
   stopFix: () => void;
   /** The correction was just saved. */
   isFixed: boolean;
-  onFixed: () => void;
+  /** The correction just moved the close here from another day (`?moved=1`). */
+  isMoved: boolean;
+  onFixed: (close: DailyClose) => void;
   approve: () => Promise<void>;
   isApproving: boolean;
   remove: () => Promise<void>;
@@ -32,16 +34,21 @@ export type UseCloseDetailResult = {
   actionError: string | null;
 };
 
-/** The owner's view of one close: correct it (the same form) or approve it. */
+/**
+ * The owner's view of one close: correct it (the same form) or approve it. A correction that
+ * moves the close to another day continues on that day's page.
+ */
 export function useCloseDetail(date: string): UseCloseDetailResult {
   const t = useTranslations("closes");
   const errorMessage = useErrorMessage();
   const router = useRouter();
+  const wasMoved = useSearchParams().get("moved") === "1";
   const day = useDailyClose(date);
   const approve = useApproveDailyClose(day.close?.id ?? "");
   const remove = useDeleteDailyClose();
   const [isFixing, setIsFixing] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
+  const [isMoved, setIsMoved] = useState(wasMoved);
   const [actionError, setActionError] = useState<string | null>(null);
 
   return {
@@ -49,12 +56,18 @@ export function useCloseDetail(date: string): UseCloseDetailResult {
     isFixing,
     startFix: () => {
       setIsFixed(false);
+      setIsMoved(false);
       setIsFixing(true);
     },
     stopFix: () => setIsFixing(false),
     isFixed,
-    onFixed: () => {
+    isMoved,
+    onFixed: (close) => {
       setIsFixing(false);
+      if (close.businessDate !== date) {
+        router.replace(`/closes/${close.businessDate}?moved=1`);
+        return;
+      }
       setIsFixed(true);
     },
     approve: async () => {

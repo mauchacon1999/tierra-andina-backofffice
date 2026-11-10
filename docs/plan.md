@@ -104,7 +104,7 @@ the list from the system.
 - [x] Notification to the owner when a close is submitted: live counter in the menu ("Cierres");
       push notifications come with the push task.
 - [x] Owner view ("Cierres"): one row per day like the Excel (a column per method, totals per
-      currency, batch, status); detail to correct and approve.
+      currency, batch, status); detail to correct (also its date, owner only) and approve.
 - [~] ~~Import history from the current Excel~~ — not needed: data starts from zero in the
   system (owner, 2026-10-17).
 

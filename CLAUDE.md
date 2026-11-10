@@ -33,7 +33,7 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 > and "Copiar para WhatsApp".
 > **Daily close** (phase 2): `/close` (manager/owner: amounts only, each in its currency; the date is
 > today and only the owner can change it; lote,
-> credit sales, expenses) and `/closes` (owner: list like the Excel, filter by week, month or dates, chips with that period's sales in Bs and in dollars, correct, approve or delete; pending
+> credit sales, expenses) and `/closes` (owner: list like the Excel, filter by week, month or dates, chips with that period's sales in Bs and in dollars, correct (also move it to another day), approve or delete; pending
 > counter in the menu) — `/api/v1/daily-closes`, `/payment-methods`, `/customers`.
 > **Tasks**: `/tasks` (owner and manager assign a name, description and person, and can
 > reassign; high priority is an orange border and a flag and stays first; pending is blue,
@@ -78,6 +78,7 @@ Business context and phases live in `docs/plan.md`. Read it before starting a ne
 | Client state (web)        | Zustand                                                                     |
 | Forms (web)               | React Hook Form + `@hookform/resolvers/zod`                                 |
 | i18n (web)                | next-intl (one locale, es-VE; no locale in the URL)                         |
+| Date picker (web)         | react-day-picker (`Calendar`, `DateField` in `components/ui/`)              |
 | Decimal math              | decimal.js                                                                  |
 | Tests                     | `bun test` (core, validators, api) · Vitest + Testing Library + jsdom (web) |
 
@@ -362,7 +363,7 @@ apps/web/src/
 - **UI follows `docs/design-system.md`**: colors only through the semantic tokens of
   `app/globals.css` (`bg-primary`, `text-muted`, `text-danger-text`…; no palette classes and no
   `dark:` color classes — `src/design-system.test.ts` fails otherwise), primitives from
-  `components/ui/` (`Button`, `ButtonLink`, `TextField`, `SelectField`, `SelectMenu`, `ComboboxField`, `SegmentedControl`,
+  `components/ui/` (`Button`, `ButtonLink`, `TextField`, `DateField` (never `type="date"`), `Calendar`, `SelectField`, `SelectMenu`, `ComboboxField`, `SegmentedControl`,
   `Checkbox`, `Alert`, `Card`, `Badge`, `Spinner`, `ConfirmButton`, `Dialog`, `IconButton`,
   `Tooltip`). Icons: `lucide-react`, always `aria-hidden` next to a text or an accessible name.
 - **Lists of records use `DataTable`** (`components/shared/data-table/`, TanStack Table v9;
@@ -587,6 +588,14 @@ Things that are not obvious from the code and have already cost time:
 - **Web tests** run with Vitest (`apps/web/vitest.config.mts`): jsdom, `@` alias and a fake
   `NEXT_PUBLIC_API_URL`, because `lib/env.ts` validates it at import time. Mock `fetch` with
   `vi.stubGlobal`; use fake timers for polling hooks.
+- **Date fields in tests**: `DateField` is a button plus a calendar, not an input. Use
+  `pickDate(label, "YYYY-MM-DD")` / `getDateField(label)` from `src/testing/date-field.ts`.
+  react-day-picker is v10 (its README suggests the new name `@daypicker/react`, same API); its
+  CSS is not loaded, `Calendar` styles it with tokens; Spanish labels come from
+  `react-day-picker/locale`.
+- **React Compiler lint (`react-hooks/refs`)** rejects reading or mutating a ref during render,
+  including a ref object returned inside a hook's result. Keep elements in state with callback
+  refs (`usePopover`'s `setTrigger`/`setPanel`) and take a callback `ref` prop.
 - **Path aliases**: `@/` maps to `src/` in both apps (`tsconfig.json` paths; Vitest via
   `resolve.alias`). Bun resolves tsconfig paths at runtime and in `bun build`.
 - **Validator middleware return type is inferred** (`apps/api/src/lib/validate.ts`): it carries

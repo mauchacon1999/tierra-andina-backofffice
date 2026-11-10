@@ -2,9 +2,11 @@
 
 import type { PayableDetail } from "@ta/validators";
 import { useTranslations } from "next-intl";
+import { Controller } from "react-hook-form";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { DateField } from "@/components/ui/date-field";
 import { TextField } from "@/components/ui/text-field";
 import { useTermsForm } from "@/features/payables/hooks/use-terms-form";
 
@@ -26,12 +28,12 @@ export function TermsForm({ payable, onDone }: TermsFormProps): React.JSX.Elemen
       }}
     >
       {f.formError && <Alert tone="error">{f.formError}</Alert>}
-      <TextField
-        label={t("dueOn")}
-        type="date"
-        required
-        error={errors.dueOn?.message}
-        {...f.form.register("dueOn")}
+      <Controller
+        control={f.form.control}
+        name="dueOn"
+        render={({ field }) => (
+          <DateField label={t("dueOn")} required error={errors.dueOn?.message} {...field} />
+        )}
       />
       <TextField
         label={t("note")}

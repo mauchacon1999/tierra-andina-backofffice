@@ -9,6 +9,7 @@ import {
 import { DailyCloseScreen } from "@/features/daily-closes/components/daily-close-screen";
 import { ApiError } from "@/lib/api";
 import { METHODS, TUESDAY_CLOSE } from "@/testing/close-fixtures";
+import { getDateField, pickDate } from "@/testing/date-field";
 import { SwrTestWrapper } from "@/testing/swr-wrapper";
 import { formatBusinessDateLong, todayBusinessDate } from "@/utils/format-date";
 
@@ -50,9 +51,11 @@ describe("DailyCloseScreen", () => {
     session.role = "owner";
     render(<DailyCloseScreen />, { wrapper: SwrTestWrapper });
 
-    const date = await screen.findByLabelText("Fecha");
-    expect((date as HTMLInputElement).value).toBe(todayBusinessDate());
-    fireEvent.change(date, { target: { value: "2026-10-12" } });
+    await screen.findByLabelText("Punto de venta");
+    expect(getDateField("Fecha").textContent?.toLowerCase()).toContain(
+      formatBusinessDateLong(todayBusinessDate()),
+    );
+    pickDate("Fecha", "2026-10-12");
     await waitFor(() => expect(getDailyClose).toHaveBeenCalledWith("2026-10-12"));
   });
 

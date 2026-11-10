@@ -5,6 +5,7 @@ import { createPayable, listExpenseCategories } from "@/features/payables/api/pa
 import { PayableForm } from "@/features/payables/components/payable-form";
 import { listSuppliers } from "@/features/purchases/api/purchase-requests";
 import { createSupplier } from "@/features/suppliers/api/supplier-requests";
+import { pickDate } from "@/testing/date-field";
 import { BAKERY, BREAD_INVOICE, FOOD, PACKAGING } from "@/testing/payable-fixtures";
 import { SwrTestWrapper } from "@/testing/swr-wrapper";
 
@@ -34,8 +35,8 @@ describe("PayableForm", () => {
 
     await screen.findByRole("option", { name: BAKERY.name });
     fill(/^Proveedor/, BAKERY.id);
-    fill(/^Fecha de emisión/, "2026-10-18");
-    fill(/^Fecha de vencimiento/, "2026-10-25");
+    pickDate("Fecha de emisión", "2026-10-18");
+    pickDate("Fecha de vencimiento", "2026-10-25");
     fill(/^Descripción/, " Bolsas medianas ");
     fill(/^Categoría/, PACKAGING.id);
     fill(/^Cantidad/, "10");
@@ -79,7 +80,6 @@ describe("PayableForm", () => {
 
   it("asks for the supplier, the due date and what was bought", async () => {
     render(<PayableForm onDone={vi.fn()} />, { wrapper: SwrTestWrapper });
-    fill(/^Fecha de vencimiento/, "");
 
     fireEvent.click(await screen.findByRole("button", { name: "Guardar factura" }));
 

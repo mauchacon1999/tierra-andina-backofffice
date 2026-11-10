@@ -204,8 +204,10 @@ export async function submitDailyClose(
 
 /**
  * The owner corrects a close: its contents are replaced. Approved closes can be corrected too
- * (the owner decides). Audited with before/after contents.
- * @throws AppError CLOSE_NOT_FOUND, PAYMENT_METHOD_NOT_FOUND, CUSTOMER_NOT_FOUND
+ * (the owner decides). The owner can also move it to any other day without a close; its credit
+ * sales and expenses move with it (they are rewritten with the close's day). Audited with
+ * before/after contents.
+ * @throws AppError CLOSE_NOT_FOUND, CLOSE_EXISTS, PAYMENT_METHOD_NOT_FOUND, CUSTOMER_NOT_FOUND
  */
 export async function updateDailyClose(
   db: Database,
@@ -214,10 +216,18 @@ export async function updateDailyClose(
   input: UpdateDailyClose,
 ): Promise<CloseWithParts> {
   const before = await loadClose(db, actor.storeId, id);
+  const businessDate = input.businessDate ?? before.businessDate;
+  if (
+    businessDate !== before.businessDate &&
+    (await findCloseByDate(db, actor.storeId, businessDate))
+  ) {
+    throw new AppError(ErrorCode.CLOSE_EXISTS, "Ese día ya tiene cierre.");
+  }
   await checkReferences(db, actor.storeId, input);
 
   await db.transaction(async (tx) => {
     const close = await updateCloseById(tx, id, {
+      businessDate,
       cardBatch: input.cardBatch || null,
       cashDestination: input.cashDestination,
       note: input.note || null,
@@ -231,6 +241,7 @@ export async function updateDailyClose(
       action: "update",
       changes: {
         before: {
+          businessDate: before.businessDate,
           cardBatch: before.cardBatch,
           cashDestination: before.cashDestination,
           note: before.note,
@@ -246,7 +257,7 @@ export async function updateDailyClose(
             currency: e.currency,
           })),
         },
-        after: input,
+        after: { ...input, businessDate },
       },
     });
   });

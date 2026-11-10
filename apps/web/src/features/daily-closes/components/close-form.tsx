@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DateField } from "@/components/ui/date-field";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { TextField } from "@/components/ui/text-field";
 import { CloseCreditRow } from "@/features/daily-closes/components/close-credit-row";
@@ -48,6 +49,16 @@ export function CloseForm(props: CloseFormProps): React.JSX.Element {
       }}
     >
       {f.formError && <Alert tone="error">{f.formError}</Alert>}
+
+      {f.isEdit && (
+        <DateField
+          label={t("date")}
+          required
+          value={f.businessDate}
+          onChange={f.setBusinessDate}
+          hint={t("moveDateHint")}
+        />
+      )}
 
       <Card className="space-y-4">
         <h2 className="font-semibold">{t("payments")}</h2>

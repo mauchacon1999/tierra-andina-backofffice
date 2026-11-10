@@ -6,8 +6,9 @@ import { closeTrip, deleteLine, getTrip } from "@/features/purchases/api/purchas
 import { listShoppingItems } from "@/features/shopping-list/api/shopping-list-requests";
 import { TripScreen } from "@/features/purchases/components/trip-screen";
 import { ApiError } from "@/lib/api";
-import { OPEN_TRIP, TOMATO_LINE } from "@/testing/purchase-fixtures";
+import { pickDate } from "@/testing/date-field";
 import { setDesktop } from "@/testing/media";
+import { OPEN_TRIP, TOMATO_LINE } from "@/testing/purchase-fixtures";
 import { SwrTestWrapper } from "@/testing/swr-wrapper";
 
 vi.mock("next/navigation", async () => {
@@ -286,9 +287,7 @@ describe("TripScreen (local purchase and invoices)", () => {
     expect(closeTrip).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("radio", { name: "Bolívares" }));
-    fireEvent.change(screen.getByLabelText(/^Vencimiento de la factura/), {
-      target: { value: "2026-10-25" },
-    });
+    pickDate("Vencimiento de la factura", "2026-10-25");
     save();
     await waitFor(() =>
       expect(closeTrip).toHaveBeenCalledWith(OPEN_TRIP.id, {

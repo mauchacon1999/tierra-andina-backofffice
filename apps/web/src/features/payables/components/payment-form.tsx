@@ -3,9 +3,11 @@
 import { PAYABLE_PAYMENT_METHODS } from "@ta/core";
 import type { PayableDetail } from "@ta/validators";
 import { useTranslations } from "next-intl";
+import { Controller } from "react-hook-form";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { DateField } from "@/components/ui/date-field";
 import { SelectField } from "@/components/ui/select-field";
 import { TextField } from "@/components/ui/text-field";
 import { usePaymentForm } from "@/features/payables/hooks/use-payment-form";
@@ -39,12 +41,12 @@ export function PaymentForm({
     >
       {f.formError && <Alert tone="error">{f.formError}</Alert>}
       <div className="grid gap-4 sm:grid-cols-2">
-        <TextField
-          label={t("paidOn")}
-          type="date"
-          required
-          error={errors.paidOn?.message}
-          {...f.form.register("paidOn")}
+        <Controller
+          control={f.form.control}
+          name="paidOn"
+          render={({ field }) => (
+            <DateField label={t("paidOn")} required error={errors.paidOn?.message} {...field} />
+          )}
         />
         <SelectField
           label={t("method")}

@@ -138,7 +138,12 @@ export function useSubmitDailyClose(): CloseMutation<SubmitDailyClose> {
   };
 }
 
-export function useUpdateDailyClose(id: string): CloseMutation<UpdateDailyClose> {
+/** The owner's correction. `previousDate`: the close's day, emptied in the cache if it moves. */
+export function useUpdateDailyClose(
+  id: string,
+  previousDate?: string,
+): CloseMutation<UpdateDailyClose> {
+  const { mutate } = useSWRConfig();
   const after = useAfterCloseWrite();
   const { trigger, isMutating } = useSWRMutation<
     DailyClose,
@@ -149,6 +154,10 @@ export function useUpdateDailyClose(id: string): CloseMutation<UpdateDailyClose>
   return {
     run: async (arg) => {
       const close = await trigger(arg);
+      if (previousDate && previousDate !== close.businessDate) {
+        await mutate(queryKeys.dailyCloses.day(previousDate), undefined, { revalidate: false });
+        await mutate(queryKeys.home);
+      }
       await after(close);
       return close;
     },

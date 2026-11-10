@@ -93,9 +93,20 @@ describe("submitDailyCloseSchema", () => {
 });
 
 describe("updateDailyCloseSchema", () => {
-  test("same contents without the date (the day of a close does not change)", () => {
+  test("the date is optional: without it the close keeps its day", () => {
     const { businessDate: _date, ...body } = TUESDAY;
-    expect(updateDailyCloseSchema.parse(body)).toMatchObject({ cardBatch: "16" });
+    const parsed = updateDailyCloseSchema.parse(body);
+    expect(parsed).toMatchObject({ cardBatch: "16" });
+    expect(parsed.businessDate).toBeUndefined();
+  });
+
+  test("accepts another day to move the close and rejects a malformed one", () => {
+    expect(updateDailyCloseSchema.parse({ ...TUESDAY, businessDate: "2026-10-12" })).toMatchObject({
+      businessDate: "2026-10-12",
+    });
+    expect(
+      updateDailyCloseSchema.safeParse({ ...TUESDAY, businessDate: "12/10/2026" }).success,
+    ).toBe(false);
   });
 });
 

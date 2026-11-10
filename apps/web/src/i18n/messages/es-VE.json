@@ -22,6 +22,11 @@
     "edit": "Editar",
     "delete": "Eliminar"
   },
+  "dateField": {
+    "placeholder": "Elige una fecha",
+    "today": "Hoy",
+    "clear": "Borrar"
+  },
   "dataTable": {
     "rowActions": "Acciones de {name}",
     "actions": "Acciones",
@@ -709,6 +714,7 @@
     "reviewTitle": "Revisa el cierre",
     "reviewFixTitle": "Revisa la corrección",
     "reviewHint": "Confirma los montos. Si algo no está bien, corrígelo antes de guardarlo.",
+    "moveDateHint": "Cámbiala si el cierre quedó en otro día. Sus fiados y gastos pasan a esa fecha.",
     "backToForm": "Corregir",
     "submit": "Enviar cierre",
     "submitting": "Enviando…",
@@ -768,6 +774,7 @@
     "fix": "Corregir",
     "cancelFix": "Cancelar corrección",
     "fixed": "Corrección guardada.",
+    "moved": "Corrección guardada. El cierre pasó al {date}.",
     "notFound": "No hay cierre para ese día."
   },
   "users": {

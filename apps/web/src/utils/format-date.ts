@@ -27,6 +27,22 @@ export function formatBusinessDateLong(date: string): string {
   return `${weekday} ${formatBusinessDate(date)}`;
 }
 
+/**
+ * "2026-10-19" → local midnight of that day. Date pickers work with local dates; reading and
+ * writing only the local year, month and day keeps the business day unchanged.
+ */
+export function businessDateToLocalDate(date: string): Date {
+  const [year = "1970", month = "1", day = "1"] = date.split("-");
+  return new Date(Number(year), Number(month) - 1, Number(day));
+}
+
+/** A local date (from a date picker) → "YYYY-MM-DD" with its local year, month and day. */
+export function localDateToBusinessDate(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
 /** The business day `days` before `date` ("2026-10-19", 14 → "2026-10-05"). */
 export function businessDateMinusDays(date: string, days: number): string {
   const d = new Date(`${date}T12:00:00Z`);

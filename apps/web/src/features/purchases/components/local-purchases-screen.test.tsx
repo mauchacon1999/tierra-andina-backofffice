@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getDailyRates } from "@/features/exchange-rates/api/exchange-rates-requests";
 import { listSuppliers, listTrips, openTrip } from "@/features/purchases/api/purchase-requests";
 import { LocalPurchasesScreen } from "@/features/purchases/components/local-purchases-screen";
+import { pickDate } from "@/testing/date-field";
 import { BAKERY } from "@/testing/payable-fixtures";
 import { OPEN_TRIP } from "@/testing/purchase-fixtures";
 import { SwrTestWrapper } from "@/testing/swr-wrapper";
@@ -62,7 +63,7 @@ describe("LocalPurchasesScreen", () => {
 
     await screen.findByRole("option", { name: BAKERY.name });
     fireEvent.change(screen.getByLabelText(/^Proveedor/), { target: { value: BAKERY.id } });
-    fireEvent.change(screen.getByLabelText(/^Fecha/), { target: { value: "2026-10-18" } });
+    pickDate("Fecha", "2026-10-18");
     fireEvent.click(screen.getByRole("button", { name: "Empezar compra" }));
 
     await waitFor(() =>

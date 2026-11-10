@@ -6,8 +6,8 @@ import { useTranslations } from "next-intl";
 
 import { Card } from "@/components/ui/card";
 import { ConfirmButton } from "@/components/ui/confirm-button";
+import { DateField } from "@/components/ui/date-field";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { TextField } from "@/components/ui/text-field";
 import { useTripClose } from "@/features/purchases/hooks/use-trip-close";
 import type { UseTripScreenResult } from "@/features/purchases/hooks/use-trip-screen";
 
@@ -41,13 +41,12 @@ export function TripCloseCard({ trip, screen }: TripCloseCardProps): React.JSX.E
             value={c.currency}
             onChange={c.setCurrency}
           />
-          <TextField
+          <DateField
             label={t("payableDueOn")}
-            type="date"
             required
             value={c.dueOn}
             error={c.dueOnError}
-            onChange={(event) => c.setDueOn(event.target.value)}
+            onChange={c.setDueOn}
           />
         </div>
       )}

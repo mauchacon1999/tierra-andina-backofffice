@@ -8,6 +8,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CloseTotals } from "@/features/daily-closes/components/close-totals";
+import { formatBusinessDateLong } from "@/utils/format-date";
 import { formatDecimal } from "@/utils/format-number";
 
 export type CloseReviewProps = {
@@ -55,6 +56,14 @@ export function CloseReview({
       {error && <Alert tone="error">{error}</Alert>}
 
       <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+        {contents.businessDate && (
+          <>
+            <dt className="text-muted">{t("date")}</dt>
+            <dd className="text-right capitalize">
+              {formatBusinessDateLong(contents.businessDate)}
+            </dd>
+          </>
+        )}
         {contents.payments.map((payment) => {
           const method = methodOf.get(payment.paymentMethodId);
           if (!method) return null;

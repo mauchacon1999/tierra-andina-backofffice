@@ -3,11 +3,12 @@
 import { CURRENCIES } from "@ta/core";
 import type { PayableDetail } from "@ta/validators";
 import { useTranslations } from "next-intl";
-import { useWatch } from "react-hook-form";
+import { Controller, useWatch } from "react-hook-form";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DateField } from "@/components/ui/date-field";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { SelectField } from "@/components/ui/select-field";
 import { TextField } from "@/components/ui/text-field";
@@ -83,19 +84,24 @@ export function PayableForm({ payable, onDone }: PayableFormProps): React.JSX.El
           onChange={(value) => f.form.setValue("currency", value, { shouldDirty: true })}
         />
         <div className="grid gap-4 sm:grid-cols-2">
-          <TextField
-            label={t("issuedOn")}
-            type="date"
-            required
-            error={errors.issuedOn?.message}
-            {...f.form.register("issuedOn")}
+          <Controller
+            control={f.form.control}
+            name="issuedOn"
+            render={({ field }) => (
+              <DateField
+                label={t("issuedOn")}
+                required
+                error={errors.issuedOn?.message}
+                {...field}
+              />
+            )}
           />
-          <TextField
-            label={t("dueOn")}
-            type="date"
-            required
-            error={errors.dueOn?.message}
-            {...f.form.register("dueOn")}
+          <Controller
+            control={f.form.control}
+            name="dueOn"
+            render={({ field }) => (
+              <DateField label={t("dueOn")} required error={errors.dueOn?.message} {...field} />
+            )}
           />
         </div>
         <TextField

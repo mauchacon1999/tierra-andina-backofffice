@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { TextField } from "@/components/ui/text-field";
+import { DateField } from "@/components/ui/date-field";
 import { CloseForm } from "@/features/daily-closes/components/close-form";
 import { CloseSummary } from "@/features/daily-closes/components/close-summary";
 import { useDailyCloseScreen } from "@/features/daily-closes/hooks/use-daily-close-screen";
@@ -21,13 +21,7 @@ export function DailyCloseScreen(): React.JSX.Element {
   return (
     <div className="space-y-5">
       {s.canChangeDate ? (
-        <TextField
-          label={t("date")}
-          type="date"
-          value={s.date}
-          onChange={(event) => event.target.value && s.setDate(event.target.value)}
-          hint={formatBusinessDateLong(s.date)}
-        />
+        <DateField label={t("date")} required value={s.date} onChange={s.setDate} />
       ) : (
         <p className="text-sm">
           <span className="font-medium text-foreground">{t("date")}</span>

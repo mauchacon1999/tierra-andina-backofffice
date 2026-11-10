@@ -4,10 +4,10 @@ import { useTranslations } from "next-intl";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { DateField } from "@/components/ui/date-field";
 import { TextField } from "@/components/ui/text-field";
 import { OfficialRateCard } from "@/features/exchange-rates/components/official-rate-card";
 import { useDailyRatesForm } from "@/features/exchange-rates/hooks/use-daily-rates-form";
-import { formatBusinessDateLong } from "@/utils/format-date";
 
 export type DailyRatesFormProps = {
   /** Day shown first; today in Caracas by default. */
@@ -34,13 +34,7 @@ export function DailyRatesForm({ initialDate }: DailyRatesFormProps): React.JSX.
       {r.isSaved && <Alert tone="success">{t("saved")}</Alert>}
       <OfficialRateCard onUse={r.applyOfficialBcv} />
 
-      <TextField
-        label={t("date")}
-        type="date"
-        value={r.date}
-        onChange={(event) => event.target.value && r.setDate(event.target.value)}
-        hint={formatBusinessDateLong(r.date)}
-      />
+      <DateField label={t("date")} required value={r.date} onChange={r.setDate} />
       <div className="grid gap-4 sm:grid-cols-3">
         <TextField
           label={t("bcv")}

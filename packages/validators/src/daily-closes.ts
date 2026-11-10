@@ -114,8 +114,14 @@ export const submitDailyCloseSchema = z.object({ businessDate: businessDateSchem
 export type SubmitDailyCloseInput = z.input<typeof submitDailyCloseSchema>;
 export type SubmitDailyClose = z.output<typeof submitDailyCloseSchema>;
 
-/** PATCH /api/v1/daily-closes/:id — the owner corrects a close (replaces its contents). */
-export const updateDailyCloseSchema = z.object(closeBody);
+/**
+ * PATCH /api/v1/daily-closes/:id — the owner corrects a close (replaces its contents) and can
+ * move it to another day (`businessDate`; omitted = the same day).
+ */
+export const updateDailyCloseSchema = z.object({
+  businessDate: businessDateSchema.optional(),
+  ...closeBody,
+});
 export type UpdateDailyClose = z.output<typeof updateDailyCloseSchema>;
 
 export const dailyCloseRangeQuerySchema = z

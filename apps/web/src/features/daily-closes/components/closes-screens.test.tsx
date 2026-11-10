@@ -12,13 +12,19 @@ import {
 import { CloseDetailScreen } from "@/features/daily-closes/components/close-detail-screen";
 import { ClosesScreen } from "@/features/daily-closes/components/closes-screen";
 import { METHODS, TUESDAY_CLOSE } from "@/testing/close-fixtures";
+import { getDateField, pickDate } from "@/testing/date-field";
 import { setDesktop } from "@/testing/media";
 import { SwrTestWrapper } from "@/testing/swr-wrapper";
 
-const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+const { push, replace, search } = vi.hoisted(() => ({
+  push: vi.fn(),
+  replace: vi.fn(),
+  search: { value: "" },
+}));
 vi.mock("next/navigation", () => ({
   useParams: () => ({ date: "2026-10-13" }),
-  useRouter: () => ({ push }),
+  useRouter: () => ({ push, replace }),
+  useSearchParams: () => new URLSearchParams(search.value),
 }));
 vi.mock("@/utils/format-date", async () => {
   const actual = (await vi.importActual("@/utils/format-date")) as Record<string, unknown>;
@@ -94,8 +100,8 @@ describe("ClosesScreen (owner)", () => {
       "true",
     );
 
-    fireEvent.change(screen.getByLabelText("Desde"), { target: { value: "2026-10-20" } });
-    fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: "2026-10-01" } });
+    pickDate("Desde", "2026-10-20");
+    pickDate("Hasta", "2026-10-01");
 
     expect(screen.getByText("La fecha inicial no puede ser posterior a la final.")).toBeDefined();
     expect(listDailyCloses).not.toHaveBeenCalledWith("2026-10-20", "2026-10-01");
@@ -126,6 +132,8 @@ describe("CloseDetailScreen (owner)", () => {
     vi.mocked(deleteDailyClose).mockReset();
     vi.mocked(updateDailyClose).mockReset();
     push.mockReset();
+    replace.mockReset();
+    search.value = "";
   });
 
   it("approves after confirming", async () => {
@@ -171,6 +179,34 @@ describe("CloseDetailScreen (owner)", () => {
       }),
     ]);
     expect(await screen.findByText("Corrección guardada.")).toBeDefined();
+  });
+
+  it("moves the close to another day and continues on that day's page", async () => {
+    vi.mocked(updateDailyClose).mockResolvedValue({ ...TUESDAY_CLOSE, businessDate: "2026-10-12" });
+    render(<CloseDetailScreen />, { wrapper: SwrTestWrapper });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Corregir" }));
+    await screen.findByText("Cámbiala si el cierre quedó en otro día.", { exact: false });
+    expect(getDateField("Fecha").textContent).toContain("martes 13/10/2026");
+    pickDate("Fecha", "2026-10-12");
+    fireEvent.click(screen.getByRole("button", { name: "Revisar corrección" }));
+    expect(await screen.findByText("lunes 12/10/2026")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Guardar corrección" }));
+
+    await waitFor(() => expect(updateDailyClose).toHaveBeenCalledOnce());
+    expect(vi.mocked(updateDailyClose).mock.calls[0]?.[1]).toMatchObject({
+      businessDate: "2026-10-12",
+    });
+    expect(replace).toHaveBeenCalledWith("/closes/2026-10-12?moved=1");
+  });
+
+  it("says the close was moved here after a move", async () => {
+    search.value = "moved=1";
+    render(<CloseDetailScreen />, { wrapper: SwrTestWrapper });
+
+    expect(
+      await screen.findByText("Corrección guardada. El cierre pasó al martes 13/10/2026."),
+    ).toBeDefined();
   });
 
   it("deletes the day after confirming and goes back to the list", async () => {

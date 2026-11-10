@@ -56,6 +56,7 @@ export function CloseDetailScreen(): React.JSX.Element {
       <h2 className="text-lg font-semibold capitalize">{t("detailTitle", { date: day })}</h2>
       {s.actionError && <Alert tone="error">{s.actionError}</Alert>}
       {s.isFixed && <Alert tone="success">{t("fixed")}</Alert>}
+      {s.isMoved && <Alert tone="success">{t("moved", { date: day })}</Alert>}
       {s.isFixing ? (
         <div className="space-y-3">
           <CloseForm mode="edit" close={close} onDone={s.onFixed} />

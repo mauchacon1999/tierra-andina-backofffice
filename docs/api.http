@@ -303,6 +303,14 @@ Content-Type: application/json
 
 { "cardBatch": "16", "cashDestination": "deposited", "payments": [], "credits": [], "expenses": [] }
 
+### Correct and move to another day (owner) — credit sales and expenses move too; 409 CLOSE_EXISTS
+### when that day already has a close
+PATCH {{baseUrl}}/api/v1/daily-closes/<close id>
+Origin: http://localhost:3000
+Content-Type: application/json
+
+{ "businessDate": "2026-10-12", "cardBatch": "16", "cashDestination": "kept", "payments": [], "credits": [], "expenses": [] }
+
 ### Approve (owner) — 409 CLOSE_ALREADY_APPROVED the second time
 POST {{baseUrl}}/api/v1/daily-closes/<close id>/approve
 Origin: http://localhost:3000

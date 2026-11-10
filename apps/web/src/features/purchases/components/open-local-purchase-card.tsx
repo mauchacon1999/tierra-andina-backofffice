@@ -1,12 +1,13 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useWatch } from "react-hook-form";
+import { Controller, useWatch } from "react-hook-form";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Card } from "@/components/ui/card";
+import { DateField } from "@/components/ui/date-field";
 import { SelectField } from "@/components/ui/select-field";
 import { TextField } from "@/components/ui/text-field";
 import { useOpenLocalPurchase } from "@/features/purchases/hooks/use-local-purchases";
@@ -49,12 +50,17 @@ export function OpenLocalPurchaseCard(): React.JSX.Element {
             error={errors.supplierId?.message}
             {...f.form.register("supplierId")}
           />
-          <TextField
-            label={t("date")}
-            type="date"
-            required
-            error={errors.businessDate?.message}
-            {...f.form.register("businessDate")}
+          <Controller
+            control={f.form.control}
+            name="businessDate"
+            render={({ field }) => (
+              <DateField
+                label={t("date")}
+                required
+                error={errors.businessDate?.message}
+                {...field}
+              />
+            )}
           />
         </div>
         <TextField label={t("note")} autoComplete="off" {...f.form.register("note")} />

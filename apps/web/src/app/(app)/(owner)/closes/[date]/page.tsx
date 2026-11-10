@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 
 import { ButtonLink } from "@/components/ui/button-link";
 import { CloseDetailScreen } from "@/features/daily-closes/components/close-detail-screen";
@@ -11,6 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function CloseDetailPage(): Promise<React.JSX.Element> {
   const t = await getTranslations("closes");
+  const tc = await getTranslations("common");
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <header className="flex items-start justify-between gap-3">
@@ -19,7 +21,16 @@ export default async function CloseDetailPage(): Promise<React.JSX.Element> {
           {t("back")}
         </ButtonLink>
       </header>
-      <CloseDetailScreen />
+      {/* The screen reads ?moved=1; Next requires a Suspense boundary for that. */}
+      <Suspense
+        fallback={
+          <p role="status" className="text-muted">
+            {tc("loading")}
+          </p>
+        }
+      >
+        <CloseDetailScreen />
+      </Suspense>
     </div>
   );
 }

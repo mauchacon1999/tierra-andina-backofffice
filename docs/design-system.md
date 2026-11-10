@@ -5,7 +5,7 @@ screen and component; if something is missing here, add it here first.
 
 - Tokens: `apps/web/src/app/globals.css`
 - Primitives: `apps/web/src/components/ui/` — `Button`, `ButtonLink` (a link that looks like a
-  button), `TextField`, `SelectField`, `SelectMenu` (styled dropdown), `ComboboxField` (search a long list by name), `SegmentedControl` (few exclusive options, real radios),
+  button), `TextField`, `DateField` (calendar in a popover), `Calendar`, `SelectField`, `SelectMenu` (styled dropdown), `ComboboxField` (search a long list by name), `SegmentedControl` (few exclusive options, real radios),
   `Checkbox`, `Alert`, `Card` (tones), `Badge`, `Spinner`, `ConfirmButton` (two-step action),
   `Dialog` (native modal / drawer), `IconButton` (icon only, label required), `Tooltip`
 - Icons: `lucide-react`, `size-5` (`size-6` in the top bar), always `aria-hidden`
@@ -221,15 +221,16 @@ Structure:
 
 Input types:
 
-| Data                | Props                                                                                                                                                                         |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Email               | `type="email" inputMode="email" autoComplete="email"`                                                                                                                         |
-| Password            | `type="password" autoComplete="current-password"`                                                                                                                             |
-| Money, kg, rates, % | `type="text" inputMode="decimal"` — **never `type="number"`** (it uses floats and the device locale); values stay strings and are validated with `amountSchema`-style schemas |
-| Phone               | `type="tel" inputMode="tel" autoComplete="tel"`                                                                                                                               |
-| Search              | `type="search"`, large, at the top of the screen                                                                                                                              |
-| Long catalog        | `ComboboxField`: type the name (accents ignored) and tap the row. Native `SelectField` stays for short fixed lists (currency, unit)                                           |
-| Styled choice       | `SelectMenu`: a button that opens a list (Downshift, already in the app). `appearance="avatar"` shows only the person's initial in a circle until it is pressed               |
+| Data                | Props                                                                                                                                                                                                                                                                                                             |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Email               | `type="email" inputMode="email" autoComplete="email"`                                                                                                                                                                                                                                                             |
+| Password            | `type="password" autoComplete="current-password"`                                                                                                                                                                                                                                                                 |
+| Money, kg, rates, % | `type="text" inputMode="decimal"` — **never `type="number"`** (it uses floats and the device locale); values stay strings and are validated with `amountSchema`-style schemas                                                                                                                                     |
+| Phone               | `type="tel" inputMode="tel" autoComplete="tel"`                                                                                                                                                                                                                                                                   |
+| Search              | `type="search"`, large, at the top of the screen                                                                                                                                                                                                                                                                  |
+| Long catalog        | `ComboboxField`: type the name (accents ignored) and tap the row. Native `SelectField` stays for short fixed lists (currency, unit)                                                                                                                                                                               |
+| Styled choice       | `SelectMenu`: a button that opens a list (Downshift, already in the app). `appearance="avatar"` shows only the person's initial in a circle until it is pressed                                                                                                                                                   |
+| Date                | `DateField` — **never `type="date"`**: shows "lunes 19/10/2026", opens a Spanish month calendar (react-day-picker, weeks from Monday, month/year selects, "Hoy"; "Borrar" only when optional; `min`/`max`). Controlled with `"YYYY-MM-DD"` strings; in React Hook Form wrap it in `Controller` and spread `field` |
 
 Validation:
 
@@ -305,6 +306,8 @@ A status is a dot + a label (never color alone). Mapping for the app's states:
 - Rates show their kind: "Tasa BCV 200,00", "Tasa de venta 210,00".
 - Dates: `dd/mm/aaaa` (`es-VE`); business days are dates without time; times as "7:49 a. m.".
 - Date helpers go in `apps/web/src/utils/format-date.ts` when the first screen needs them.
+  Calendars use local `Date`s: convert with `businessDateToLocalDate` / `localDateToBusinessDate`
+  (local year, month and day only), never `new Date("YYYY-MM-DD")` (that is UTC midnight).
 
 ---
 

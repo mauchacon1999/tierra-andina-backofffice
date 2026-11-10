@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { toBusinessDate } from "@ta/core";
 import { uniq } from "@ta/db/testing";
 import {
+  customerCreditDetailSchema,
   customerListSchema,
   dailyCloseListSchema,
   dailyCloseSchema,
@@ -36,6 +37,12 @@ const tuesday = (businessDate: string, extra: Json = {}): Json => ({
   ],
   ...extra,
 });
+
+/** The same contents for a correction (PATCH), without the day. */
+const contentsOf = (extra: Json = {}): Json => {
+  const { businessDate: _day, ...contents } = tuesday("", extra);
+  return contents;
+};
 
 const submit = (cookie: string, body: Json) => call(s.app, "POST", "/daily-closes", cookie, body);
 
@@ -258,6 +265,73 @@ describe("owner review", () => {
     expect((await call(s.app, "DELETE", `/daily-closes/${created.id}`, s.owner)).status).toBe(204);
     expect((await call(s.app, "GET", `/daily-closes/${day}`, s.owner)).status).toBe(404);
     expect((await submit(s.owner, tuesday(day))).status).toBe(201);
+  });
+
+  test("the owner moves a close to another day; its credit sale moves with it", async () => {
+    const from = nextDay();
+    const to = nextDay();
+    const created = dailyCloseSchema.parse(
+      (
+        await submit(
+          s.owner,
+          tuesday(from, {
+            credits: [{ customerName: uniq("Sr. Luis"), amount: "300", currency: "VES" }],
+          }),
+        )
+      ).body,
+    );
+    const contents = contentsOf({
+      credits: [{ customerId: created.credits[0]!.customerId, amount: "300", currency: "VES" }],
+    });
+
+    const res = await call(s.app, "PATCH", `/daily-closes/${created.id}`, s.owner, {
+      ...contents,
+      businessDate: to,
+    });
+
+    expect(res.status).toBe(200);
+    expect(dailyCloseSchema.parse(res.body)).toMatchObject({ id: created.id, businessDate: to });
+    expect((await call(s.app, "GET", `/daily-closes/${from}`, s.owner)).status).toBe(404);
+    expect((await call(s.app, "GET", `/daily-closes/${to}`, s.owner)).status).toBe(200);
+    const credit = customerCreditDetailSchema.parse(
+      (await call(s.app, "GET", `/customers/${created.credits[0]!.customerId}/credit`, s.owner))
+        .body,
+    );
+    expect(credit.entries.map((e) => e.businessDate)).toEqual([to]);
+  });
+
+  test("moving a close onto a day that has one is 409 CLOSE_EXISTS; the manager gets 403", async () => {
+    const taken = nextDay();
+    await submit(s.owner, tuesday(taken));
+    const created = dailyCloseSchema.parse((await submit(s.owner, tuesday(nextDay()))).body);
+    const contents = contentsOf();
+
+    const clash = await call(s.app, "PATCH", `/daily-closes/${created.id}`, s.owner, {
+      ...contents,
+      businessDate: taken,
+    });
+    const asManager = await call(s.app, "PATCH", `/daily-closes/${created.id}`, s.manager, {
+      ...contents,
+      businessDate: nextDay(),
+    });
+
+    expect(clash.status).toBe(409);
+    expect(errorOf(clash.body).code).toBe("CLOSE_EXISTS");
+    expect(asManager.status).toBe(403);
+    expect(
+      (await call(s.app, "GET", `/daily-closes/${created.businessDate}`, s.owner)).status,
+    ).toBe(200);
+  });
+
+  test("400 when the new day is not a date", async () => {
+    const created = dailyCloseSchema.parse((await submit(s.owner, tuesday(nextDay()))).body);
+
+    const res = await call(s.app, "PATCH", `/daily-closes/${created.id}`, s.owner, {
+      ...contentsOf(),
+      businessDate: "31/01/2027",
+    });
+
+    expect(res.status).toBe(400);
   });
 
   test("404 when correcting, approving or deleting a close that does not exist", async () => {

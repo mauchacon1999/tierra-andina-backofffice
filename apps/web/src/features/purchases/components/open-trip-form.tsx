@@ -1,13 +1,14 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Controller } from "react-hook-form";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
+import { DateField } from "@/components/ui/date-field";
 import { TextField } from "@/components/ui/text-field";
 import { useOpenTripForm } from "@/features/purchases/hooks/use-open-trip-form";
-import { formatBusinessDateLong } from "@/utils/format-date";
 import { formatDecimal } from "@/utils/format-number";
 
 /** Opens the purchase trip of a day with that day's BCV and Coche rates. */
@@ -29,12 +30,12 @@ export function OpenTripForm(): React.JSX.Element {
     >
       <h2 className="font-semibold">{t("title")}</h2>
       {f.formError && !first && <Alert tone="error">{f.formError}</Alert>}
-      <TextField
-        label={t("date")}
-        type="date"
-        error={errors.businessDate?.message}
-        hint={f.businessDate ? formatBusinessDateLong(f.businessDate) : undefined}
-        {...f.form.register("businessDate")}
+      <Controller
+        control={f.form.control}
+        name="businessDate"
+        render={({ field }) => (
+          <DateField label={t("date")} required error={errors.businessDate?.message} {...field} />
+        )}
       />
       {first ? (
         <Alert

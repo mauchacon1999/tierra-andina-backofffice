@@ -227,6 +227,8 @@ where a **receiver** checks what arrives.
 - Cash destination: `kept` or `deposited`.
 - Once submitted, only the owner can change a close; the owner reviews and approves it. A
   counter of closes waiting for review shows in the app (push notifications come later).
+- When correcting, the owner can move a close to any other day that has no close (owner,
+  2026-11-09). Its credit sales and expenses move with it; the audit keeps both dates.
 - The owner can delete a close, approved or not (owner, 2026-10-17). Its payments, credit
   sales and expenses go with it, the deletion is audited, and that day can be submitted again.
 
